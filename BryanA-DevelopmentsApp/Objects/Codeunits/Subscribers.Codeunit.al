@@ -1949,6 +1949,7 @@ codeunit 75010 "BA SEI Subscibers"
         ArchiveMgt.StoreSalesDocument(SalesHeader, false);
         SalesInvoiceHeader."Order No." := SalesHeader."No.";
         SalesInvoiceHeader."ENC Assigned User ID" := SalesHeader."Assigned User ID";
+        SalesInvoiceHeader."BA Actual Posting DateTime" := CurrentDateTime();
         SalesInvoiceHeader.Modify(false);
     end;
 
