@@ -141,5 +141,17 @@ tableextension 80030 "BA Customer" extends Customer
             Caption = 'Block Reason';
             TableRelation = "BA Block Reason";
         }
+        field(80085; "BA Non-Mandatory Customer"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Non-Mandatory Customer Classification';
+        }
+        field(80086; "BA New Record"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Record';
+            Editable = false;
+            InitValue = true;
+        }
     }
 }

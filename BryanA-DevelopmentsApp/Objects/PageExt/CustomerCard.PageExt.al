@@ -69,6 +69,15 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
                 {
                     ApplicationArea = all;
                 }
+                field("BA Non-Mandatory Customer"; Rec."BA Non-Mandatory Customer")
+                {
+                    ApplicationArea = all;
+
+                    trigger OnValidate()
+                    begin
+                        ShowMandatoryFields := not Rec."BA Non-Mandatory Customer";
+                    end;
+                }
             }
 
         }
@@ -304,12 +313,12 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
             field("BA Segment Code"; Rec."BA Segment Code")
             {
                 ApplicationArea = all;
-                ShowMandatory = true;
+                ShowMandatory = ShowMandatoryFields;
             }
             field("BA Sub-Segment Code"; Rec."BA Sub-Segment Code")
             {
                 ApplicationArea = all;
-                ShowMandatory = true;
+                ShowMandatory = ShowMandatoryFields;
             }
             field("BA Dealer"; Rec."BA Dealer")
             {
@@ -364,7 +373,12 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
         RecVar: Variant;
         FieldsToCheck: List of [Integer];
     begin
-        if Rec."No." = '' then
+        if (Rec."No." = '') or Rec."BA Non-Mandatory Customer" then
+            exit;
+        if Rec."BA New Record" then begin
+            Rec."BA New Record" := false;
+            Rec.Modify(false);
+        end else
             exit;
         if (Rec.Blocked <> Rec.Blocked::" ") and (Rec."BA Block Reason" = '') then
             Error(BlockedCustMsg);
@@ -381,6 +395,7 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
     var
         CustomDetailsFactbox: page "Customer Details FactBox";
     begin
+        ShowMandatoryFields := Rec."BA New Record" and not Rec."BA Non-Mandatory Customer";
         UpdateBalanaceDisplay();
         StyleTxt := '';
         if ShowLCYBalances then
@@ -459,6 +474,8 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
     end;
 
 
+
+
     var
         AdjmtCost: Decimal;
         AdjCustProfit: Decimal;
@@ -467,6 +484,8 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
         CustPayments: Decimal;
         CustSales: Decimal;
         CustProfit: Decimal;
+        [InDataSet]
+        ShowMandatoryFields: Boolean;
 
         BlockedCustMsg: Label 'Block Reason must specified if customer is blocked.';
         UnfavorableStyle: Label 'Unfavorable';
