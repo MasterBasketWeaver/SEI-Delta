@@ -623,10 +623,22 @@ codeunit 75010 "BA SEI Subscibers"
         SalesPrice.SetRange("Item No.", SalesLine."No.");
         SalesPrice.SetRange("Currency Code", CurrencyCode);
         SalesPrice.SetRange("Starting Date", 0D, WorkDate());
+        SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::"Customer Price Group");
+        SalesPrice.SetRange("Sales Code", SalesLine."Customer Price Group");
         SalesPrice.SetAscending("Starting Date", true);
         FoundSalesPrice := SalesPrice.FindLast();
-        if not FoundSalesPrice then
-            exit;
+        if not FoundSalesPrice then begin
+            SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::Customer);
+            SalesPrice.SetRange("Sales Code", SalesLine."Bill-to Customer No.");
+            FoundSalesPrice := SalesPrice.FindLast();
+            if not FoundSalesPrice then begin
+                SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::"All Customers");
+                SalesPrice.SetRange("Sales Code");
+                FoundSalesPrice := SalesPrice.FindLast();
+                if not FoundSalesPrice then
+                    exit;
+            end;
+        end;
         TempSalesPrice := SalesPrice;
         if not (SalesLine."Document Type" in [SalesLine."Document Type"::Quote, SalesLine."Document Type"::Order]) then
             exit;
