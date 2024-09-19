@@ -630,11 +630,11 @@ codeunit 75010 "BA SEI Subscibers"
         TempSalesPrice := SalesPrice;
         if not (SalesLine."Document Type" in [SalesLine."Document Type"::Quote, SalesLine."Document Type"::Order]) then
             exit;
-        if (SalesLine."Currency Code" <> CurrencyCode) and GetExchangeRate(ExchangeRate, CurrencyCode) then begin
+        if (SalesLine."Currency Code" <> CurrencyCode) and GetExchangeRate(ExchangeRate, SalesLine."Currency Code") then begin
             GLSetup.TestField("Amount Rounding Precision");
-            TempSalesPrice."Unit Price" := Round(TempSalesPrice."Unit Price" * ExchangeRate."Relational Exch. Rate Amount",
-                GLSetup."Amount Rounding Precision");
-            RateValue := Round(ExchangeRate."Relational Exch. Rate Amount", GLSetup."Amount Rounding Precision");
+            RateValue := 1 / ExchangeRate."Relational Exch. Rate Amount";
+            TempSalesPrice."Unit Price" := Round(TempSalesPrice."Unit Price" * RateValue, GLSetup."Amount Rounding Precision");
+            RateValue := Round(RateValue, GLSetup."Amount Rounding Precision");
         end else
             RateValue := 1;
         SalesHeader.Get(SalesLine."Document Type", SalesLine."Document No.");
@@ -695,6 +695,7 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         ExchangeRate.SetRange("Currency Code", CurrencyCode);
         ExchangeRate.SetRange("Starting Date", 0D, WorkDate());
+        ExchangeRate.SetFilter("Relational Exch. Rate Amount", '<>%1', 0);
         exit(ExchangeRate.FindLast());
     end;
 
