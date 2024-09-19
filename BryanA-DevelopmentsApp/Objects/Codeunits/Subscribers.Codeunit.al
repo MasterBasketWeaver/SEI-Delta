@@ -609,12 +609,16 @@ codeunit 75010 "BA SEI Subscibers"
         GenProdPostingGroup: Record "Gen. Product Posting Group";
         CurrencyCode: Code[10];
         RateValue: Decimal;
+        FoundRate: Boolean;
+        InvertRate: Boolean;
     begin
         if not FoundSalesPrice and (SalesLine."Unit Price" <> 0) then begin
             TempSalesPrice."Unit Price" := SalesLine."Unit Price";
             exit;
         end;
         if not GenProdPostingGroup.Get(SalesLine."Gen. Prod. Posting Group") then
+            exit;
+        if GenProdPostingGroup."BA Division Currency" = '' then
             exit;
         GLSetup.Get();
         GLSetup.TestField("LCY Code");
@@ -642,11 +646,22 @@ codeunit 75010 "BA SEI Subscibers"
         TempSalesPrice := SalesPrice;
         if not (SalesLine."Document Type" in [SalesLine."Document Type"::Quote, SalesLine."Document Type"::Order]) then
             exit;
-        if (SalesLine."Currency Code" <> CurrencyCode) and GetExchangeRate(ExchangeRate, SalesLine."Currency Code") then begin
-            GLSetup.TestField("Amount Rounding Precision");
-            RateValue := 1 / ExchangeRate."Relational Exch. Rate Amount";
-            TempSalesPrice."Unit Price" := Round(TempSalesPrice."Unit Price" * RateValue, GLSetup."Amount Rounding Precision");
-            RateValue := Round(RateValue, GLSetup."Amount Rounding Precision");
+        if (SalesLine."Currency Code" <> CurrencyCode) then begin
+            if SalesLine."Currency Code" <> '' then begin
+                FoundRate := GetExchangeRate(ExchangeRate, SalesLine."Currency Code");
+                InvertRate := true;
+            end else
+                FoundRate := GetExchangeRate(ExchangeRate, CurrencyCode);
+            if FoundRate then begin
+                GLSetup.TestField("Amount Rounding Precision");
+                if InvertRate then
+                    RateValue := 1 / ExchangeRate."Relational Exch. Rate Amount"
+                else
+                    RateValue := ExchangeRate."Relational Exch. Rate Amount";
+                TempSalesPrice."Unit Price" := Round(TempSalesPrice."Unit Price" * RateValue, GLSetup."Amount Rounding Precision");
+                RateValue := Round(RateValue, GLSetup."Amount Rounding Precision");
+            end else
+                RateValue := 1;
         end else
             RateValue := 1;
         SalesHeader.Get(SalesLine."Document Type", SalesLine."Document No.");
