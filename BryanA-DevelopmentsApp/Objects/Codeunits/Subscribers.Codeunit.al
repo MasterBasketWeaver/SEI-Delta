@@ -659,7 +659,7 @@ codeunit 75010 "BA SEI Subscibers"
                 else
                     RateValue := ExchangeRate."Relational Exch. Rate Amount";
                 TempSalesPrice."Unit Price" := Round(TempSalesPrice."Unit Price" * RateValue, GLSetup."Amount Rounding Precision");
-                RateValue := Round(RateValue, GLSetup."Amount Rounding Precision");
+                RateValue := Round(RateValue, 0.00001);
             end else
                 RateValue := 1;
         end else
