@@ -83,22 +83,6 @@ pageextension 80051 "BA Service Quote" extends "Service Quote"
                 ApplicationArea = all;
                 Editable = false;
             }
-            field("ENC BBD Sell-To No."; Rec."ENC BBD Sell-To No.")
-            {
-                ApplicationArea = all;
-            }
-            field("ENC BBD Sell-To Name"; Rec."ENC BBD Sell-To Name")
-            {
-                ApplicationArea = all;
-            }
-            field("ENC BBD Sell-To PO No."; Rec."ENC BBD Sell-To PO No.")
-            {
-                ApplicationArea = all;
-            }
-            field("ENC BBD Contact"; Rec."ENC BBD Contact")
-            {
-                ApplicationArea = all;
-            }
         }
         addafter("Tax Area Code")
         {

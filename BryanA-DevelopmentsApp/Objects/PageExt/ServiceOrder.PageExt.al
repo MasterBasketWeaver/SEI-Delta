@@ -107,22 +107,6 @@ pageextension 80050 "BA Service Order" extends "Service Order"
                 ApplicationArea = all;
                 ShowMandatory = MandatoryDeliveryDate;
             }
-            field("ENC BBD Sell-To No."; Rec."ENC BBD Sell-To No.")
-            {
-                ApplicationArea = all;
-            }
-            field("ENC BBD Sell-To Name"; Rec."ENC BBD Sell-To Name")
-            {
-                ApplicationArea = all;
-            }
-            field("ENC BBD Sell-To PO No."; Rec."ENC BBD Sell-To PO No.")
-            {
-                ApplicationArea = all;
-            }
-            field("ENC BBD Contact"; Rec."ENC BBD Contact")
-            {
-                ApplicationArea = all;
-            }
         }
         addafter("Tax Area Code")
         {
