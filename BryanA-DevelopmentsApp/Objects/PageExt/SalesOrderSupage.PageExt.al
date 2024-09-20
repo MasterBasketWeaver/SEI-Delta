@@ -51,6 +51,7 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
                 BlankZero = true;
                 ToolTip = 'Specifies the exchange rate used to calculate prices for item sales lines.';
                 Caption = 'Exchange Rate';
+                DecimalPlaces = 2 : 5;
             }
         }
         modify("Location Code")
