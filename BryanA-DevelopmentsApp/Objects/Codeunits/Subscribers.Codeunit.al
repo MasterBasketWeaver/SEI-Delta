@@ -450,8 +450,6 @@ codeunit 75010 "BA SEI Subscibers"
         Customer.Get(SalesHeader."Sell-to Customer No.");
         if not Customer."BA Int. Customer" then
             exit;
-        SalesHeader.TestField("ENC BBD Sell-To No.");
-        SalesHeader.TestField("ENC BBD Sell-To Name");
         SalesHeader.TestField("External Document No.");
         FormatInternationalExtDocNo(SalesHeader."External Document No.", SalesHeader.FieldCaption("External Document No."));
     end;
@@ -465,8 +463,6 @@ codeunit 75010 "BA SEI Subscibers"
         Customer.Get(PassedServHeader."Customer No.");
         if not Customer."BA Serv. Int. Customer" then
             exit;
-        PassedServHeader.TestField("ENC BBD Sell-To No.");
-        PassedServHeader.TestField("ENC BBD Sell-To Name");
         PassedServHeader.TestField("ENC External Document No.");
         FormatInternationalExtDocNo(PassedServHeader."ENC External Document No.", PassedServHeader.FieldCaption("External Document No."));
     end;
