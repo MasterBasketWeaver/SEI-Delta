@@ -51,6 +51,7 @@ pageextension 80076 "BA Sales Quote Subpage" extends "Sales Quote Subform"
                 BlankZero = true;
                 ToolTip = 'Specifies the exchange rate used to calculate prices for item sales lines.';
                 Caption = 'Exchange Rate';
+                DecimalPlaces = 2 : 5;
             }
         }
         modify("Location Code")

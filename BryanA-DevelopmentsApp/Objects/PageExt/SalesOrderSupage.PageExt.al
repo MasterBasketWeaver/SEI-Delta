@@ -51,6 +51,7 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
                 BlankZero = true;
                 ToolTip = 'Specifies the exchange rate used to calculate prices for item sales lines.';
                 Caption = 'Exchange Rate';
+                DecimalPlaces = 2 : 5;
             }
         }
         modify("Location Code")
@@ -62,6 +63,22 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
                 Text := Subscribers.LocationListLookup();
                 exit(Text <> '');
             end;
+        }
+        addafter(Description)
+        {
+            field("Gen. Bus. Posting Group"; "Gen. Bus. Posting Group")
+            {
+                ApplicationArea = all;
+            }
+            field("Gen. Prod. Posting Group"; "Gen. Prod. Posting Group")
+            {
+                ApplicationArea = all;
+
+                trigger OnValidate()
+                begin
+                    Rec.UpdateUnitPrice(Rec.FieldNo("Gen. Prod. Posting Group"));
+                end;
+            }
         }
     }
 
