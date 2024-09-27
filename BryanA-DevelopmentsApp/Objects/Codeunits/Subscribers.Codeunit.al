@@ -43,6 +43,7 @@ codeunit 75010 "BA SEI Subscibers"
                     SalesHeader.Validate("Order Date", 0D);
                     SalesHeader.Validate("BA Quote Date", Today());
                     SalesHeader.Validate("Shipment Date", 0D);
+                    SalesHeader.Validate("ENC Stage", SalesHeader."ENC Stage"::Open);
                 end;
             SalesHeader."Document Type"::Order:
                 begin
