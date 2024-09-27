@@ -80,6 +80,13 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
                 end;
             }
         }
+        addlast(Control1)
+        {
+            field("BA Booking Date"; Rec."BA Booking Date")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     trigger OnOpenPage()

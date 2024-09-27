@@ -7,5 +7,11 @@ tableextension 80080 "BA Sales Invoice Line" extends "Sales Invoice Line"
             DataClassification = CustomerContent;
             Caption = 'Omit From Reports';
         }
+        field(80050; "BA Booking Date"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Booking Date';
+            Editable = false;
+        }
     }
 }

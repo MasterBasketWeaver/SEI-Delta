@@ -1541,6 +1541,8 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Item: Record Item;
     begin
+        if (Rec."Document Type" = Rec."Document Type"::Order) and (xRec."No." = '') then
+            Rec."BA Booking Date" := WorkDate();
         if (Rec.Type <> Rec.Type::Item) or (Rec."No." = xRec."No.") or not Item.Get(Rec."No.") then
             exit;
         Item.TestField("ENC Not for Sale", false);
@@ -2634,6 +2636,13 @@ codeunit 75010 "BA SEI Subscibers"
             Message(UpdateReasonCodeMsg, Rec.FieldCaption("Reason Code"));
     end;
 
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Quote to Order", 'OnBeforeInsertSalesOrderLine', '', false, false)]
+    local procedure SalesQuoteToOrderOnBeforeInsertSalesOrderLine(var SalesOrderLine: Record "Sales Line")
+    begin
+        SalesOrderLine."BA Booking Date" := WorkDate();
+    end;
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
