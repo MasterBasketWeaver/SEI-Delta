@@ -2667,9 +2667,12 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.SetRange("Column No.", 1);
         if not ExcelBuffer.FindSet() then
             exit;
-        Window.Open('#1####/#2####');
-        RecCount := ExcelBuffer.Count();
 
+        RecCount := ExcelBuffer.Count();
+        if not Confirm(StrSubstNo('Delete %1 records?', RecCount)) then
+            Error('');
+
+        Window.Open('#1####/#2####');
         SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::"All Customers");
         SalesPrice.SetRange("Sales Code", '');
         SalesPrice.SetRange("Starting Date", 0D, DMY2Date(31, 12, 2022));
@@ -2684,7 +2687,7 @@ codeunit 75010 "BA SEI Subscibers"
         until ExcelBuffer.Next() = 0;
         Window.Close();
 
-        Message('Delete %1 of %2 sales pricing.', i, i2);
+        Message('Deleted %1 of %2 sales pricing.', i2, RecCount);
     end;
 
 

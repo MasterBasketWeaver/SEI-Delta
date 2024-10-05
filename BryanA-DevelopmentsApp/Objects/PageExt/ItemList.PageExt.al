@@ -51,6 +51,9 @@ pageextension 80046 "BA Item List" extends "Item List"
                 PromotedCategory = Process;
                 PromotedIsBig = true;
                 PromotedOnly = true;
+                Caption = 'Remove Sales Pricing';
+                Visible = IsBryanUser;
+                Enabled = IsBryanUser;
 
                 trigger OnAction()
                 var
@@ -61,4 +64,13 @@ pageextension 80046 "BA Item List" extends "Item List"
             }
         }
     }
+
+    trigger OnOpenPage()
+    begin
+        IsBryanUser := UserId = 'SEI-IND\BRYANBCDEV';
+    end;
+
+    var
+        [InDataSet]
+        IsBryanUser: Boolean;
 }
