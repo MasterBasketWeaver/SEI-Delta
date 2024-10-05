@@ -2635,6 +2635,59 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+
+
+
+
+
+    procedure ImportPricingListToRemove()
+    var
+        ExcelBuffer: Record "Excel Buffer" temporary;
+        ErrorBuffer: Record "Name/Value Buffer" temporary;
+        TempBlob: Record TempBlob;
+        SalesPrice: Record "Sales Price";
+        FileMgt: Codeunit "File Management";
+        IStream: InStream;
+        Window: Dialog;
+        FileName: Text;
+        RecCount: Integer;
+        i: Integer;
+        i2: Integer;
+    begin
+        if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Sales Pricing List', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
+            exit;
+        TempBlob.Blob.CreateInStream(IStream);
+        if not ExcelBuffer.GetSheetsNameListFromStream(IStream, ErrorBuffer) then
+            Error('No Sheets in file.');
+        ErrorBuffer.FindFirst();
+        ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
+        ExcelBuffer.ReadSheet();
+        ExcelBuffer.SetFilter("Row No.", '>%1', 1);
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        ExcelBuffer.SetRange("Column No.", 1);
+        if not ExcelBuffer.FindSet() then
+            exit;
+        Window.Open('#1####/#2####');
+        RecCount := ExcelBuffer.Count();
+
+        SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::"All Customers");
+        SalesPrice.SetRange("Sales Code", '');
+        SalesPrice.SetRange("Starting Date", 0D, DMY2Date(12, 31, 2022));
+        repeat
+            i += 1;
+            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+            SalesPrice.SetRange("Item No.", ExcelBuffer."Cell Value as Text");
+            if SalesPrice.FindFirst() then begin
+                SalesPrice.Delete(true);
+                i2 += 1;
+            end;
+        until ExcelBuffer.Next() = 0;
+        Window.Close();
+
+        Message('Delete %1 of %2 sales pricing.', i, i2);
+    end;
+
+
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
         DefaultBlockReason: Label 'Product Dimension ID must be updated, the default Product ID cannot be used!';

@@ -38,4 +38,27 @@ pageextension 80046 "BA Item List" extends "Item List"
             }
         }
     }
+
+    actions
+    {
+        addfirst(Processing)
+        {
+            action("BA Remove Sales Pricing")
+            {
+                ApplicationArea = all;
+                Image = PriceAdjustment;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Subscribers.ImportPricingListToRemove();
+                end;
+            }
+        }
+    }
 }
