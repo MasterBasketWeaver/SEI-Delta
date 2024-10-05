@@ -2672,7 +2672,7 @@ codeunit 75010 "BA SEI Subscibers"
 
         SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::"All Customers");
         SalesPrice.SetRange("Sales Code", '');
-        SalesPrice.SetRange("Starting Date", 0D, DMY2Date(12, 31, 2022));
+        SalesPrice.SetRange("Starting Date", 0D, DMY2Date(31, 12, 2022));
         repeat
             i += 1;
             Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
