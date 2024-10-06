@@ -3287,6 +3287,13 @@ codeunit 75010 "BA SEI Subscibers"
         ErrorBuffer.FindFirst();
         ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
         ExcelBuffer.ReadSheet();
+
+        ExcelBuffer.SetRange("Row No.", 1);
+        ExcelBuffer.SetRange("Cell Value as Text", 'Starting Date');
+        if not ExcelBuffer.FindFirst() then
+            Error('Invalid formatting, not Starting Date column found.');
+        DateColumnNo := ExcelBuffer."Column No.";
+
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
         if not ExcelBuffer.FindSet() then
@@ -3295,12 +3302,6 @@ codeunit 75010 "BA SEI Subscibers"
             ExcelBuffer2 := ExcelBuffer;
             ExcelBuffer2.Insert(false);
         until ExcelBuffer.Next() = 0;
-
-        ExcelBuffer2.SetRange("Row No.", 1);
-        ExcelBuffer2.SetRange("Cell Value as Text", 'Starting Date');
-        if not ExcelBuffer2.FindFirst() then
-            Error('Invalid formatting, not Starting Date column found.');
-        DateColumnNo := ExcelBuffer2."Column No.";
 
         ExcelBuffer.SetRange("Column No.", 1);
         RecCount := ExcelBuffer.Count();
