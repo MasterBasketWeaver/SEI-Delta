@@ -3266,6 +3266,7 @@ codeunit 75010 "BA SEI Subscibers"
     procedure ImportPricingListToRemove()
     var
         ExcelBuffer: Record "Excel Buffer" temporary;
+        ExcelBuffer2: Record "Excel Buffer" temporary;
         ErrorBuffer: Record "Name/Value Buffer" temporary;
         TempBlob: Record TempBlob;
         SalesPrice: Record "Sales Price";
@@ -3287,22 +3288,33 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.ReadSheet();
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
-        ExcelBuffer.SetRange("Column No.", 1);
+
         if not ExcelBuffer.FindSet() then
             exit;
+
+        repeat
+            ExcelBuffer2 := ExcelBuffer;
+            ExcelBuffer2.Insert(false);
+        until ExcelBuffer.Next() = 0;
+
+        ExcelBuffer.SetRange("Column No.", 1);
 
         RecCount := ExcelBuffer.Count();
         if not Confirm(StrSubstNo('Delete %1 records?', RecCount)) then
             Error('');
 
+        ExcelBuffer.FindSet();
+
         Window.Open('#1####/#2####');
         SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::"All Customers");
         SalesPrice.SetRange("Sales Code", '');
-        SalesPrice.SetRange("Starting Date", 0D, DMY2Date(31, 12, 2022));
+
         repeat
             i += 1;
             Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
             SalesPrice.SetRange("Item No.", ExcelBuffer."Cell Value as Text");
+            ExcelBuffer2.Get(ExcelBuffer."Row No.", 4);
+            SalesPrice.SetRange("Starting Date", GetDate(ExcelBuffer2."Cell Value as Text"));
             if SalesPrice.FindFirst() then begin
                 SalesPrice.Delete(true);
                 i2 += 1;
@@ -3313,6 +3325,26 @@ codeunit 75010 "BA SEI Subscibers"
         Message('Deleted %1 of %2 sales pricing.', i2, RecCount);
     end;
 
+
+    local procedure GetDate(Input: Text): Date
+    var
+        Parts: List of [Text];
+        s: Text;
+        i: Integer;
+        i2: Integer;
+        i3: Integer;
+    begin
+        Parts := Input.Split('/');
+        Parts.Get(1, s);
+        Evaluate(i, s);
+        Parts.Get(2, s);
+        Evaluate(i2, s);
+        Parts.Get(3, s);
+        Evaluate(i3, s);
+        if i3 < 2000 then
+            i3 += 2000;
+        exit(DMY2Date(i2, i, i3));
+    end;
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
