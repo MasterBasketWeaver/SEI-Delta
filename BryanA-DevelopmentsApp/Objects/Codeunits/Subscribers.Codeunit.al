@@ -3275,6 +3275,7 @@ codeunit 75010 "BA SEI Subscibers"
         Window: Dialog;
         FileName: Text;
         RecCount: Integer;
+        DateColumnNo: Integer;
         i: Integer;
         i2: Integer;
     begin
@@ -3288,32 +3289,33 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.ReadSheet();
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
-
         if not ExcelBuffer.FindSet() then
             exit;
-
         repeat
             ExcelBuffer2 := ExcelBuffer;
             ExcelBuffer2.Insert(false);
         until ExcelBuffer.Next() = 0;
 
-        ExcelBuffer.SetRange("Column No.", 1);
+        ExcelBuffer2.SetRange("Row No.", 1);
+        ExcelBuffer2.SetRange("Cell Value as Text", 'Starting Date');
+        if not ExcelBuffer2.FindFirst() then
+            Error('Invalid formatting, not Starting Date column found.');
+        DateColumnNo := ExcelBuffer2."Column No.";
 
+        ExcelBuffer.SetRange("Column No.", 1);
         RecCount := ExcelBuffer.Count();
         if not Confirm(StrSubstNo('Delete %1 records?', RecCount)) then
             Error('');
-
         ExcelBuffer.FindSet();
 
         Window.Open('#1####/#2####');
         SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::"All Customers");
         SalesPrice.SetRange("Sales Code", '');
-
         repeat
             i += 1;
             Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+            ExcelBuffer2.Get(ExcelBuffer."Row No.", DateColumnNo);
             SalesPrice.SetRange("Item No.", ExcelBuffer."Cell Value as Text");
-            ExcelBuffer2.Get(ExcelBuffer."Row No.", 4);
             SalesPrice.SetRange("Starting Date", GetDate(ExcelBuffer2."Cell Value as Text"));
             if SalesPrice.FindFirst() then begin
                 SalesPrice.Delete(true);
