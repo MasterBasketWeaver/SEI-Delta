@@ -2758,6 +2758,41 @@ codeunit 75010 "BA SEI Subscibers"
         exit(DMY2Date(i2, i, i3));
     end;
 
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterInsertEvent', '', false, false)]
+    local procedure SalesPriceOnAfterInsert()
+    begin
+        CheckIfCanEditSalesPrices();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterDeleteEvent', '', false, false)]
+    local procedure SalesPriceOnAfterDelete()
+    begin
+        CheckIfCanEditSalesPrices();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterModifyEvent', '', false, false)]
+    local procedure SalesPriceOnAfterModify()
+    begin
+        CheckIfCanEditSalesPrices();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterRenameEvent', '', false, false)]
+    local procedure SalesPriceOnAfterRename()
+    begin
+        CheckIfCanEditSalesPrices();
+    end;
+
+
+    local procedure CheckIfCanEditSalesPrices()
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if not UserSetup.Get(UserId()) or not UserSetup."BA Can Edit Sales Prices" then
+            Error(SalesPricePermissionErr);
+    end;
+
+
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
         DefaultBlockReason: Label 'Product Dimension ID must be updated, the default Product ID cannot be used!';
@@ -2789,4 +2824,5 @@ codeunit 75010 "BA SEI Subscibers"
         PendingApprovalErr: Label 'Cannot set as Barbados Order as there is one or more pending approval requests.';
         NoPromDelDateErr: Label '%1 must be assigned before invoicing.\Please have the sales staff fill in the %1.';
         UpdateReasonCodeMsg: Label 'Please update the %1 field to a new value.';
+        SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';
 }
