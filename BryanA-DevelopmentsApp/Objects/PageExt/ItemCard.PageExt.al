@@ -294,6 +294,11 @@ pageextension 80009 "BA Item Card" extends "Item Card"
                 NewRec := Description = '';
             end;
         }
+        modify("Unit Price")
+        {
+            ApplicationArea = all;
+            Editable = false;
+        }
     }
 
     actions
