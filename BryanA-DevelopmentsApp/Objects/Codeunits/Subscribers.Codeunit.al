@@ -3270,13 +3270,16 @@ codeunit 75010 "BA SEI Subscibers"
         ErrorBuffer: Record "Name/Value Buffer" temporary;
         TempBlob: Record TempBlob;
         SalesPrice: Record "Sales Price";
+        TempSalesPrice: Record "Sales Price" temporary;
         FileMgt: Codeunit "File Management";
         IStream: InStream;
         Window: Dialog;
         FileName: Text;
+        TempDec: Decimal;
         RecCount: Integer;
         DateColumnNo: Integer;
         CurrColumnNo: Integer;
+        PriceColumnNo: Integer;
         i: Integer;
         i2: Integer;
     begin
@@ -3300,6 +3303,11 @@ codeunit 75010 "BA SEI Subscibers"
             Error('Invalid formatting, Currency Code column found.');
         CurrColumnNo := ExcelBuffer."Column No.";
 
+        ExcelBuffer.SetRange("Cell Value as Text", 'Unit Price');
+        if not ExcelBuffer.FindFirst() then
+            Error('Invalid formatting, Unit Price column found.');
+        PriceColumnNo := ExcelBuffer."Column No.";
+
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
         if not ExcelBuffer.FindSet() then
@@ -3311,10 +3319,7 @@ codeunit 75010 "BA SEI Subscibers"
 
         ExcelBuffer.SetRange("Column No.", 1);
         RecCount := ExcelBuffer.Count();
-        if not Confirm(StrSubstNo('Delete %1 records?', RecCount)) then
-            Error('');
         ExcelBuffer.FindSet();
-
         Window.Open('#1####/#2####');
         SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::"All Customers");
         SalesPrice.SetRange("Sales Code", '');
@@ -3324,16 +3329,35 @@ codeunit 75010 "BA SEI Subscibers"
             ExcelBuffer2.Get(ExcelBuffer."Row No.", DateColumnNo);
             SalesPrice.SetRange("Item No.", ExcelBuffer."Cell Value as Text");
             SalesPrice.SetRange("Starting Date", GetDate(ExcelBuffer2."Cell Value as Text"));
-            ExcelBuffer2.Get(ExcelBuffer."Row No.", CurrColumnNo);
-            SalesPrice.SetRange("Currency Code", ExcelBuffer2."Cell Value as Text");
-            if SalesPrice.FindFirst() then begin
-                SalesPrice.Delete(true);
-                i2 += 1;
-            end;
+            if ExcelBuffer2.Get(ExcelBuffer."Row No.", CurrColumnNo) then
+                SalesPrice.SetRange("Currency Code", ExcelBuffer2."Cell Value as Text")
+            else
+                SalesPrice.SetRange("Currency Code", '');
+            ExcelBuffer2.Get(ExcelBuffer."Row No.", PriceColumnNo);
+            Evaluate(TempDec, ExcelBuffer2."Cell Value as Text");
+            SalesPrice.SetRange("Unit Price", TempDec);
+            if SalesPrice.FindSet() then
+                repeat
+                    if not TempSalesPrice.Get(SalesPrice.RecordId) then begin
+                        TempSalesPrice := SalesPrice;
+                        TempSalesPrice.Insert(false);
+                    end;
+                until SalesPrice.Next() = 0;
+
         until ExcelBuffer.Next() = 0;
         Window.Close();
 
-        Message('Deleted %1 of %2 sales pricing.', i2, RecCount);
+
+        Page.RunModal(Page::"BA Temp Sales Price", TempSalesPrice);
+        if Confirm(StrSubstNo('Delete %1 of %2 sales pricing?', TempSalesPrice.Count(), RecCount)) then
+            if TempSalesPrice.FindSet() then
+                repeat
+                    SalesPrice.Get(TempSalesPrice.RecordId);
+                    SalesPrice.Delete(true);
+                    i2 += 1;
+                until TempSalesPrice.Next() = 0;
+
+        Message('Deleted %1 of %2, Excel Lines (%3)', i2, TempSalesPrice.Count(), RecCount);
     end;
 
 
