@@ -3276,6 +3276,7 @@ codeunit 75010 "BA SEI Subscibers"
         FileName: Text;
         RecCount: Integer;
         DateColumnNo: Integer;
+        CurrColumnNo: Integer;
         i: Integer;
         i2: Integer;
     begin
@@ -3291,8 +3292,13 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.SetRange("Row No.", 1);
         ExcelBuffer.SetRange("Cell Value as Text", 'Starting Date');
         if not ExcelBuffer.FindFirst() then
-            Error('Invalid formatting, not Starting Date column found.');
+            Error('Invalid formatting, Starting Date column found.');
         DateColumnNo := ExcelBuffer."Column No.";
+
+        ExcelBuffer.SetRange("Cell Value as Text", 'Currency Code');
+        if not ExcelBuffer.FindFirst() then
+            Error('Invalid formatting, Currency Code column found.');
+        CurrColumnNo := ExcelBuffer."Column No.";
 
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
@@ -3318,6 +3324,8 @@ codeunit 75010 "BA SEI Subscibers"
             ExcelBuffer2.Get(ExcelBuffer."Row No.", DateColumnNo);
             SalesPrice.SetRange("Item No.", ExcelBuffer."Cell Value as Text");
             SalesPrice.SetRange("Starting Date", GetDate(ExcelBuffer2."Cell Value as Text"));
+            ExcelBuffer2.Get(ExcelBuffer."Row No.", CurrColumnNo);
+            SalesPrice.SetRange("Currency Code", ExcelBuffer2."Cell Value as Text");
             if SalesPrice.FindFirst() then begin
                 SalesPrice.Delete(true);
                 i2 += 1;
