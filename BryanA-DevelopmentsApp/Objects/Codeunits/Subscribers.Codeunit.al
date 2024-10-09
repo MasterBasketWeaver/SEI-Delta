@@ -3465,6 +3465,7 @@ codeunit 75010 "BA SEI Subscibers"
         if not ExcelBuffer.FindSet() then
             exit;
 
+        ExcelBuffer.SetRange("Column No.", 1);
         RecCount := ExcelBuffer.Count();
         ExcelBuffer.FindSet();
         Window.Open('#1####/#2####');
