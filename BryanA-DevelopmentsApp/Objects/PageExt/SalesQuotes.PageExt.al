@@ -22,4 +22,40 @@ pageextension 80120 "BA Sales Quotes" extends "Sales Quotes"
             }
         }
     }
+
+    actions
+    {
+        addlast(Processing)
+        {
+            action("BA Delete Sales Quotes")
+            {
+                ApplicationArea = all;
+                Image = DeleteAllBreakpoints;
+                Caption = 'Delete Sales Quotes';
+                Visible = IsBryan;
+                Enabled = IsBryan;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Subscribers.ImportSalesQuoteListToRemove();
+                end;
+            }
+        }
+    }
+
+
+    trigger OnOpenPage()
+    begin
+        IsBryan := UserId = 'SEI-IND\BRYANBCDEV';
+    end;
+
+    var
+        [InDataSet]
+        IsBryan: Boolean;
 }
