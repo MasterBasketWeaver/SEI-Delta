@@ -2636,6 +2636,57 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+
+
+
+    procedure ImportSalesQuoteListToRemove()
+    var
+        ExcelBuffer: Record "Excel Buffer" temporary;
+        ErrorBuffer: Record "Name/Value Buffer" temporary;
+        TempBlob: Record TempBlob;
+        SalesHeader: Record "Sales Header";
+        FileMgt: Codeunit "File Management";
+        IStream: InStream;
+        Window: Dialog;
+        FileName: Text;
+        RecCount: Integer;
+        i: Integer;
+        i2: Integer;
+    begin
+        if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Sales Pricing List', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
+            exit;
+        TempBlob.Blob.CreateInStream(IStream);
+        if not ExcelBuffer.GetSheetsNameListFromStream(IStream, ErrorBuffer) then
+            Error('No Sheets in file.');
+        ErrorBuffer.FindFirst();
+        ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
+        ExcelBuffer.ReadSheet();
+
+        ExcelBuffer.SetFilter("Row No.", '>%1', 1);
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        if not ExcelBuffer.FindSet() then
+            exit;
+
+        RecCount := ExcelBuffer.Count();
+        ExcelBuffer.FindSet();
+        Window.Open('#1####/#2####');
+
+        repeat
+            i += 1;
+            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+            if SalesHeader.Get(SalesHeader."Document Type"::Quote, ExcelBuffer."Cell Value as Text") then begin
+                SalesHeader.SetHideValidationDialog(true);
+                SalesHeader.Delete(true);
+                i2 += 1;
+            end;
+        until ExcelBuffer.Next() = 0;
+        Window.Close();
+
+        if not Confirm(StrSubstNo('Delete %1 of %2 Sales Quotes?', i2, RecCount)) then
+            Error('');
+    end;
+
+
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
         DefaultBlockReason: Label 'Product Dimension ID must be updated, the default Product ID cannot be used!';
