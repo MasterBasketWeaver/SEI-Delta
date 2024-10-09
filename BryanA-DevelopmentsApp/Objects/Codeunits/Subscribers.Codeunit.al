@@ -2776,27 +2776,31 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterInsertEvent', '', false, false)]
-    local procedure SalesPriceOnAfterInsert()
+    local procedure SalesPriceOnAfterInsert(var Rec: Record "Sales Price")
     begin
-        CheckIfCanEditSalesPrices();
+        if not Rec.IsTemporary() then
+            CheckIfCanEditSalesPrices();
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterDeleteEvent', '', false, false)]
-    local procedure SalesPriceOnAfterDelete()
+    local procedure SalesPriceOnAfterDelete(var Rec: Record "Sales Price")
     begin
-        CheckIfCanEditSalesPrices();
+        if not Rec.IsTemporary() then
+            CheckIfCanEditSalesPrices();
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterModifyEvent', '', false, false)]
-    local procedure SalesPriceOnAfterModify()
+    local procedure SalesPriceOnAfterModify(var Rec: Record "Sales Price")
     begin
-        CheckIfCanEditSalesPrices();
+        if not Rec.IsTemporary() then
+            CheckIfCanEditSalesPrices();
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterRenameEvent', '', false, false)]
-    local procedure SalesPriceOnAfterRename()
+    local procedure SalesPriceOnAfterRename(var Rec: Record "Sales Price")
     begin
-        CheckIfCanEditSalesPrices();
+        if not Rec.IsTemporary() then
+            CheckIfCanEditSalesPrices();
     end;
 
 
