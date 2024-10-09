@@ -199,6 +199,8 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
                 Image = CompareCOA;
                 Caption = 'Mark as Barbados Order';
                 ToolTip = 'Updated the Order No. to have the suffix "-B"';
+                Enabled = false;
+                Visible = false;
 
                 trigger OnAction()
                 begin
