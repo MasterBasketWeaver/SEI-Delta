@@ -3277,9 +3277,11 @@ codeunit 75010 "BA SEI Subscibers"
         FileName: Text;
         TempDec: Decimal;
         RecCount: Integer;
+        ItemNoColumnNo: Integer;
         DateColumnNo: Integer;
         CurrColumnNo: Integer;
         PriceColumnNo: Integer;
+        DeleteColumnNo: Integer;
         i: Integer;
         i2: Integer;
     begin
@@ -3293,20 +3295,11 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.ReadSheet();
 
         ExcelBuffer.SetRange("Row No.", 1);
-        ExcelBuffer.SetRange("Cell Value as Text", 'Starting Date');
-        if not ExcelBuffer.FindFirst() then
-            Error('Invalid formatting, Starting Date column found.');
-        DateColumnNo := ExcelBuffer."Column No.";
-
-        ExcelBuffer.SetRange("Cell Value as Text", 'Currency Code');
-        if not ExcelBuffer.FindFirst() then
-            Error('Invalid formatting, Currency Code column found.');
-        CurrColumnNo := ExcelBuffer."Column No.";
-
-        ExcelBuffer.SetRange("Cell Value as Text", 'Unit Price');
-        if not ExcelBuffer.FindFirst() then
-            Error('Invalid formatting, Unit Price column found.');
-        PriceColumnNo := ExcelBuffer."Column No.";
+        DateColumnNo := GetColumnNo(ExcelBuffer, 'Starting Date');
+        CurrColumnNo := GetColumnNo(ExcelBuffer, 'Currency Code');
+        PriceColumnNo := GetColumnNo(ExcelBuffer, 'Unit Price');
+        ItemNoColumnNo := GetColumnNo(ExcelBuffer, 'Item No_');
+        DeleteColumnNo := GetColumnNo(ExcelBuffer, 'Delete', true);
 
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
@@ -3317,7 +3310,10 @@ codeunit 75010 "BA SEI Subscibers"
             ExcelBuffer2.Insert(false);
         until ExcelBuffer.Next() = 0;
 
-        ExcelBuffer.SetRange("Column No.", 1);
+        if DeleteColumnNo <> 0 then
+            ExcelBuffer.SetRange("Column No.", DeleteColumnNo)
+        else
+            ExcelBuffer.SetRange("Column No.", ItemNoColumnNo);
         RecCount := ExcelBuffer.Count();
         ExcelBuffer.FindSet();
         Window.Open('#1####/#2####');
@@ -3326,8 +3322,12 @@ codeunit 75010 "BA SEI Subscibers"
         repeat
             i += 1;
             Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+            if DeleteColumnNo <> 0 then begin
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", ItemNoColumnNo);
+                SalesPrice.SetRange("Item No.", ExcelBuffer2."Cell Value as Text");
+            end else
+                SalesPrice.SetRange("Item No.", ExcelBuffer."Cell Value as Text");
             ExcelBuffer2.Get(ExcelBuffer."Row No.", DateColumnNo);
-            SalesPrice.SetRange("Item No.", ExcelBuffer."Cell Value as Text");
             SalesPrice.SetRange("Starting Date", GetDate(ExcelBuffer2."Cell Value as Text"));
             if ExcelBuffer2.Get(ExcelBuffer."Row No.", CurrColumnNo) then
                 SalesPrice.SetRange("Currency Code", ExcelBuffer2."Cell Value as Text")
@@ -3360,6 +3360,22 @@ codeunit 75010 "BA SEI Subscibers"
         Message('Deleted %1 of %2, Excel Lines (%3)', i2, TempSalesPrice.Count(), RecCount);
     end;
 
+
+    local procedure GetColumnNo(var ExcelBuffer: Record "Excel Buffer"; ColumnName: Text): Integer
+    begin
+        exit(GetColumnNo(ExcelBuffer, ColumnName, false))
+    end;
+
+    local procedure GetColumnNo(var ExcelBuffer: Record "Excel Buffer"; ColumnName: Text; Skip: Boolean): Integer
+    begin
+        ExcelBuffer.SetRange("Cell Value as Text", ColumnName);
+        if not ExcelBuffer.FindFirst() then begin
+            if Skip then
+                exit(0);
+            Error('Invalid formatting, %1 column found.', ColumnName);
+        end;
+        exit(ExcelBuffer."Column No.");
+    end;
 
     local procedure GetDate(Input: Text): Date
     var
