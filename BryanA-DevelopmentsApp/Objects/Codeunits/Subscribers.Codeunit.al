@@ -2644,6 +2644,85 @@ codeunit 75010 "BA SEI Subscibers"
         SalesOrderLine."BA Booking Date" := WorkDate();
     end;
 
+    procedure ImportBookingDates()
+    var
+        ExcelBuffer: Record "Excel Buffer" temporary;
+        ExcelBuffer2: Record "Excel Buffer" temporary;
+        ErrorBuffer: Record "Name/Value Buffer" temporary;
+        TempBlob: Record TempBlob;
+        SalesInvLine: Record "Sales Invoice Line";
+        FileMgt: Codeunit "File Management";
+        IStream: InStream;
+        Window: Dialog;
+        FileName: Text;
+        RecCount: Integer;
+
+        i: Integer;
+        i2: Integer;
+        LineNo: Integer;
+    begin
+        if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Sales Pricing List', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
+            exit;
+        TempBlob.Blob.CreateInStream(IStream);
+        if not ExcelBuffer.GetSheetsNameListFromStream(IStream, ErrorBuffer) then
+            Error('No Sheets in file.');
+        ErrorBuffer.FindFirst();
+        ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
+        ExcelBuffer.ReadSheet();
+
+        ExcelBuffer.SetRange("Row No.", 1);
+
+
+        ExcelBuffer.SetFilter("Row No.", '>%1', 1);
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        if not ExcelBuffer.FindSet() then
+            exit;
+        repeat
+            ExcelBuffer2 := ExcelBuffer;
+            ExcelBuffer2.Insert(false);
+        until ExcelBuffer.Next() = 0;
+
+        ExcelBuffer.SetRange("Column No.", 1);
+        RecCount := ExcelBuffer.Count();
+        ExcelBuffer.FindSet();
+        Window.Open('#1####/#2####');
+
+        repeat
+            i += 1;
+
+            ExcelBuffer2.Get(ExcelBuffer."Row No.", 2);
+            Evaluate(LineNo, ExcelBuffer2."Cell Value as Text");
+            if SalesInvLine.Get(ExcelBuffer."Cell Value as Text", LineNo) then begin
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", 4);
+                // SalesInvLine."BA Booking Date" := g
+            end;
+
+            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+        until ExcelBuffer.Next() = 0;
+        Window.Close();
+
+
+        Page.RunModal(Page::"BA Temp Sales Price", TempSalesPrice);
+        if Confirm(StrSubstNo('Update %1 of %2 sales pricing?', TempSalesPrice.Count(), RecCount)) then begin
+            Window.Open('Updating/#1####');
+            if TempSalesPrice.FindSet() then
+                repeat
+                    SalesPrice.Get(TempSalesPrice.RecordId);
+                    SalesPrice."BA Pricelist Name" := TempSalesPrice."BA Pricelist Name";
+                    SalesPrice."BA Pricelist Year" := TempSalesPrice."BA Pricelist Year";
+                    SalesPrice.Modify(true);
+                    i2 += 1;
+                    Window.Update(1, StrSubstNo('%1 of %2', i2, RecCount));
+                until TempSalesPrice.Next() = 0;
+            Window.Close();
+        end;
+
+        Message('Updated %1 of %2, Excel Lines (%3)', i2, TempSalesPrice.Count(), RecCount);
+    end;
+
+
+
+
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
         DefaultBlockReason: Label 'Product Dimension ID must be updated, the default Product ID cannot be used!';
