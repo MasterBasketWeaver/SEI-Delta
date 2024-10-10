@@ -2864,6 +2864,114 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+
+
+
+    procedure ImportPricingListToUpdate()
+    var
+        ExcelBuffer: Record "Excel Buffer" temporary;
+        ExcelBuffer2: Record "Excel Buffer" temporary;
+        ErrorBuffer: Record "Name/Value Buffer" temporary;
+        TempBlob: Record TempBlob;
+        SalesPrice: Record "Sales Price";
+        TempSalesPrice: Record "Sales Price" temporary;
+        FileMgt: Codeunit "File Management";
+        IStream: InStream;
+        Window: Dialog;
+        FileName: Text;
+        TempDec: Decimal;
+        RecCount: Integer;
+        ItemNoColumnNo: Integer;
+        DateColumnNo: Integer;
+        CurrColumnNo: Integer;
+        PriceColumnNo: Integer;
+        DeleteColumnNo: Integer;
+        i: Integer;
+        i2: Integer;
+    begin
+        if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Sales Pricing List', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
+            exit;
+        TempBlob.Blob.CreateInStream(IStream);
+        if not ExcelBuffer.GetSheetsNameListFromStream(IStream, ErrorBuffer) then
+            Error('No Sheets in file.');
+        ErrorBuffer.FindFirst();
+        ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
+        ExcelBuffer.ReadSheet();
+
+        ExcelBuffer.SetRange("Row No.", 1);
+
+
+        ExcelBuffer.SetFilter("Row No.", '>%1', 1);
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        if not ExcelBuffer.FindSet() then
+            exit;
+        repeat
+            ExcelBuffer2 := ExcelBuffer;
+            ExcelBuffer2.Insert(false);
+        until ExcelBuffer.Next() = 0;
+
+        ExcelBuffer.SetRange("Column No.", 1);
+        RecCount := ExcelBuffer.Count();
+        ExcelBuffer.FindSet();
+        Window.Open('#1####/#2####');
+
+        repeat
+            i += 1;
+
+            SalesPrice.SetRange("Item No.", ExcelBuffer."Cell Value as Text");
+            ExcelBuffer2.Get(ExcelBuffer."Row No.", 2);
+            SalesPrice.SetRange("Sales Type", GetSalesType(SalesPrice, ExcelBuffer2."Cell Value as Text"));
+            if ExcelBuffer2.Get(ExcelBuffer."Row No.", 3) then
+                SalesPrice.SetRange("Sales Code", ExcelBuffer2."Cell Value as Text")
+            else
+                SalesPrice.SetRange("Sales Code", '');
+            ExcelBuffer2.Get(ExcelBuffer."Row No.", 4);
+            SalesPrice.SetRange("Starting Date", GetDate(ExcelBuffer2."Cell Value as Text"));
+            if ExcelBuffer2.Get(ExcelBuffer."Row No.", 5) then
+                SalesPrice.SetRange("Currency Code", ExcelBuffer2."Cell Value as Text")
+            else
+                SalesPrice.SetRange("Currency Code", '');
+
+            if SalesPrice.FindFirst() then begin
+                TempSalesPrice := SalesPrice;
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", 8);
+                TempSalesPrice."BA Pricelist Name" := ExcelBuffer2."Cell Value as Text";
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", 9);
+                TempSalesPrice."BA Pricelist Year" := ExcelBuffer2."Cell Value as Text";
+                TempSalesPrice.Insert();
+            end;
+
+            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+        until ExcelBuffer.Next() = 0;
+        Window.Close();
+
+
+        Page.RunModal(Page::"BA Temp Sales Price", TempSalesPrice);
+        if Confirm(StrSubstNo('Delete %1 of %2 sales pricing?', TempSalesPrice.Count(), RecCount)) then
+            if TempSalesPrice.FindSet() then
+                repeat
+                    SalesPrice.Get(TempSalesPrice.RecordId);
+                    SalesPrice."BA Pricelist Name" := TempSalesPrice."BA Pricelist Name";
+                    SalesPrice."BA Pricelist Year" := TempSalesPrice."BA Pricelist Year";
+                    SalesPrice.Modify(true);
+                    i2 += 1;
+                until TempSalesPrice.Next() = 0;
+
+        Message('Updated %1 of %2, Excel Lines (%3)', i2, TempSalesPrice.Count(), RecCount);
+    end;
+
+    local procedure GetSalesType(var SalesPrice: Record "Sales Price"; Input: Text): Integer
+    begin
+        Input := Input.Trim();
+        case Input of
+            '1':
+                exit(SalesPrice."Sales Type"::"Customer Price Group");
+            '2':
+                exit(SalesPrice."Sales Type"::"All Customers");
+        end;
+    end;
+
+
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
         DefaultBlockReason: Label 'Product Dimension ID must be updated, the default Product ID cannot be used!';
