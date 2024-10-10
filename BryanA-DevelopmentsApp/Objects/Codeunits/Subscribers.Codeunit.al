@@ -2639,27 +2639,17 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-
-
-    procedure ImportPricingListToRemove()
+    procedure ImportSalesQuoteListToRemove()
     var
         ExcelBuffer: Record "Excel Buffer" temporary;
-        ExcelBuffer2: Record "Excel Buffer" temporary;
         ErrorBuffer: Record "Name/Value Buffer" temporary;
         TempBlob: Record TempBlob;
-        SalesPrice: Record "Sales Price";
-        TempSalesPrice: Record "Sales Price" temporary;
+        SalesHeader: Record "Sales Header";
         FileMgt: Codeunit "File Management";
         IStream: InStream;
         Window: Dialog;
         FileName: Text;
-        TempDec: Decimal;
         RecCount: Integer;
-        ItemNoColumnNo: Integer;
-        DateColumnNo: Integer;
-        CurrColumnNo: Integer;
-        PriceColumnNo: Integer;
-        DeleteColumnNo: Integer;
         i: Integer;
         i2: Integer;
     begin
@@ -2672,145 +2662,29 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
         ExcelBuffer.ReadSheet();
 
-        ExcelBuffer.SetRange("Row No.", 1);
-        DateColumnNo := GetColumnNo(ExcelBuffer, 'Starting Date');
-        CurrColumnNo := GetColumnNo(ExcelBuffer, 'Currency Code');
-        PriceColumnNo := GetColumnNo(ExcelBuffer, 'Unit Price');
-        ItemNoColumnNo := GetColumnNo(ExcelBuffer, 'Item No_');
-        DeleteColumnNo := GetColumnNo(ExcelBuffer, 'Delete', true);
-
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
         if not ExcelBuffer.FindSet() then
             exit;
-        repeat
-            ExcelBuffer2 := ExcelBuffer;
-            ExcelBuffer2.Insert(false);
-        until ExcelBuffer.Next() = 0;
 
-        if DeleteColumnNo <> 0 then
-            ExcelBuffer.SetRange("Column No.", DeleteColumnNo)
-        else
-            ExcelBuffer.SetRange("Column No.", ItemNoColumnNo);
+        ExcelBuffer.SetRange("Column No.", 1);
         RecCount := ExcelBuffer.Count();
         ExcelBuffer.FindSet();
         Window.Open('#1####/#2####');
-        SalesPrice.SetRange("Sales Type", SalesPrice."Sales Type"::"All Customers");
-        SalesPrice.SetRange("Sales Code", '');
+
         repeat
             i += 1;
             Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
-            if DeleteColumnNo <> 0 then begin
-                ExcelBuffer2.Get(ExcelBuffer."Row No.", ItemNoColumnNo);
-                SalesPrice.SetRange("Item No.", ExcelBuffer2."Cell Value as Text");
-            end else
-                SalesPrice.SetRange("Item No.", ExcelBuffer."Cell Value as Text");
-            ExcelBuffer2.Get(ExcelBuffer."Row No.", DateColumnNo);
-            SalesPrice.SetRange("Starting Date", GetDate(ExcelBuffer2."Cell Value as Text"));
-            if ExcelBuffer2.Get(ExcelBuffer."Row No.", CurrColumnNo) then
-                SalesPrice.SetRange("Currency Code", ExcelBuffer2."Cell Value as Text")
-            else
-                SalesPrice.SetRange("Currency Code", '');
-            ExcelBuffer2.Get(ExcelBuffer."Row No.", PriceColumnNo);
-            Evaluate(TempDec, ExcelBuffer2."Cell Value as Text");
-            SalesPrice.SetRange("Unit Price", TempDec);
-            if SalesPrice.FindSet() then
-                repeat
-                    if not TempSalesPrice.Get(SalesPrice.RecordId) then begin
-                        TempSalesPrice := SalesPrice;
-                        TempSalesPrice.Insert(false);
-                    end;
-                until SalesPrice.Next() = 0;
-
+            if SalesHeader.Get(SalesHeader."Document Type"::Quote, ExcelBuffer."Cell Value as Text") then begin
+                SalesHeader.SetHideValidationDialog(true);
+                SalesHeader.Delete(true);
+                i2 += 1;
+            end;
         until ExcelBuffer.Next() = 0;
         Window.Close();
 
-
-        Page.RunModal(Page::"BA Temp Sales Price", TempSalesPrice);
-        if Confirm(StrSubstNo('Delete %1 of %2 sales pricing?', TempSalesPrice.Count(), RecCount)) then
-            if TempSalesPrice.FindSet() then
-                repeat
-                    SalesPrice.Get(TempSalesPrice.RecordId);
-                    SalesPrice.Delete(true);
-                    i2 += 1;
-                until TempSalesPrice.Next() = 0;
-
-        Message('Deleted %1 of %2, Excel Lines (%3)', i2, TempSalesPrice.Count(), RecCount);
-    end;
-
-
-    local procedure GetColumnNo(var ExcelBuffer: Record "Excel Buffer"; ColumnName: Text): Integer
-    begin
-        exit(GetColumnNo(ExcelBuffer, ColumnName, false))
-    end;
-
-    local procedure GetColumnNo(var ExcelBuffer: Record "Excel Buffer"; ColumnName: Text; Skip: Boolean): Integer
-    begin
-        ExcelBuffer.SetRange("Cell Value as Text", ColumnName);
-        if not ExcelBuffer.FindFirst() then begin
-            if Skip then
-                exit(0);
-            Error('Invalid formatting, %1 column found.', ColumnName);
-        end;
-        exit(ExcelBuffer."Column No.");
-    end;
-
-    local procedure GetDate(Input: Text): Date
-    var
-        Parts: List of [Text];
-        s: Text;
-        i: Integer;
-        i2: Integer;
-        i3: Integer;
-    begin
-        Parts := Input.Split('/');
-        Parts.Get(1, s);
-        Evaluate(i, s);
-        Parts.Get(2, s);
-        Evaluate(i2, s);
-        Parts.Get(3, s);
-        Evaluate(i3, s);
-        if i3 < 2000 then
-            i3 += 2000;
-        exit(DMY2Date(i2, i, i3));
-    end;
-
-
-    [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterInsertEvent', '', false, false)]
-    local procedure SalesPriceOnAfterInsert(var Rec: Record "Sales Price")
-    begin
-        if not Rec.IsTemporary() then
-            CheckIfCanEditSalesPrices();
-    end;
-
-    [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterDeleteEvent', '', false, false)]
-    local procedure SalesPriceOnAfterDelete(var Rec: Record "Sales Price")
-    begin
-        if not Rec.IsTemporary() then
-            CheckIfCanEditSalesPrices();
-    end;
-
-    [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterModifyEvent', '', false, false)]
-    local procedure SalesPriceOnAfterModify(var Rec: Record "Sales Price")
-    begin
-        if not Rec.IsTemporary() then
-            CheckIfCanEditSalesPrices();
-    end;
-
-    [EventSubscriber(ObjectType::Table, Database::"Sales Price", 'OnAfterRenameEvent', '', false, false)]
-    local procedure SalesPriceOnAfterRename(var Rec: Record "Sales Price")
-    begin
-        if not Rec.IsTemporary() then
-            CheckIfCanEditSalesPrices();
-    end;
-
-
-    local procedure CheckIfCanEditSalesPrices()
-    var
-        UserSetup: Record "User Setup";
-    begin
-        if not UserSetup.Get(UserId()) or not UserSetup."BA Can Edit Sales Prices" then
-            Error(SalesPricePermissionErr);
+        if not Confirm(StrSubstNo('Delete %1 of %2 Sales Quotes?', i2, RecCount)) then
+            Error('');
     end;
 
 
