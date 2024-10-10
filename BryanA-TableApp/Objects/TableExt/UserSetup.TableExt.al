@@ -37,6 +37,11 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             DataClassification = CustomerContent;
             Caption = 'Force Reason Code Entry';
         }
+        field(80020; "BA Can Edit Sales Prices"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Can Edit Sales Prices';
+        }
         field(80099; "BA Service Order Open"; Boolean)
         {
             DataClassification = CustomerContent;
