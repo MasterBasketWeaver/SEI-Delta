@@ -193,37 +193,7 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
         }
     }
 
-    actions
-    {
-        addlast(Processing)
-        {
-            action("BA Barbados Order")
-            {
-                ApplicationArea = all;
-                Promoted = true;
-                PromotedCategory = Process;
-                PromotedIsBig = true;
-                PromotedOnly = true;
-                Image = CompareCOA;
-                Caption = 'Mark as Barbados Order';
-                ToolTip = 'Updated the Order No. to have the suffix "-B"';
-                Enabled = false;
-                Visible = false;
 
-                trigger OnAction()
-                begin
-                    if Rec."BA SEI Barbados Order" then
-                        Error(AlreadyMarkedErr, Rec."No.");
-                    Rec."BA SEI Barbados Order" := true;
-                    Rec."BA Allow Rename" := true;
-                    Rec.Modify(false);
-                    Rec.Rename(Rec."Document Type", StrSubstNo('%1-B', Rec."No."));
-                    Rec."BA Allow Rename" := false;
-                    Rec.Modify(false);
-                end;
-            }
-        }
-    }
 
 
     var
@@ -270,6 +240,4 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
         Rec.Modify(true);
     end;
 
-    var
-        AlreadyMarkedErr: Label 'Order %1 is already marked as a Barbados order.';
 }
