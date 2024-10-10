@@ -3569,7 +3569,8 @@ codeunit 75010 "BA SEI Subscibers"
 
 
         Page.RunModal(Page::"BA Temp Sales Price", TempSalesPrice);
-        if Confirm(StrSubstNo('Delete %1 of %2 sales pricing?', TempSalesPrice.Count(), RecCount)) then
+        if Confirm(StrSubstNo('Update %1 of %2 sales pricing?', TempSalesPrice.Count(), RecCount)) then begin
+            Window.Open('Updating/#1####');
             if TempSalesPrice.FindSet() then
                 repeat
                     SalesPrice.Get(TempSalesPrice.RecordId);
@@ -3577,7 +3578,10 @@ codeunit 75010 "BA SEI Subscibers"
                     SalesPrice."BA Pricelist Year" := TempSalesPrice."BA Pricelist Year";
                     SalesPrice.Modify(true);
                     i2 += 1;
+                    Window.Update(1, StrSubstNo('%1 of %2', i2, RecCount));
                 until TempSalesPrice.Next() = 0;
+            Window.Close();
+        end;
 
         Message('Updated %1 of %2, Excel Lines (%3)', i2, TempSalesPrice.Count(), RecCount);
     end;
