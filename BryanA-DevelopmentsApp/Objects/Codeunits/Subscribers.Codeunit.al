@@ -2670,9 +2670,6 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
         ExcelBuffer.ReadSheet();
 
-        ExcelBuffer.SetRange("Row No.", 1);
-
-
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
         if not ExcelBuffer.FindSet() then
@@ -2694,7 +2691,9 @@ codeunit 75010 "BA SEI Subscibers"
             Evaluate(LineNo, ExcelBuffer2."Cell Value as Text");
             if SalesInvLine.Get(ExcelBuffer."Cell Value as Text", LineNo) then begin
                 ExcelBuffer2.Get(ExcelBuffer."Row No.", 4);
-                // SalesInvLine."BA Booking Date" := g
+                SalesInvLine."BA Booking Date" := GetDate(ExcelBuffer2."Cell Value as Text");
+                SalesInvLine.Modify(false);
+                i2 += 1;
             end;
 
             Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
@@ -2702,25 +2701,30 @@ codeunit 75010 "BA SEI Subscibers"
         Window.Close();
 
 
-        Page.RunModal(Page::"BA Temp Sales Price", TempSalesPrice);
-        if Confirm(StrSubstNo('Update %1 of %2 sales pricing?', TempSalesPrice.Count(), RecCount)) then begin
-            Window.Open('Updating/#1####');
-            if TempSalesPrice.FindSet() then
-                repeat
-                    SalesPrice.Get(TempSalesPrice.RecordId);
-                    SalesPrice."BA Pricelist Name" := TempSalesPrice."BA Pricelist Name";
-                    SalesPrice."BA Pricelist Year" := TempSalesPrice."BA Pricelist Year";
-                    SalesPrice.Modify(true);
-                    i2 += 1;
-                    Window.Update(1, StrSubstNo('%1 of %2', i2, RecCount));
-                until TempSalesPrice.Next() = 0;
-            Window.Close();
-        end;
-
-        Message('Updated %1 of %2, Excel Lines (%3)', i2, TempSalesPrice.Count(), RecCount);
+        Message('Updated %1 of %2.', i2, RecCount);
     end;
 
 
+
+    local procedure GetDate(Input: Text): Date
+    var
+        Parts: List of [Text];
+        s: Text;
+        i: Integer;
+        i2: Integer;
+        i3: Integer;
+    begin
+        Parts := Input.Split('/');
+        Parts.Get(1, s);
+        Evaluate(i, s);
+        Parts.Get(2, s);
+        Evaluate(i2, s);
+        Parts.Get(3, s);
+        Evaluate(i3, s);
+        if i3 < 2000 then
+            i3 += 2000;
+        exit(DMY2Date(i2, i, i3));
+    end;
 
 
     var
