@@ -18,6 +18,13 @@ pageextension 80145 "BA Posted Sales Inv. Subpage" extends "Posted Sales Invoice
                 ApplicationArea = all;
             }
         }
+        addlast(Control1)
+        {
+            field("BA Booking Date"; Rec."BA Booking Date")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions

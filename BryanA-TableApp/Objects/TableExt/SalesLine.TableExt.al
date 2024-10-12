@@ -29,5 +29,11 @@ tableextension 80002 "BA Sales Line" extends "Sales Line"
             Editable = false;
             Description = 'System field to override default rename functionality';
         }
+        field(80050; "BA Booking Date"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Booking Date';
+            Editable = false;
+        }
     }
 }

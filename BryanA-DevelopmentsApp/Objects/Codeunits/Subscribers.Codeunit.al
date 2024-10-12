@@ -1542,6 +1542,8 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Item: Record Item;
     begin
+        if (Rec."Document Type" = Rec."Document Type"::Order) and (xRec."No." = '') then
+            Rec."BA Booking Date" := WorkDate();
         if (Rec.Type <> Rec.Type::Item) or (Rec."No." = xRec."No.") or not Item.Get(Rec."No.") then
             exit;
         Item.TestField("ENC Not for Sale", false);
