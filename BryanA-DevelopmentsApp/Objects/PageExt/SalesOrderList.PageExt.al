@@ -30,27 +30,4 @@ pageextension 80121 "BA Sales Order List" extends "Sales Order List"
             }
         }
     }
-
-    actions
-    {
-        addlast(Processing)
-        {
-            action("BA Import Booking Date")
-            {
-                ApplicationArea = all;
-                Image = DepreciationBooks;
-                Promoted = true;
-                PromotedCategory = Process;
-                PromotedIsBig = true;
-                PromotedOnly = true;
-
-                trigger OnAction()
-                var
-                    Subscribers: Codeunit "BA SEI Subscibers";
-                begin
-                    Subscribers.ImportBookingDates();
-                end;
-            }
-        }
-    }
 }

@@ -8,6 +8,14 @@ pageextension 80099 "BA Service Item WkSht. Subform" extends "Service Item Works
             {
                 ApplicationArea = all;
             }
+
+        }
+        addlast(Control1)
+        {
+            field("BA Booking Date"; Rec."BA Booking Date")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 }
