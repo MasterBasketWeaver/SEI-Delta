@@ -61,12 +61,19 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'No.', false, false)]
-    local procedure SalesLineOnAfterValdiateNo(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
+    local procedure SalesLineOnAfterValidateNo(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
+    var
+        Item: Record Item;
     begin
-        if Rec."No." = xRec."No." then
+        if Rec."No." <> xRec."No." then begin
+            ClearShipmentDates(Rec);
+            CheckServiceItem(Rec);
+        end;
+        if (Rec."Document Type" = Rec."Document Type"::Order) and (xRec."No." = '') then
+            Rec."BA Booking Date" := WorkDate();
+        if (Rec.Type <> Rec.Type::Item) or (Rec."No." = xRec."No.") or not Item.Get(Rec."No.") then
             exit;
-        ClearShipmentDates(Rec);
-        CheckServiceItem(Rec);
+        Item.TestField("ENC Not for Sale", false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Quantity', false, false)]
@@ -1537,17 +1544,7 @@ codeunit 75010 "BA SEI Subscibers"
                 Error(DescripLengthErr, Rec.FieldCaption("Description 2"), StrLen(Rec."Description 2"));
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'No.', false, false)]
-    local procedure SalesLineOnAfterValidateNo(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
-    var
-        Item: Record Item;
-    begin
-        if (Rec."Document Type" = Rec."Document Type"::Order) and (xRec."No." = '') then
-            Rec."BA Booking Date" := WorkDate();
-        if (Rec.Type <> Rec.Type::Item) or (Rec."No." = xRec."No.") or not Item.Get(Rec."No.") then
-            exit;
-        Item.TestField("ENC Not for Sale", false);
-    end;
+
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterTestSalesLine', '', false, false)]
     local procedure SalesPostOnAfterTestSalesLine(SalesLine: Record "Sales Line")
@@ -3041,6 +3038,22 @@ codeunit 75010 "BA SEI Subscibers"
                 exit(SalesPrice."Sales Type"::"All Customers");
         end;
     end;
+
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Service Line", 'OnAfterValidateEvent', 'No.', false, false)]
+    local procedure ServiceLineOnAfterValidateNo(var Rec: Record "Service Line"; var xRec: Record "Service Line")
+    begin
+        if (Rec."Document Type" = Rec."Document Type"::Order) and (xRec."No." = '') then
+            Rec."BA Booking Date" := WorkDate();
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Quote to Order", 'OnBeforeServOrderLineInsert', '', false, false)]
+    local procedure ServiceQuoteToOrderOnBeforeServOrderLineInsert(var ServiceOrderLine2: Record "Service Line")
+    begin
+        ServiceOrderLine2."BA Booking Date" := WorkDate();
+    end;
+
 
 
     var
