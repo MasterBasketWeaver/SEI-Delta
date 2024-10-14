@@ -2577,8 +2577,10 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Customer: Record Customer;
     begin
-        if (xRec."Sell-to Customer No." <> Rec."Sell-to Customer No.") and Customer.Get(Rec."Sell-to Customer No.") then
+        if (xRec."Sell-to Customer No." <> Rec."Sell-to Customer No.") and Customer.Get(Rec."Sell-to Customer No.") then begin
             Rec.Validate("BA EORI No.", Customer."BA EORI No.");
+            Rec.Validate("BA Ship-to Email", Customer."BA Ship-to Email");
+        end;
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterValidateEvent', 'Customer No.', false, false)]
@@ -2586,8 +2588,10 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Customer: Record Customer;
     begin
-        if (xRec."Customer No." <> Rec."Customer No.") and Customer.Get(Rec."Customer No.") then
+        if (xRec."Customer No." <> Rec."Customer No.") and Customer.Get(Rec."Customer No.") then begin
             Rec.Validate("BA EORI No.", Customer."BA EORI No.");
+            Rec.Validate("Ship-to E-mail", Customer."BA Ship-to Email");
+        end;
     end;
 
 
@@ -3041,6 +3045,9 @@ codeunit 75010 "BA SEI Subscibers"
                 exit(SalesPrice."Sales Type"::"All Customers");
         end;
     end;
+
+
+
 
 
     var

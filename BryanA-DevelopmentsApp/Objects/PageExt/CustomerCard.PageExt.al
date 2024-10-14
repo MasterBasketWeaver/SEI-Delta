@@ -329,6 +329,13 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
                 ApplicationArea = all;
             }
         }
+        addafter("E-Mail")
+        {
+            field("BA Ship-to Email"; Rec."BA Ship-to Email")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions

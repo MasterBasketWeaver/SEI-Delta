@@ -125,6 +125,78 @@ pageextension 80055 "BA Posted Service Invoice" extends "Posted Service Invoice"
                 ApplicationArea = all;
             }
         }
+        addafter("Location Code")
+        {
+            field("ENC Shipping Agent Code"; "ENC Shipping Agent Code")
+            {
+                ApplicationArea = all;
+                Editable = true;
+                Caption = 'Freight Carrier';
+            }
+            field("ENC Shipment Method Code"; "ENC Shipment Method Code")
+            {
+                ApplicationArea = all;
+                Editable = true;
+                Caption = 'Service Level';
+            }
+            field("ENC Freight Term"; "ENC Freight Term")
+            {
+                ApplicationArea = all;
+                Editable = true;
+            }
+            field("ENC Shipped By"; "ENC Shipped By")
+            {
+                ApplicationArea = all;
+                Editable = true;
+            }
+            field("ENC Freight Account No."; "ENC Freight Account No.")
+            {
+                ApplicationArea = all;
+            }
+            field("ENC Package Tracking No."; "ENC Package Tracking No.")
+            {
+                ApplicationArea = all;
+                Editable = true;
+            }
+            field("BA Package Tracking No. Date"; Rec."BA Package Tracking No. Date")
+            {
+                ApplicationArea = all;
+            }
+            field("Ship-to E-Mail"; Rec."Ship-to E-Mail")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Promised Delivery Date"; "BA Promised Delivery Date")
+            {
+                ApplicationArea = all;
+            }
+            field("ENC Physical Ship Date"; "ENC Physical Ship Date")
+            {
+                ApplicationArea = all;
+                Editable = true;
+            }
+            field("Reason Code";
+            "Reason Code")
+            {
+                ApplicationArea = all;
+                Editable = true;
+            }
+            field("ENC Freight Invoice Billed"; "ENC Freight Invoice Billed")
+            {
+                ApplicationArea = all;
+                Editable = true;
+            }
+            field("ENC Brokerage Billed"; "ENC Brokerage Billed")
+            {
+                ApplicationArea = all;
+                Editable = true;
+            }
+            field("ENC Consolidated With Order(s)"; "ENC Consolidated With Order(s)")
+            {
+                ApplicationArea = all;
+                Editable = true;
+            }
+        }
     }
 
     trigger OnAfterGetCurrRecord()
