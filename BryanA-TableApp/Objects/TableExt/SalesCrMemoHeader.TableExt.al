@@ -50,6 +50,13 @@ tableextension 80062 "BA Sales Cr.Memo Header" extends "Sales Cr.Memo Header"
             Caption = 'Quote Date';
             Editable = false;
         }
+        field(80090; "BA Ship-to Email"; Text[100])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Ship-to Email';
+            ExtendedDatatype = EMail;
+            Editable = false;
+        }
         field(80100; "BA Actual Posting DateTime"; DateTime)
         {
             DataClassification = CustomerContent;

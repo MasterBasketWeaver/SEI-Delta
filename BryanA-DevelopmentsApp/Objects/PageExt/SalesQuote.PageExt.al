@@ -176,6 +176,13 @@ pageextension 80005 "BA Sales Quote" extends "Sales Quote"
                 ApplicationArea = all;
             }
         }
+        addafter("Ship-to Contact")
+        {
+            field("BA Ship-to Email"; Rec."BA Ship-to Email")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions

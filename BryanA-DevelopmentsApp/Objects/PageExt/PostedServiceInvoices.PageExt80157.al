@@ -37,4 +37,27 @@ pageextension 80157 "BA Posted Service Invoices" extends "Posted Service Invoice
             }
         }
     }
+    actions
+    {
+        addlast(Processing)
+        {
+            action("BA Send Shipment Details")
+            {
+                ApplicationArea = all;
+                Image = SendEmailPDFNoAttach;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Send Shipment Details';
+
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Subscribers.SendShipmentTrackingInfoEmail(Rec);
+                end;
+            }
+        }
+    }
 }

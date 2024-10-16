@@ -28,62 +28,26 @@ codeunit 75011 "BA Install Codeunit"
         // UpdateItemDescriptions();
         // DefineNonTaxTaxGroup();
         // InitiateDeptCodesPurchaseLookup();
-        // UpdateExchangeRates();
-        PopulatePrepaymentAttachmentLayout();
+        PopulateShipmentTrackingInfoReportUsage();
     end;
 
 
-    local procedure UpdateExchangeRates()
-    var
-        SalesHeader: Record "Sales Header";
-        ExchangeRate: Record "Currency Exchange Rate";
-        SalesRecSetup: Record "Sales & Receivables Setup";
-        Currency: Record Currency;
-        GLSetup: Record "General Ledger Setup";
-        ExchRate: Decimal;
-        ExchDate: Date;
-    begin
-        SalesRecSetup.Get();
-        if not SalesRecSetup."BA Use Single Currency Pricing" then
-            exit;
-        SalesRecSetup.TestField("BA Single Price Currency");
-        GLSetup.Get();
-        GLSetup.TestField("LCY Code");
-        Currency.SetFilter(Code, '<>%1', GLSetup."LCY Code");
-        if Currency.FindSet() then
-            repeat
-                SalesHeader.SetRange("Currency Code", Currency.Code);
-                if SalesHeader.FindSet(true) then begin
-                    repeat
-                        ExchDate := SalesHeader."Posting Date";
-                        ExchRate := 0;
-                        ExchangeRate.GetLastestExchangeRate(Currency.Code, ExchDate, ExchRate);
-                        if ExchRate <> 0 then begin
-                            SalesHeader."BA Quote Exch. Rate" := ExchRate;
-                            SalesHeader.Modify(false);
-                        end;
-                    until SalesHeader.Next() = 0;
-                end;
-            until Currency.Next() = 0;
-        PopulatePrepaymentAttachmentLayout();
-    end;
-
-    local procedure PopulatePrepaymentAttachmentLayout()
+    local procedure PopulateShipmentTrackingInfoReportUsage()
     var
         ReportSelections: Record "Report Selections";
-        CustRepSelection: Record "Custom Report Selection";
+        Subscribers: Codeunit "BA SEI Subscibers";
     begin
-        if ReportSelections.Get(50015, '000001') then
+        ReportSelections.SetRange(Usage, Subscribers.GetShipmentTrackingInfoReportUsage());
+        ReportSelections.SetRange("Report ID", Report::"BA Shipment Tracking Info");
+        if not ReportSelections.IsEmpty() then
             exit;
         ReportSelections.Init();
-        ReportSelections.Validate(Usage, 50015);
-        ReportSelections.Validate(Sequence, '000001');
-        ReportSelections.Validate("Report ID", 50015);
-        ReportSelections.Validate("Use for Email Attachment", true);
+        ReportSelections.Validate(Usage, Subscribers.GetShipmentTrackingInfoReportUsage());
+        ReportSelections.Validate(Sequence, '1');
+        ReportSelections.Validate("Report ID", Report::"BA Shipment Tracking Info");
+        ReportSelections.Validate("Use for Email Attachment", false);
+        ReportSelections.Validate("Use for Email Body", true);
         ReportSelections.Insert(true);
-
-        CustRepSelection.SetRange(Usage, 50015);
-        CustRepSelection.DeleteAll(true);
     end;
 
 

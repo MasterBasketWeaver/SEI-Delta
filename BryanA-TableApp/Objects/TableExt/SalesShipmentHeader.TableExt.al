@@ -75,5 +75,12 @@ tableextension 80060 "BA Sales Shpt. Header" extends "Sales Shipment Header"
             Caption = 'Quote Date';
             Editable = false;
         }
+        field(80090; "BA Ship-to Email"; Text[100])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Ship-to Email';
+            ExtendedDatatype = EMail;
+            Editable = false;
+        }
     }
 }

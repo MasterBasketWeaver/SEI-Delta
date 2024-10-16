@@ -191,6 +191,13 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
             ApplicationArea = all;
             ShowMandatory = MandatoryDeliveryDate;
         }
+        addafter("Ship-to Contact")
+        {
+            field("BA Ship-to Email"; Rec."BA Ship-to Email")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
 
