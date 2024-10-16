@@ -3049,6 +3049,121 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    procedure SendShipmentTrackingInfoEmail(var SalesInvHeader: Record "Sales Invoice Header")
+    begin
+        if TryToSendSendShipmentTrackingInfoEmail(SalesInvHeader, SalesInvHeader."No.", SalesInvHeader."Bill-to Customer No.") then
+            Message(ShipmentInfoSentMsg)
+        else
+            Error(ShipmentSendErr, GetLastErrorText());
+    end;
+
+    procedure SendShipmentTrackingInfoEmail(var ServiceInvHeader: Record "Service Invoice Header")
+    begin
+        if TryToSendSendShipmentTrackingInfoEmail(ServiceInvHeader, ServiceInvHeader."No.", ServiceInvHeader."Customer No.") then
+            Message(ShipmentInfoSentMsg)
+        else
+            Error(ShipmentSendErr, GetLastErrorText());
+    end;
+
+    [TryFunction]
+    local procedure TryToSendSendShipmentTrackingInfoEmail(RecVar: Variant; DocNo: Code[20]; CustNo: Code[20])
+    var
+        ReportSelections: Record "Report Selections";
+    begin
+        ReportSelections.SendEmailToVendor(GetShipmentTrackingInfoReportUsage(), RecVar, DocNo, '', true, CustNo);
+    end;
+
+    procedure GetShipmentTrackingInfoReportUsage(): Integer
+    begin
+        exit(80000);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnFindReportSelections', '', false, false)]
+    local procedure ReportSelectionsOnFindReportSelections(var FilterReportSelections: Record "Report Selections"; var IsHandled: Boolean; sender: Record "Report Selections")
+    begin
+        if sender.Usage <> GetShipmentTrackingInfoReportUsage() then
+            exit;
+        IsHandled := true;
+        FilterReportSelections := sender;
+        FilterReportSelections.Insert(false);
+        FilterReportSelections.SetRange(Usage, GetShipmentTrackingInfoReportUsage());
+        FilterReportSelections.SetFilter("Report ID", '<>%1', 0);
+        FilterReportSelections.SetRange("Use for Email Body", true);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeGetVendorEmailAddress', '', false, false)]
+    local procedure ReportSelectionsOnBeforeGetVendorEmailAddress(var IsHandled: Boolean; ReportUsage: Option; var ToAddress: Text; RecVar: Variant; BuyFromVendorNo: Code[20])
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ServiceInvHeader: Record "Service Invoice Header";
+        RecRef: RecordRef;
+    begin
+        if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
+            exit;
+        RecRef.GetTable(RecVar);
+        if RecRef.Number() = Database::"Sales Invoice Header" then begin
+            RecRef.SetTable(SalesInvHeader);
+            ToAddress := SalesInvHeader."BA Ship-to Email";
+        end else begin
+            RecRef.SetTable(ServiceInvHeader);
+            ToAddress := ServiceInvHeader."Ship-to E-Mail";
+        end;
+        IsHandled := true;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeDoSaveReportAsHTML', '', false, false)]
+    local procedure ReportSelectionsOnBeforeDoSaveReportAsHTML(var FilePath: Text[250]; var RecordVariant: Variant; ReportID: Integer)
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ServiceInvHeader: Record "Service Invoice Header";
+        RecRef: RecordRef;
+    begin
+        if ReportID <> Report::"BA Shipment Tracking Info" then
+            exit;
+        RecRef.GetTable(RecordVariant);
+        RecRef.Reset();
+        if RecRef.Number() = Database::"Sales Invoice Header" then begin
+            RecRef.SetTable(SalesInvHeader);
+            SalesInvHeader.SetRange("No.", SalesInvHeader."No.");
+            RecRef.GetTable(SalesInvHeader);
+        end else begin
+            RecRef.SetTable(ServiceInvHeader);
+            ServiceInvHeader.SetRange("No.", ServiceInvHeader."No.");
+            RecRef.GetTable(ServiceInvHeader);
+        end;
+        RecRef.SetTable(RecordVariant);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeEmailFileInternal', '', false, false)]
+    local procedure DocMailingOnBeforeEmailFileInternal(var ReportUsage: Integer; var ToEmailAddress: Text[250]; var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var EmailSubject: Text[250])
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ServiceInvHeader: Record "Service Invoice Header";
+    begin
+        if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
+            exit;
+        HideDialog := true;
+        IsFromPostedDoc := false;
+        EmailSubject := StrSubstNo('%1 Shipment Details', PostedDocNo);
+        if ToEmailAddress <> '' then
+            exit;
+        if SalesInvHeader.Get(PostedDocNo) then
+            ToEmailAddress := SalesInvHeader."BA Ship-to Email"
+        else
+            if ServiceInvHeader.Get(PostedDocNo) then
+                ToEmailAddress := ServiceInvHeader."Ship-to E-Mail";
+    end;
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeSendEmail', '', false, false)]
+    local procedure DocMailingOnBeforeSendEmail(var ReportUsage: Integer; var TempEmailItem: Record "Email Item")
+    begin
+        if ReportUsage = GetShipmentTrackingInfoReportUsage() then
+            TempEmailItem."Attachment File Path" := '';
+    end;
+
+
+
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
@@ -3082,4 +3197,6 @@ codeunit 75010 "BA SEI Subscibers"
         NoPromDelDateErr: Label '%1 must be assigned before invoicing.\Please have the sales staff fill in the %1.';
         UpdateReasonCodeMsg: Label 'Please update the %1 field to a new value.';
         SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';
+        ShipmentInfoSentMsg: Label 'Shipment Details sent successfully.';
+        ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
 }

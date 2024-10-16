@@ -20,6 +20,26 @@ codeunit 75011 "BA Install Codeunit"
         // UpdateItemDescriptions();
         // DefineNonTaxTaxGroup();
         // InitiateDeptCodesPurchaseLookup();
+        PopulateShipmentTrackingInfoReportUsage();
+    end;
+
+
+    local procedure PopulateShipmentTrackingInfoReportUsage()
+    var
+        ReportSelections: Record "Report Selections";
+        Subscribers: Codeunit "BA SEI Subscibers";
+    begin
+        ReportSelections.SetRange(Usage, Subscribers.GetShipmentTrackingInfoReportUsage());
+        ReportSelections.SetRange("Report ID", Report::"BA Shipment Tracking Info");
+        if not ReportSelections.IsEmpty() then
+            exit;
+        ReportSelections.Init();
+        ReportSelections.Validate(Usage, Subscribers.GetShipmentTrackingInfoReportUsage());
+        ReportSelections.Validate(Sequence, '1');
+        ReportSelections.Validate("Report ID", Report::"BA Shipment Tracking Info");
+        ReportSelections.Validate("Use for Email Attachment", false);
+        ReportSelections.Validate("Use for Email Body", true);
+        ReportSelections.Insert(true);
     end;
 
 

@@ -250,6 +250,30 @@ pageextension 80052 "BA Posted Sales Invoice" extends "Posted Sales Invoice"
         }
     }
 
+    actions
+    {
+        addlast(Processing)
+        {
+            action("BA Send Shipment Details")
+            {
+                ApplicationArea = all;
+                Image = SendEmailPDFNoAttach;
+                Promoted = true;
+                PromotedCategory = Category6;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Send Shipment Details';
+
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Subscribers.SendShipmentTrackingInfoEmail(Rec);
+                end;
+            }
+        }
+    }
+
     trigger OnAfterGetCurrRecord()
     begin
         SalesSource := Rec."BA Sales Source";
