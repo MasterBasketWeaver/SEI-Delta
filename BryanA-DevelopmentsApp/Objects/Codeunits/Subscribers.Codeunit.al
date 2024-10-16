@@ -3056,6 +3056,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     procedure SendShipmentTrackingInfoEmail(var SalesInvHeader: Record "Sales Invoice Header")
     begin
+        SalesInvHeader.TestField("BA Ship-to Email");
         if not TryToSendSendShipmentTrackingInfoEmail(SalesInvHeader, SalesInvHeader."No.", SalesInvHeader."Bill-to Customer No.") then
             Error(ShipmentSendErr, GetLastErrorText());
         Message(ShipmentInfoSentMsg);
@@ -3063,6 +3064,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     procedure SendShipmentTrackingInfoEmail(var ServiceInvHeader: Record "Service Invoice Header")
     begin
+        ServiceInvHeader.TestField("Ship-to E-Mail");
         if not TryToSendSendShipmentTrackingInfoEmail(ServiceInvHeader, ServiceInvHeader."No.", ServiceInvHeader."Customer No.") then
             Error(ShipmentSendErr, GetLastErrorText());
         Message(ShipmentInfoSentMsg);
