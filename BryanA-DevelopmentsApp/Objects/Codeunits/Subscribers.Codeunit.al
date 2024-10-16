@@ -3672,7 +3672,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     procedure SendShipmentTrackingInfoEmail(var ServiceInvHeader: Record "Service Invoice Header")
     begin
-        if TryToSendSendShipmentTrackingInfoEmail(ServiceInvHeader, ServiceInvHeader."No.", ServiceInvHeader."Customer No.") then
+        if not TryToSendSendShipmentTrackingInfoEmail(ServiceInvHeader, ServiceInvHeader."No.", ServiceInvHeader."Customer No.") then
             Error(ShipmentSendErr, GetLastErrorText());
         Message(ShipmentInfoSentMsg);
     end;
