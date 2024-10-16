@@ -16,6 +16,12 @@ report 50088 "BA Shipment Tracking Info"
             column(SalesInvHeader_PackageTrackingURL; TrackingURL) { }
             column(SalesInvHeader_FreightCarrier; "Shipping Agent Code") { }
 
+            trigger OnPreDataItem()
+            begin
+                if SalesInvoiceHeader.GetFilters() = '' then
+                    CurrReport.Break();
+            end;
+
             trigger OnAfterGetRecord()
             begin
                 TrackingURL := GetShippingAgentTrackingURL(SalesInvoiceHeader."Shipping Agent Code");
@@ -26,9 +32,30 @@ report 50088 "BA Shipment Tracking Info"
                         TrackingURL := '';
             end;
         }
-        dataitem(SerInvHeader; "Service Invoice Header")
+        dataitem(ServiceInvoiceHeader; "Service Invoice Header")
         {
+            column(ServiceInvHeader_No; "No.") { }
+            column(ServiceInvHeader_OrderNo; "Order No.") { }
+            column(ServiceInvHeader_ExtDocNo; "External Document No.") { }
+            column(ServiceInvHeader_PackageTrackingNo; "ENC Package Tracking No.") { }
+            column(ServiceInvHeader_PackageTrackingURL; TrackingURL) { }
+            column(ServiceInvHeader_FreightCarrier; ServiceInvoiceHeader."ENC Shipping Agent Code") { }
 
+            trigger OnPreDataItem()
+            begin
+                if ServiceInvoiceHeader.GetFilters() = '' then
+                    CurrReport.Break();
+            end;
+
+            trigger OnAfterGetRecord()
+            begin
+                TrackingURL := GetShippingAgentTrackingURL(ServiceInvoiceHeader."ENC Shipping Agent Code");
+                if TrackingURL <> '' then
+                    if ServiceInvoiceHeader."ENC Package Tracking No." <> '' then
+                        TrackingURL += ServiceInvoiceHeader."ENC Package Tracking No."
+                    else
+                        TrackingURL := '';
+            end;
         }
     }
 
@@ -40,6 +67,7 @@ report 50088 "BA Shipment Tracking Info"
         if ShippingAgent.Get(AgentCode) then
             exit(ShippingAgent."Internet Address")
     end;
+
 
     var
         TrackingURL: Text;

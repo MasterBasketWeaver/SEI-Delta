@@ -3049,20 +3049,23 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    procedure GetShipmentTrackingInfoReportUsage(): Integer
+    begin
+        exit(80000);
+    end;
+
     procedure SendShipmentTrackingInfoEmail(var SalesInvHeader: Record "Sales Invoice Header")
     begin
-        if TryToSendSendShipmentTrackingInfoEmail(SalesInvHeader, SalesInvHeader."No.", SalesInvHeader."Bill-to Customer No.") then
-            Message(ShipmentInfoSentMsg)
-        else
+        if not TryToSendSendShipmentTrackingInfoEmail(SalesInvHeader, SalesInvHeader."No.", SalesInvHeader."Bill-to Customer No.") then
             Error(ShipmentSendErr, GetLastErrorText());
+        Message(ShipmentInfoSentMsg);
     end;
 
     procedure SendShipmentTrackingInfoEmail(var ServiceInvHeader: Record "Service Invoice Header")
     begin
         if TryToSendSendShipmentTrackingInfoEmail(ServiceInvHeader, ServiceInvHeader."No.", ServiceInvHeader."Customer No.") then
-            Message(ShipmentInfoSentMsg)
-        else
             Error(ShipmentSendErr, GetLastErrorText());
+        Message(ShipmentInfoSentMsg);
     end;
 
     [TryFunction]
@@ -3071,11 +3074,6 @@ codeunit 75010 "BA SEI Subscibers"
         ReportSelections: Record "Report Selections";
     begin
         ReportSelections.SendEmailToVendor(GetShipmentTrackingInfoReportUsage(), RecVar, DocNo, '', true, CustNo);
-    end;
-
-    procedure GetShipmentTrackingInfoReportUsage(): Integer
-    begin
-        exit(80000);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnFindReportSelections', '', false, false)]
@@ -3144,7 +3142,7 @@ codeunit 75010 "BA SEI Subscibers"
             exit;
         HideDialog := true;
         IsFromPostedDoc := false;
-        EmailSubject := StrSubstNo('%1 Shipment Details', PostedDocNo);
+        EmailSubject := StrSubstNo(ShipmentDetailsSubject, PostedDocNo);
         if ToEmailAddress <> '' then
             exit;
         if SalesInvHeader.Get(PostedDocNo) then
@@ -3153,7 +3151,6 @@ codeunit 75010 "BA SEI Subscibers"
             if ServiceInvHeader.Get(PostedDocNo) then
                 ToEmailAddress := ServiceInvHeader."Ship-to E-Mail";
     end;
-
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeSendEmail', '', false, false)]
     local procedure DocMailingOnBeforeSendEmail(var ReportUsage: Integer; var TempEmailItem: Record "Email Item")
@@ -3199,4 +3196,6 @@ codeunit 75010 "BA SEI Subscibers"
         SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';
         ShipmentInfoSentMsg: Label 'Shipment Details sent successfully.';
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
+        ShipmentDetailsSubject: Label '%1 Shipment Details';
 }
+
