@@ -41,4 +41,27 @@ pageextension 80123 "BA Posted Sales Invoices" extends "Posted Sales Invoices"
             }
         }
     }
+    actions
+    {
+        addlast(Processing)
+        {
+            action("BA Import Booking Dates")
+            {
+                ApplicationArea = all;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = UpdateUnitCost;
+                Caption = 'Update Booking Dates';
+
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Subscribers.ImportBookingDates(true);
+                end;
+            }
+        }
+    }
 }
