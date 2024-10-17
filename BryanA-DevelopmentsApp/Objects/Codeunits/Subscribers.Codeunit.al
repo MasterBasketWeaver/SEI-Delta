@@ -3243,13 +3243,14 @@ codeunit 75010 "BA SEI Subscibers"
         SalesOrderLine."BA Booking Date" := WorkDate();
     end;
 
-    procedure ImportBookingDates()
+    procedure ImportBookingDates(Sales: Boolean)
     var
         ExcelBuffer: Record "Excel Buffer" temporary;
         ExcelBuffer2: Record "Excel Buffer" temporary;
         ErrorBuffer: Record "Name/Value Buffer" temporary;
         TempBlob: Record TempBlob;
         SalesInvLine: Record "Sales Invoice Line";
+        ServiceInvLine: Record "Service Invoice Line";
         FileMgt: Codeunit "File Management";
         IStream: InStream;
         Window: Dialog;
@@ -3283,20 +3284,33 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.FindSet();
         Window.Open('#1####/#2####');
 
-        repeat
-            i += 1;
+        if Sales then
+            repeat
+                i += 1;
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", 2);
+                Evaluate(LineNo, ExcelBuffer2."Cell Value as Text");
+                if SalesInvLine.Get(ExcelBuffer."Cell Value as Text", LineNo) then begin
+                    ExcelBuffer2.Get(ExcelBuffer."Row No.", 4);
+                    SalesInvLine."BA Booking Date" := GetDate(ExcelBuffer2."Cell Value as Text");
+                    SalesInvLine.Modify(false);
+                    i2 += 1;
+                end;
+                Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+            until ExcelBuffer.Next() = 0
+        else
+            repeat
+                i += 1;
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", 2);
+                Evaluate(LineNo, ExcelBuffer2."Cell Value as Text");
+                if ServiceInvLine.Get(ExcelBuffer."Cell Value as Text", LineNo) then begin
+                    ExcelBuffer2.Get(ExcelBuffer."Row No.", 4);
+                    ServiceInvLine."BA Booking Date" := GetDate(ExcelBuffer2."Cell Value as Text");
+                    ServiceInvLine.Modify(false);
+                    i2 += 1;
+                end;
+                Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+            until ExcelBuffer.Next() = 0;
 
-            ExcelBuffer2.Get(ExcelBuffer."Row No.", 2);
-            Evaluate(LineNo, ExcelBuffer2."Cell Value as Text");
-            if SalesInvLine.Get(ExcelBuffer."Cell Value as Text", LineNo) then begin
-                ExcelBuffer2.Get(ExcelBuffer."Row No.", 4);
-                SalesInvLine."BA Booking Date" := GetDate(ExcelBuffer2."Cell Value as Text");
-                SalesInvLine.Modify(false);
-                i2 += 1;
-            end;
-
-            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
-        until ExcelBuffer.Next() = 0;
         Window.Close();
 
         Message('Updated %1 of %2.', i2, RecCount);

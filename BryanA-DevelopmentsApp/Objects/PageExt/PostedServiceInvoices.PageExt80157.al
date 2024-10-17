@@ -58,6 +58,23 @@ pageextension 80157 "BA Posted Service Invoices" extends "Posted Service Invoice
                     Subscribers.SendShipmentTrackingInfoEmail(Rec);
                 end;
             }
+            action("BA Import Booking Dates")
+            {
+                ApplicationArea = all;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = UpdateUnitCost;
+                Caption = 'Update Booking Dates';
+
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Subscribers.ImportBookingDates(false);
+                end;
+            }
         }
     }
 }
