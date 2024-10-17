@@ -2705,7 +2705,7 @@ codeunit 75010 "BA SEI Subscibers"
                 ExcelBuffer2.Get(ExcelBuffer."Row No.", 2);
                 Evaluate(LineNo, ExcelBuffer2."Cell Value as Text");
                 if ServiceInvLine.Get(ExcelBuffer."Cell Value as Text", LineNo) then begin
-                    ExcelBuffer2.Get(ExcelBuffer."Row No.", 4);
+                    ExcelBuffer2.Get(ExcelBuffer."Row No.", 3);
                     ServiceInvLine."BA Booking Date" := GetDate(ExcelBuffer2."Cell Value as Text");
                     ServiceInvLine.Modify(false);
                     i2 += 1;
