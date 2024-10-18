@@ -3758,23 +3758,41 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeEmailFileInternal', '', false, false)]
-    local procedure DocMailingOnBeforeEmailFileInternal(var ReportUsage: Integer; var ToEmailAddress: Text[250]; var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var EmailSubject: Text[250])
+    local procedure DocMailingOnBeforeEmailFileInternal(var ReportUsage: Integer; var ToEmailAddress: Text[250]; var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var EmailSubject: Text[250]; var TempEmailItem: Record "Email Item")
     var
         SalesInvHeader: Record "Sales Invoice Header";
         ServiceInvHeader: Record "Service Invoice Header";
+        CompInfo: Record "Company Information";
+        OrderNo: Code[20];
+        Sales: Boolean;
     begin
         if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
             exit;
+        CompInfo.Get();
         HideDialog := true;
         IsFromPostedDoc := false;
-        EmailSubject := StrSubstNo(ShipmentDetailsSubject, PostedDocNo);
+        Sales := SalesInvHeader.Get(PostedDocNo);
+        if Sales then
+            OrderNo := SalesInvHeader."Order No."
+        else
+            OrderNo := ServiceInvHeader."Order No.";
+        if OrderNo = '' then
+            OrderNo := PostedDocNo;
+        EmailSubject := StrSubstNo(ShipmentDetailsSubject, CompInfo.Name, OrderNo);
+        TempEmailItem."Message Type" := GetShipmentTrackingInfoReportUsage();
         if ToEmailAddress <> '' then
             exit;
-        if SalesInvHeader.Get(PostedDocNo) then
+        if Sales then
             ToEmailAddress := SalesInvHeader."BA Ship-to Email"
         else
-            if ServiceInvHeader.Get(PostedDocNo) then
-                ToEmailAddress := ServiceInvHeader."Ship-to E-Mail";
+            ToEmailAddress := ServiceInvHeader."Ship-to E-Mail";
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Mail Management", 'OnBeforeRunMailDialog', '', false, false)]
+    local procedure MailMgtOnBeforeRunMailDialog(var TempEmailItem: Record "Email Item"; var IsHandled: Boolean)
+    begin
+        if UserId <> 'SEI-IND\BRYANBCDEV' then
+            IsHandled := TempEmailItem."Message Type" = GetShipmentTrackingInfoReportUsage();
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeSendEmail', '', false, false)]
@@ -3841,6 +3859,6 @@ codeunit 75010 "BA SEI Subscibers"
         SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';
         ShipmentInfoSentMsg: Label 'Shipment Details sent successfully.';
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
-        ShipmentDetailsSubject: Label '%1 Shipment Details';
+        ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation';
 }
 

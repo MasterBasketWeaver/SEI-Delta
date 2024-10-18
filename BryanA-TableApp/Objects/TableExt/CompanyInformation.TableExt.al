@@ -9,5 +9,17 @@ tableextension 80095 "BA Company Info" extends "Company Information"
             Description = 'Used by install codeunit to prevent AddNewDimValues() function from running mulitple times.';
             Editable = false;
         }
+        field(80010; "BA Ship-To Email"; Text[80])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Ship-To Email';
+            ExtendedDatatype = EMail;
+        }
+        field(80011; "BA Ship-To Phone No."; Text[30])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Ship-To Phone No.';
+            ExtendedDatatype = PhoneNo;
+        }
     }
 }

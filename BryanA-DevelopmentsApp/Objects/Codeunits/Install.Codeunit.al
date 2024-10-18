@@ -29,8 +29,24 @@ codeunit 75011 "BA Install Codeunit"
         // DefineNonTaxTaxGroup();
         // InitiateDeptCodesPurchaseLookup();
         PopulateShipmentTrackingInfoReportUsage();
+        PopulateShipToContactDetails();
     end;
 
+
+
+    local procedure PopulateShipToContactDetails()
+    var
+        CompInfo: Record "Company Information";
+    begin
+        if not CompInfo.Get('') then
+            exit;
+        if CompInfo.Name = 'SEI Industries' then
+            if (CompInfo."BA Ship-To Email" = '') and (CompInfo."BA Ship-To Phone No." = '') then begin
+                CompInfo."BA Ship-To Email" := 'shipping@sei-ind.com';
+                CompInfo."BA Ship-To Phone No." := '1-866-570-3473';
+                CompInfo.Modify(true);
+            end;
+    end;
 
     local procedure PopulateShipmentTrackingInfoReportUsage()
     var

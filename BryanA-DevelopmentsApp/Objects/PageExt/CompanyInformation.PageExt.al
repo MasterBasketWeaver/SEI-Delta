@@ -15,5 +15,19 @@ pageextension 80135 "BA Company Information" extends "Company Information"
         //         ShowMandatory = true;
         //     }
         // }
+        addafter("Phone No.")
+        {
+            field("BA Ship-To Phone No."; Rec."BA Ship-To Phone No.")
+            {
+                ApplicationArea = all;
+            }
+        }
+        addafter("E-Mail")
+        {
+            field("BA Ship-To Email"; Rec."BA Ship-To Email")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 }
