@@ -9,6 +9,13 @@ pageextension 80147 "BA Posted Service Inv. Subpage" extends "Posted Service Inv
                 ApplicationArea = all;
             }
         }
+        addlast(Control1)
+        {
+            field("BA Booking Date"; Rec."BA Booking Date")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions
