@@ -3138,8 +3138,9 @@ codeunit 75010 "BA SEI Subscibers"
         RecRef.SetTable(RecordVariant);
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeEmailFileInternal', '', false, false)]
-    local procedure DocMailingOnBeforeEmailFileInternal(var ReportUsage: Integer; var ToEmailAddress: Text[250]; var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var EmailSubject: Text[250]; var TempEmailItem: Record "Email Item")
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeSendEmail', '', false, false)]
+    local procedure DocMailingOnBeforeSendEmail(var ReportUsage: Integer; var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var TempEmailItem: Record "Email Item")
     var
         SalesInvHeader: Record "Sales Invoice Header";
         ServiceInvHeader: Record "Service Invoice Header";
@@ -3149,9 +3150,10 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
             exit;
+
         CompInfo.Get();
-        CompInfo.TestField("BA Ship-To Email");
-        TempEmailItem."From Address" := CompInfo."BA Ship-To Email";
+        // CompInfo.TestField("BA Ship-To Email");
+        // TempEmailItem."From Address" := CompInfo."BA Ship-To Email";
         if not IsDebugUser() then
             HideDialog := true;
         IsFromPostedDoc := false;
@@ -3162,14 +3164,14 @@ codeunit 75010 "BA SEI Subscibers"
             OrderNo := ServiceInvHeader."Order No.";
         if OrderNo = '' then
             OrderNo := PostedDocNo;
-        EmailSubject := StrSubstNo(ShipmentDetailsSubject, CompInfo.Name, OrderNo);
+        TempEmailItem.Subject := StrSubstNo(ShipmentDetailsSubject, CompInfo.Name, OrderNo);
         TempEmailItem."Message Type" := GetShipmentTrackingInfoReportUsage();
-        if ToEmailAddress <> '' then
-            exit;
-        if Sales then
-            ToEmailAddress := SalesInvHeader."BA Ship-to Email"
-        else
-            ToEmailAddress := ServiceInvHeader."Ship-to E-Mail";
+        TempEmailItem."Attachment File Path" := '';
+        if TempEmailItem."Send to" = '' then
+            if Sales then
+                TempEmailItem."Send to" := SalesInvHeader."BA Ship-to Email"
+            else
+                TempEmailItem."Send to" := ServiceInvHeader."Ship-to E-Mail";
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Mail Management", 'OnBeforeRunMailDialog', '', false, false)]
@@ -3179,12 +3181,7 @@ codeunit 75010 "BA SEI Subscibers"
             IsHandled := TempEmailItem."Message Type" = GetShipmentTrackingInfoReportUsage();
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeSendEmail', '', false, false)]
-    local procedure DocMailingOnBeforeSendEmail(var ReportUsage: Integer; var TempEmailItem: Record "Email Item")
-    begin
-        if ReportUsage = GetShipmentTrackingInfoReportUsage() then
-            TempEmailItem."Attachment File Path" := '';
-    end;
+
 
 
     procedure IsDebugUser(): Boolean
