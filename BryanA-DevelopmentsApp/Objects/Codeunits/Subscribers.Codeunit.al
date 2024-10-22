@@ -3057,6 +3057,8 @@ codeunit 75010 "BA SEI Subscibers"
     procedure SendShipmentTrackingInfoEmail(var SalesInvHeader: Record "Sales Invoice Header")
     begin
         SalesInvHeader.TestField("BA Ship-to Email");
+        SalesInvHeader.TestField("Shipping Agent Code");
+        SalesInvHeader.TestField("Package Tracking No.");
         if not TryToSendSendShipmentTrackingInfoEmail(SalesInvHeader, SalesInvHeader."No.", SalesInvHeader."Bill-to Customer No.") then
             Error(ShipmentSendErr, GetLastErrorText());
         Message(ShipmentInfoSentMsg);
@@ -3065,6 +3067,8 @@ codeunit 75010 "BA SEI Subscibers"
     procedure SendShipmentTrackingInfoEmail(var ServiceInvHeader: Record "Service Invoice Header")
     begin
         ServiceInvHeader.TestField("Ship-to E-Mail");
+        ServiceInvHeader.TestField("ENC Shipping Agent Code");
+        ServiceInvHeader.TestField("ENC Package Tracking No.");
         if not TryToSendSendShipmentTrackingInfoEmail(ServiceInvHeader, ServiceInvHeader."No.", ServiceInvHeader."Customer No.") then
             Error(ShipmentSendErr, GetLastErrorText());
         Message(ShipmentInfoSentMsg);
@@ -3146,7 +3150,10 @@ codeunit 75010 "BA SEI Subscibers"
         if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
             exit;
         CompInfo.Get();
-        HideDialog := true;
+        CompInfo.TestField("BA Ship-To Email");
+        TempEmailItem."From Address" := CompInfo."BA Ship-To Email";
+        if not IsDebugUser() then
+            HideDialog := true;
         IsFromPostedDoc := false;
         Sales := SalesInvHeader.Get(PostedDocNo);
         if Sales then
@@ -3168,7 +3175,7 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Mail Management", 'OnBeforeRunMailDialog', '', false, false)]
     local procedure MailMgtOnBeforeRunMailDialog(var TempEmailItem: Record "Email Item"; var IsHandled: Boolean)
     begin
-        if UserId <> 'SEI-IND\BRYANBCDEV' then
+        if not IsDebugUser() then
             IsHandled := TempEmailItem."Message Type" = GetShipmentTrackingInfoReportUsage();
     end;
 
@@ -3180,6 +3187,10 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    procedure IsDebugUser(): Boolean
+    begin
+        exit(UserId() = 'SEI-IND\BRYANBCDEV');
+    end;
 
 
     var
