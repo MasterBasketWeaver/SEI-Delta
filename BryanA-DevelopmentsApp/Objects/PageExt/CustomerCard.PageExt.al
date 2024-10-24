@@ -4,7 +4,7 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
     {
         modify("No.")
         {
-            trigger OnAfterValidate()
+            trigger OnBeforeValidate()
             var
                 i: Integer;
             begin
