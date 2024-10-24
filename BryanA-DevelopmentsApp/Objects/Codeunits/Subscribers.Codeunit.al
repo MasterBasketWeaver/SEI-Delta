@@ -3773,10 +3773,6 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
             exit;
-
-        CompInfo.Get();
-        CompInfo.TestField("BA Ship-To Email");
-        // TempEmailItem."From Address" := CompInfo."BA Ship-To Email";
         if not IsDebugUser() then
             HideDialog := true;
         IsFromPostedDoc := false;
@@ -3787,10 +3783,10 @@ codeunit 75010 "BA SEI Subscibers"
             OrderNo := ServiceInvHeader."Order No.";
         if OrderNo = '' then
             OrderNo := PostedDocNo;
+        CompInfo.Get();
         TempEmailItem.Subject := StrSubstNo(ShipmentDetailsSubject, CompInfo.Name, OrderNo);
         TempEmailItem."Message Type" := GetShipmentTrackingInfoReportUsage();
         TempEmailItem."Attachment File Path" := '';
-        TempEmailItem."Send CC" := CompInfo."BA Ship-To Email";
         if TempEmailItem."Send to" = '' then
             if Sales then
                 TempEmailItem."Send to" := SalesInvHeader."BA Ship-to Email"
