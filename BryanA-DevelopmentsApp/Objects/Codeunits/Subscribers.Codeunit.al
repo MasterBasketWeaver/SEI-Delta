@@ -3069,6 +3069,23 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    [EventSubscriber(ObjectType::Table, Database::"Customer", 'OnBeforeRenameEvent', '', false, false)]
+    local procedure CustomerOnBeforeRename(var Rec: Record Customer; var xRec: Record Customer)
+    begin
+        CheckCustomerNo(Rec, xRec);
+    end;
+
+    procedure CheckCustomerNo(var Rec: Record Customer; var xRec: Record Customer)
+    var
+        i: Integer;
+    begin
+        if Rec."No." = xRec."No." then
+            exit;
+        i := StrLen(Rec."No.");
+        if (i < 6) or (i > 8) then
+            Error(CustNoLengthErr, Rec.FieldCaption("No."), i);
+    end;
+
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
@@ -3102,4 +3119,5 @@ codeunit 75010 "BA SEI Subscibers"
         NoPromDelDateErr: Label '%1 must be assigned before invoicing.\Please have the sales staff fill in the %1.';
         UpdateReasonCodeMsg: Label 'Please update the %1 field to a new value.';
         SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';
+        CustNoLengthErr: Label '%1 must be between 6 to 8 characters, currently %2.';
 }
