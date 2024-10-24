@@ -504,5 +504,5 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
         UnfavorableStyle: Label 'Unfavorable';
         SingleMissingValueErr: Label '%1 must be given a value before the page can be closed.';
         MultiMissingValueErr: Label 'The following fields must be given a value before the page can be closed:';
-        NoLengthErr: Label '%1 must be between 6 to 8 characters, currently %2.'
+        NoLengthErr: Label '%1 must be between 6 to 8 characters, currently %2.';
 }
