@@ -2,6 +2,19 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
 {
     layout
     {
+        modify("No.")
+        {
+            trigger OnAfterValidate()
+            var
+                i: Integer;
+            begin
+                if Rec."No." = xRec."No." then
+                    exit;
+                i := StrLen(Rec."No.");
+                if (i < 6) or (i > 8) then
+                    Error(NoLengthErr, Rec.FieldCaption("No."), i);
+            end;
+        }
         addlast(General)
         {
             field("BA Last Sales Activity"; "BA Last Sales Activity")
@@ -498,4 +511,5 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
         UnfavorableStyle: Label 'Unfavorable';
         SingleMissingValueErr: Label '%1 must be given a value before the page can be closed.';
         MultiMissingValueErr: Label 'The following fields must be given a value before the page can be closed:';
+        NoLengthErr: Label '%1 must be between 6 to 8 characters, currently %2.'
 }
