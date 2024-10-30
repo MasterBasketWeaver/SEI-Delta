@@ -11,7 +11,6 @@ tableextension 80082 "BA Service Invoice Line" extends "Service Invoice Line"
         {
             DataClassification = CustomerContent;
             Caption = 'Booking Date';
-            Editable = false;
         }
     }
 }

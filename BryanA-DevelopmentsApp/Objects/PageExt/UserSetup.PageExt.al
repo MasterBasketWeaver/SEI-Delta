@@ -41,6 +41,10 @@ pageextension 80044 "BA User Setup" extends "User Setup"
             {
                 ApplicationArea = all;
             }
+            field("BA Can Edit Booking Dates"; Rec."BA Can Edit Booking Dates")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 

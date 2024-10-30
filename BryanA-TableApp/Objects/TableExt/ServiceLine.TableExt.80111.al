@@ -6,7 +6,6 @@ tableextension 80111 "BA Service Line" extends "Service Line"
         {
             DataClassification = CustomerContent;
             Caption = 'Booking Date';
-            Editable = false;
         }
     }
 }

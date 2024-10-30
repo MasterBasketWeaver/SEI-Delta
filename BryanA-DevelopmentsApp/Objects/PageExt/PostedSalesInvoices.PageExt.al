@@ -45,23 +45,6 @@ pageextension 80123 "BA Posted Sales Invoices" extends "Posted Sales Invoices"
     {
         addlast(Processing)
         {
-            action("BA Send Shipment Details")
-            {
-                ApplicationArea = all;
-                Image = SendEmailPDFNoAttach;
-                Promoted = true;
-                PromotedCategory = Category7;
-                PromotedIsBig = true;
-                PromotedOnly = true;
-                Caption = 'Send Shipment Details';
-
-                trigger OnAction()
-                var
-                    Subscribers: Codeunit "BA SEI Subscibers";
-                begin
-                    Subscribers.SendShipmentTrackingInfoEmail(Rec);
-                end;
-            }
             action("BA Import Booking Dates")
             {
                 ApplicationArea = all;
@@ -77,6 +60,23 @@ pageextension 80123 "BA Posted Sales Invoices" extends "Posted Sales Invoices"
                     Subscribers: Codeunit "BA SEI Subscibers";
                 begin
                     Subscribers.ImportBookingDates(true);
+                end;
+            }
+            action("BA Send Shipment Details")
+            {
+                ApplicationArea = all;
+                Image = SendEmailPDFNoAttach;
+                Promoted = true;
+                PromotedCategory = Category7;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Send Shipment Details';
+
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Subscribers.SendShipmentTrackingInfoEmail(Rec);
                 end;
             }
         }

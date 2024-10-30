@@ -11,6 +11,7 @@ codeunit 75010 "BA SEI Subscibers"
                   tabledata "Sales Cr.Memo Line" = m,
                   tabledata "Sales Cr.Memo Header" = m,
                   tabledata "Service Invoice Header" = rimd,
+                  tabledata "Service Invoice Line" = m,
                   tabledata "Service Cr.Memo Header" = m,
                   tabledata "Transfer Shipment Header" = rimd,
                   tabledata "Item Ledger Entry" = rimd,
@@ -3686,9 +3687,6 @@ codeunit 75010 "BA SEI Subscibers"
             Error(CustNoLengthErr, Rec.FieldCaption("No."), i);
     end;
 
-
-
-
     procedure GetShipmentTrackingInfoReportUsage(): Integer
     begin
         exit(80000);
@@ -3826,6 +3824,12 @@ codeunit 75010 "BA SEI Subscibers"
         exit(UserId() = 'SEI-IND\BRYANBCDEV');
     end;
 
+    procedure UpdateBookingDate(SalesInvLine: Record "Sales Invoice Line"; NewDate: Date)
+    begin
+        SalesInvLine.Validate("BA Booking Date", NewDate);
+        SalesInvLine.Modify(true);
+    end;
+
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
@@ -3879,9 +3883,9 @@ codeunit 75010 "BA SEI Subscibers"
         NoPromDelDateErr: Label '%1 must be assigned before invoicing.\Please have the sales staff fill in the %1.';
         UpdateReasonCodeMsg: Label 'Please update the %1 field to a new value.';
         SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';
+        CustNoLengthErr: Label '%1 must be between 6 to 8 characters, currently %2.';
         ShipmentInfoSentMsg: Label 'Shipment Details sent successfully.';
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation';
-        CustNoLengthErr: Label '%1 must be between 6 to 8 characters, currently %2.';
 }
 
