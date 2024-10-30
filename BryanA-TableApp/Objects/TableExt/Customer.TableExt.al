@@ -153,5 +153,11 @@ tableextension 80030 "BA Customer" extends Customer
             Editable = false;
             InitValue = true;
         }
+        field(80090; "BA Ship-to Email"; Text[100])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Ship-to Email';
+            ExtendedDatatype = EMail;
+        }
     }
 }

@@ -20,6 +20,42 @@ codeunit 75011 "BA Install Codeunit"
         // UpdateItemDescriptions();
         // DefineNonTaxTaxGroup();
         // InitiateDeptCodesPurchaseLookup();
+        PopulateShipmentTrackingInfoReportUsage();
+        PopulateShipToContactDetails();
+    end;
+
+
+
+    local procedure PopulateShipToContactDetails()
+    var
+        CompInfo: Record "Company Information";
+    begin
+        if not CompInfo.Get('') then
+            exit;
+        if CompInfo.Name = 'SEI Industries' then
+            if (CompInfo."BA Ship-To Email" = '') and (CompInfo."BA Ship-To Phone No." = '') then begin
+                CompInfo."BA Ship-To Email" := 'shipping@sei-ind.com';
+                CompInfo."BA Ship-To Phone No." := '1-866-570-3473';
+                CompInfo.Modify(true);
+            end;
+    end;
+
+    local procedure PopulateShipmentTrackingInfoReportUsage()
+    var
+        ReportSelections: Record "Report Selections";
+        Subscribers: Codeunit "BA SEI Subscibers";
+    begin
+        ReportSelections.SetRange(Usage, Subscribers.GetShipmentTrackingInfoReportUsage());
+        ReportSelections.SetRange("Report ID", Report::"BA Shipment Tracking Info");
+        if not ReportSelections.IsEmpty() then
+            exit;
+        ReportSelections.Init();
+        ReportSelections.Validate(Usage, Subscribers.GetShipmentTrackingInfoReportUsage());
+        ReportSelections.Validate(Sequence, '1');
+        ReportSelections.Validate("Report ID", Report::"BA Shipment Tracking Info");
+        ReportSelections.Validate("Use for Email Attachment", false);
+        ReportSelections.Validate("Use for Email Body", true);
+        ReportSelections.Insert(true);
     end;
 
 

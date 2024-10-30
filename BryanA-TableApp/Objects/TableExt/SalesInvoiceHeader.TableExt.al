@@ -68,6 +68,12 @@ tableextension 80061 "BA Sales Invoice Header" extends "Sales Invoice Header"
             Caption = 'Quote Date';
             Editable = false;
         }
+        field(80090; "BA Ship-to Email"; Text[100])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Ship-to Email';
+            ExtendedDatatype = EMail;
+        }
         field(80100; "BA Actual Posting DateTime"; DateTime)
         {
             DataClassification = CustomerContent;

@@ -2574,8 +2574,10 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Customer: Record Customer;
     begin
-        if (xRec."Sell-to Customer No." <> Rec."Sell-to Customer No.") and Customer.Get(Rec."Sell-to Customer No.") then
+        if (xRec."Sell-to Customer No." <> Rec."Sell-to Customer No.") and Customer.Get(Rec."Sell-to Customer No.") then begin
             Rec.Validate("BA EORI No.", Customer."BA EORI No.");
+            Rec.Validate("BA Ship-to Email", Customer."BA Ship-to Email");
+        end;
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterValidateEvent', 'Customer No.', false, false)]
@@ -2583,8 +2585,10 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Customer: Record Customer;
     begin
-        if (xRec."Customer No." <> Rec."Customer No.") and Customer.Get(Rec."Customer No.") then
+        if (xRec."Customer No." <> Rec."Customer No.") and Customer.Get(Rec."Customer No.") then begin
             Rec.Validate("BA EORI No.", Customer."BA EORI No.");
+            Rec.Validate("Ship-to E-mail", Customer."BA Ship-to Email");
+        end;
     end;
 
 
@@ -3086,6 +3090,143 @@ codeunit 75010 "BA SEI Subscibers"
             Error(CustNoLengthErr, Rec.FieldCaption("No."), i);
     end;
 
+    procedure GetShipmentTrackingInfoReportUsage(): Integer
+    begin
+        exit(80000);
+    end;
+
+    procedure SendShipmentTrackingInfoEmail(var SalesInvHeader: Record "Sales Invoice Header")
+    begin
+        SalesInvHeader.TestField("BA Ship-to Email");
+        SalesInvHeader.TestField("Shipping Agent Code");
+        SalesInvHeader.TestField("Package Tracking No.");
+        if not TryToSendSendShipmentTrackingInfoEmail(SalesInvHeader, SalesInvHeader."No.", SalesInvHeader."Bill-to Customer No.") then
+            Error(ShipmentSendErr, GetLastErrorText());
+        Message(ShipmentInfoSentMsg);
+    end;
+
+    procedure SendShipmentTrackingInfoEmail(var ServiceInvHeader: Record "Service Invoice Header")
+    begin
+        ServiceInvHeader.TestField("Ship-to E-Mail");
+        ServiceInvHeader.TestField("ENC Shipping Agent Code");
+        ServiceInvHeader.TestField("ENC Package Tracking No.");
+        if not TryToSendSendShipmentTrackingInfoEmail(ServiceInvHeader, ServiceInvHeader."No.", ServiceInvHeader."Customer No.") then
+            Error(ShipmentSendErr, GetLastErrorText());
+        Message(ShipmentInfoSentMsg);
+    end;
+
+    [TryFunction]
+    local procedure TryToSendSendShipmentTrackingInfoEmail(RecVar: Variant; DocNo: Code[20]; CustNo: Code[20])
+    var
+        ReportSelections: Record "Report Selections";
+    begin
+        ReportSelections.SendEmailToVendor(GetShipmentTrackingInfoReportUsage(), RecVar, DocNo, '', true, CustNo);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnFindReportSelections', '', false, false)]
+    local procedure ReportSelectionsOnFindReportSelections(var FilterReportSelections: Record "Report Selections"; var IsHandled: Boolean; sender: Record "Report Selections")
+    begin
+        if sender.Usage <> GetShipmentTrackingInfoReportUsage() then
+            exit;
+        IsHandled := true;
+        FilterReportSelections := sender;
+        FilterReportSelections.Insert(false);
+        FilterReportSelections.SetRange(Usage, GetShipmentTrackingInfoReportUsage());
+        FilterReportSelections.SetFilter("Report ID", '<>%1', 0);
+        FilterReportSelections.SetRange("Use for Email Body", true);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeGetVendorEmailAddress', '', false, false)]
+    local procedure ReportSelectionsOnBeforeGetVendorEmailAddress(var IsHandled: Boolean; ReportUsage: Option; var ToAddress: Text; RecVar: Variant; BuyFromVendorNo: Code[20])
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ServiceInvHeader: Record "Service Invoice Header";
+        RecRef: RecordRef;
+    begin
+        if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
+            exit;
+        RecRef.GetTable(RecVar);
+        if RecRef.Number() = Database::"Sales Invoice Header" then begin
+            RecRef.SetTable(SalesInvHeader);
+            ToAddress := SalesInvHeader."BA Ship-to Email";
+        end else begin
+            RecRef.SetTable(ServiceInvHeader);
+            ToAddress := ServiceInvHeader."Ship-to E-Mail";
+        end;
+        IsHandled := true;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeDoSaveReportAsHTML', '', false, false)]
+    local procedure ReportSelectionsOnBeforeDoSaveReportAsHTML(var FilePath: Text[250]; var RecordVariant: Variant; ReportID: Integer)
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ServiceInvHeader: Record "Service Invoice Header";
+        RecRef: RecordRef;
+    begin
+        if ReportID <> Report::"BA Shipment Tracking Info" then
+            exit;
+        RecRef.GetTable(RecordVariant);
+        RecRef.Reset();
+        if RecRef.Number() = Database::"Sales Invoice Header" then begin
+            RecRef.SetTable(SalesInvHeader);
+            SalesInvHeader.SetRange("No.", SalesInvHeader."No.");
+            RecRef.GetTable(SalesInvHeader);
+        end else begin
+            RecRef.SetTable(ServiceInvHeader);
+            ServiceInvHeader.SetRange("No.", ServiceInvHeader."No.");
+            RecRef.GetTable(ServiceInvHeader);
+        end;
+        RecRef.SetTable(RecordVariant);
+    end;
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeSendEmail', '', false, false)]
+    local procedure DocMailingOnBeforeSendEmail(var ReportUsage: Integer; var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var TempEmailItem: Record "Email Item")
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ServiceInvHeader: Record "Service Invoice Header";
+        CompInfo: Record "Company Information";
+        OrderNo: Code[20];
+        Sales: Boolean;
+    begin
+        if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
+            exit;
+        if not IsDebugUser() then
+            HideDialog := true;
+        IsFromPostedDoc := false;
+        Sales := SalesInvHeader.Get(PostedDocNo);
+        if Sales then
+            OrderNo := SalesInvHeader."Order No."
+        else
+            OrderNo := ServiceInvHeader."Order No.";
+        if OrderNo = '' then
+            OrderNo := PostedDocNo;
+        CompInfo.Get();
+        TempEmailItem.Subject := StrSubstNo(ShipmentDetailsSubject, CompInfo.Name, OrderNo);
+        TempEmailItem."Message Type" := GetShipmentTrackingInfoReportUsage();
+        TempEmailItem."Attachment File Path" := '';
+        if TempEmailItem."Send to" = '' then
+            if Sales then
+                TempEmailItem."Send to" := SalesInvHeader."BA Ship-to Email"
+            else
+                TempEmailItem."Send to" := ServiceInvHeader."Ship-to E-Mail";
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Mail Management", 'OnBeforeRunMailDialog', '', false, false)]
+    local procedure MailMgtOnBeforeRunMailDialog(var TempEmailItem: Record "Email Item"; var IsHandled: Boolean)
+    begin
+        if not IsDebugUser() then
+            IsHandled := TempEmailItem."Message Type" = GetShipmentTrackingInfoReportUsage();
+    end;
+
+
+
+
+    procedure IsDebugUser(): Boolean
+    begin
+        exit(UserId() = 'SEI-IND\BRYANBCDEV');
+    end;
+
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
@@ -3120,4 +3261,8 @@ codeunit 75010 "BA SEI Subscibers"
         UpdateReasonCodeMsg: Label 'Please update the %1 field to a new value.';
         SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';
         CustNoLengthErr: Label '%1 must be between 6 to 8 characters, currently %2.';
+        ShipmentInfoSentMsg: Label 'Shipment Details sent successfully.';
+        ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
+        ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation';
 }
+
