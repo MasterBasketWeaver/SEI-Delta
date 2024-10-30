@@ -11,6 +11,7 @@ codeunit 75010 "BA SEI Subscibers"
                   tabledata "Sales Cr.Memo Line" = m,
                   tabledata "Sales Cr.Memo Header" = m,
                   tabledata "Service Invoice Header" = rimd,
+                  tabledata "Service Invoice Line" = m,
                   tabledata "Service Cr.Memo Header" = m,
                   tabledata "Transfer Shipment Header" = rimd,
                   tabledata "Item Ledger Entry" = rimd,
@@ -3225,6 +3226,12 @@ codeunit 75010 "BA SEI Subscibers"
     procedure IsDebugUser(): Boolean
     begin
         exit(UserId() = 'SEI-IND\BRYANBCDEV');
+    end;
+
+    procedure UpdateBookingDate(SalesInvLine: Record "Sales Invoice Line"; NewDate: Date)
+    begin
+        SalesInvLine.Validate("BA Booking Date", NewDate);
+        SalesInvLine.Modify(true);
     end;
 
 

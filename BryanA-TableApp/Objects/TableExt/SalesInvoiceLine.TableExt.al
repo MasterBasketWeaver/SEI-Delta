@@ -11,7 +11,6 @@ tableextension 80080 "BA Sales Invoice Line" extends "Sales Invoice Line"
         {
             DataClassification = CustomerContent;
             Caption = 'Booking Date';
-            Editable = false;
         }
     }
 }

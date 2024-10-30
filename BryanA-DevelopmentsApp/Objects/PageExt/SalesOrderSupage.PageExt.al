@@ -85,6 +85,7 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
             field("BA Booking Date"; Rec."BA Booking Date")
             {
                 ApplicationArea = all;
+                Editable = CanEditBookingDate;
             }
         }
     }
@@ -93,7 +94,10 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
     var
         UserSetup: Record "User Setup";
     begin
-        CanEditDimensions := UserSetup.Get(UserId) and UserSetup."BA Can Edit Dimensions";
+        if UserSetup.Get(UserId()) then begin
+            CanEditDimensions := UserSetup."BA Can Edit Dimensions";
+            CanEditBookingDate := UserSetup."BA Can Edit Booking Dates";
+        end;
     end;
 
     trigger OnAfterGetRecord()
@@ -113,4 +117,6 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
         ExchageRate: Decimal;
         [InDataSet]
         CanEditDimensions: Boolean;
+        [InDataSet]
+        CanEditBookingDate: Boolean;
 }

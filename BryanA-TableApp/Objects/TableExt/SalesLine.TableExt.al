@@ -33,7 +33,6 @@ tableextension 80002 "BA Sales Line" extends "Sales Line"
         {
             DataClassification = CustomerContent;
             Caption = 'Booking Date';
-            Editable = false;
         }
     }
 }

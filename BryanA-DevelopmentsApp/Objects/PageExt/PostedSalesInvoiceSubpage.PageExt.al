@@ -20,9 +20,16 @@ pageextension 80145 "BA Posted Sales Inv. Subpage" extends "Posted Sales Invoice
         }
         addlast(Control1)
         {
-            field("BA Booking Date"; Rec."BA Booking Date")
+            field("BA Booking Date"; BookingDate)
             {
                 ApplicationArea = all;
+                Editable = CanEditBookingDate;
+                Caption = 'Booking Date';
+
+                trigger OnValidate()
+                begin
+                    Subscribers.UpdateBookingDate(Rec, BookingDate);
+                end;
             }
         }
     }
@@ -47,4 +54,23 @@ pageextension 80145 "BA Posted Sales Inv. Subpage" extends "Posted Sales Invoice
             }
         }
     }
+
+    trigger OnOpenPage()
+    var
+        UserSetup: Record "User Setup";
+    begin
+        CanEditBookingDate := UserSetup.Get(UserId()) and UserSetup."BA Can Edit Booking Dates";
+    end;
+
+    trigger OnAfterGetCurrRecord()
+    begin
+        BookingDate := Rec."BA Booking Date";
+    end;
+
+    var
+        Subscribers: Codeunit "BA SEI Subscibers";
+        [InDataSet]
+        CanEditBookingDate: Boolean;
+        BookingDate: Date;
+
 }
