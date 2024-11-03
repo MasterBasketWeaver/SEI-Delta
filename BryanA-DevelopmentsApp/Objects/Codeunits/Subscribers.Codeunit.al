@@ -3273,6 +3273,27 @@ codeunit 75010 "BA SEI Subscibers"
             IsHandled := true;
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnUpdateSalesLinesByFieldNoOnAfterCalcShouldConfirmReservationDateConflict', '', false, false)]
+    local procedure SalesHeaderOnUpdateSalesLinesByFieldNoOnAfterCalcShouldConfirmReservationDateConflict(var SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
+        SalesLine2: Record "Sales Line";
+    begin
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        if SalesLine.IsEmpty() then
+            exit;
+        SalesLine.SetFilter("Shipment Date", '<>%1', 0D);
+        if not SalesLine.FindFirst() then
+            exit;
+        SalesLine2.CopyFilters(SalesLine);
+        SalesLine2.SetFilter("Shipment Date", '<>%1&<>%2', 0D, SalesLine."Shipment Date");
+        if not SalesLine2.IsEmpty() then
+            if not Confirm(StrSubstNo(MultiShipmentDateMsg, SalesHeader."No.")) then
+                Error('');
+    end;
+
+
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
@@ -3310,5 +3331,7 @@ codeunit 75010 "BA SEI Subscibers"
         ShipmentInfoSentMsg: Label 'Shipment Details sent successfully.';
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation';
+        MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
+
 }
 
