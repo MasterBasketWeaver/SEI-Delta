@@ -3235,6 +3235,86 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    procedure ImportFreightInvoicesToFixUpdate()
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ExcelBuffer: Record "Excel Buffer" temporary;
+        ErrorBuffer: Record "Name/Value Buffer" temporary;
+        TempBlob: Record TempBlob;
+        FileMgt: Codeunit "File Management";
+        IStream: InStream;
+        Window: Dialog;
+        FileName: Text;
+        RecCount: Integer;
+        i: Integer;
+        i2: Integer;
+    begin
+        if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Freight Invoice List', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
+            exit;
+        TempBlob.Blob.CreateInStream(IStream);
+        if not ExcelBuffer.GetSheetsNameListFromStream(IStream, ErrorBuffer) then
+            Error('No Sheets in file.');
+        ErrorBuffer.FindFirst();
+        ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
+        ExcelBuffer.ReadSheet();
+
+        ExcelBuffer.SetRange("Column No.", 1);
+        ExcelBuffer.SetFilter("Row No.", '>%1', 3);
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        if not ExcelBuffer.FindSet() then
+            exit;
+
+        RecCount := ExcelBuffer.Count();
+        Window.Open('#1####/#2####');
+        repeat
+            i += 1;
+            if SalesInvHeader.Get(ExcelBuffer."Cell Value as Text") then begin
+                SalesInvHeader.Validate("Shipping Agent Code", 'FDX');
+                SalesInvHeader.Modify(true);
+                i2 += 1;
+            end;
+            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+        until ExcelBuffer.Next() = 0;
+        Window.Close();
+
+        Message('Updated %1 of %2.', i2, RecCount);
+    end;
+
+
+
+
+
+
+
+
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
         DefaultBlockReason: Label 'Product Dimension ID must be updated, the default Product ID cannot be used!';
