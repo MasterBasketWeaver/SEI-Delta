@@ -3189,6 +3189,8 @@ codeunit 75010 "BA SEI Subscibers"
         CompInfo: Record "Company Information";
         OrderNo: Code[20];
         Sales: Boolean;
+        SalesPerson: Record "Salesperson/Purchaser";
+        UserSetup: Record "User Setup";
     begin
         if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
             exit;
@@ -3206,6 +3208,12 @@ codeunit 75010 "BA SEI Subscibers"
         TempEmailItem.Subject := StrSubstNo(ShipmentDetailsSubject, CompInfo.Name, OrderNo);
         TempEmailItem."Message Type" := GetShipmentTrackingInfoReportUsage();
         TempEmailItem."Attachment File Path" := '';
+        if (SalesInvHeader."Salesperson Code" <> '') and SalesPerson.Get(SalesInvHeader."Salesperson Code") then begin
+            UserSetup.SetRange("Salespers./Purch. Code", SalesPerson.Code);
+            UserSetup.SetRange("BA Email SP On Tracking Emails", true);
+            if UserSetup.FindFirst() then
+                TempEmailItem."Send CC" := UserSetup."E-Mail";
+        end;
         if TempEmailItem."Send to" = '' then
             if Sales then
                 TempEmailItem."Send to" := SalesInvHeader."BA Ship-to Email"
