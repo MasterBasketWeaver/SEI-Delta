@@ -79,6 +79,23 @@ pageextension 80123 "BA Posted Sales Invoices" extends "Posted Sales Invoices"
                     Subscribers.SendShipmentTrackingInfoEmail(Rec);
                 end;
             }
+            action("BA Update Freight Carrier")
+            {
+                ApplicationArea = all;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = CalculateShipment;
+                Caption = 'Update Freight Carrier';
+
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Subscribers.ImportFreightInvoicesToFixUpdate();
+                end;
+            }
         }
     }
 }
