@@ -41,5 +41,12 @@ tableextension 80002 "BA Sales Line" extends "Sales Line"
             DataClassification = CustomerContent;
             Caption = 'Booking Date';
         }
+        field(80060; "BA Skip Reservation Date Check"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Skip Reservation Date Check';
+            Editable = false;
+            Description = 'System field to allow Shipment Date to be deleted when there is a linked Assembly Header.';
+        }
     }
 }
