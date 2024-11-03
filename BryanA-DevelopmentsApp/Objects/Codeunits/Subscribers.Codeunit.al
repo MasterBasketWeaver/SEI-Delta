@@ -111,6 +111,7 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnBeforeValidateEvent', 'Shipment Date', false, false)]
     local procedure SalesLineOnBeforeValdiateShipmentDate(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
     begin
+        Rec.Validate("BA Skip Reservation Date Check", false);
         if (xRec."Shipment Date" <> 0D) and (Rec."Shipment Date" = 0D) then
             CheckToUpdateAssemblyHeaderDates(Rec);
     end;
@@ -120,6 +121,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         SalesHeader: Record "Sales Header";
     begin
+        Rec.Validate("BA Skip Reservation Date Check", false);
         if not SalesHeader.Get(Rec."Document Type", Rec."Document No.") or Rec.IsTemporary or (Rec."Shipment Date" = xRec."Shipment Date")
                 or not (Rec."Document Type" in [Rec."Document Type"::Quote, Rec."Document Type"::Order]) then
             exit;
@@ -3259,8 +3261,17 @@ codeunit 75010 "BA SEI Subscibers"
         AssemblyHeader."Starting Date" := SalesLine."Shipment Date";
         AssemblyHeader."Ending Date" := SalesLine."Shipment Date";
         AssemblyHeader.Modify(false);
+        SalesLine.Validate("BA Skip Reservation Date Check", true);
+        SalesLine.Modify(true);
+        SalesLine.Get(SalesLine.RecordId());
     end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reservation-Check Date Confl.", 'OnSalesLineCheckOnBeforeIssueError', '', false, false)]
+    local procedure ReservationCheckDateConflOnSalesLineCheckOnBeforeIssueError(var SalesLine: Record "Sales Line"; var IsHandled: Boolean)
+    begin
+        if SalesLine."BA Skip Reservation Date Check" then
+            IsHandled := true;
+    end;
 
 
     var
