@@ -3854,7 +3854,7 @@ codeunit 75010 "BA SEI Subscibers"
         AssemblyHeader."Due Date" := SalesLine."Shipment Date";
         AssemblyHeader."Starting Date" := SalesLine."Shipment Date";
         AssemblyHeader."Ending Date" := SalesLine."Shipment Date";
-        AssemblyHeader.Modify(true);
+        AssemblyHeader.Modify(false);
     end;
 
 
