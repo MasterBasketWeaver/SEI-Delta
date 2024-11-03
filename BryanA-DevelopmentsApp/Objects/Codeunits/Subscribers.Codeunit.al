@@ -107,6 +107,14 @@ codeunit 75010 "BA SEI Subscibers"
         Rec.Validate("Shipment Date", 0D);
     end;
 
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnBeforeValidateEvent', 'Shipment Date', false, false)]
+    local procedure SalesLineOnBeforeValdiateShipmentDate(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
+    begin
+        if (xRec."Shipment Date" <> 0D) and (Rec."Shipment Date" = 0D) then
+            CheckToUpdateAssemblyHeaderDates(Rec);
+    end;
+
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Shipment Date', false, false)]
     local procedure SalesLineOnAfterValdiateShipmentDate(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
     var
@@ -3233,6 +3241,26 @@ codeunit 75010 "BA SEI Subscibers"
         SalesInvLine.Validate("BA Booking Date", NewDate);
         SalesInvLine.Modify(true);
     end;
+
+
+    local procedure CheckToUpdateAssemblyHeaderDates(var SalesLine: Record "Sales Line")
+    var
+        ATOLink: Record "Assemble-to-Order Link";
+        AssemblyHeader: Record "Assembly Header";
+    begin
+        ATOLink.SetCurrentKey(Type, "Document Type", "Document No.", "Document Line No.");
+        ATOLink.SetRange(Type, ATOLink.Type::Sale);
+        ATOLink.SetRange("Document Type", SalesLine."Document Type");
+        ATOLink.SetRange("Document No.", SalesLine."Document No.");
+        ATOLink.SetRange("Document Line No.", SalesLine."Line No.");
+        if not ATOLink.FindFirst() or not AssemblyHeader.Get(ATOLink."Assembly Document Type", ATOLink."Assembly Document No.") then
+            exit;
+        AssemblyHeader."Due Date" := SalesLine."Shipment Date";
+        AssemblyHeader."Starting Date" := SalesLine."Shipment Date";
+        AssemblyHeader."Ending Date" := SalesLine."Shipment Date";
+        AssemblyHeader.Modify(true);
+    end;
+
 
 
     var
