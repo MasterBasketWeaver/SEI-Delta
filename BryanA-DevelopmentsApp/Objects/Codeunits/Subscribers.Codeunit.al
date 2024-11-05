@@ -81,7 +81,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SalesLineOnAfterValdiateQuantity(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
     begin
         if Rec.Quantity <> xRec.Quantity then
-            ClearShipmentDates(Rec);
+            ClearShipmentDates(Rec, true);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeSalesLineByChangedFieldNo', '', false, false)]
@@ -94,16 +94,24 @@ codeunit 75010 "BA SEI Subscibers"
             IsHandled := true;
     end;
 
+
     local procedure ClearShipmentDates(var Rec: Record "Sales Line")
+    begin
+        ClearShipmentDates(Rec, false);
+    end;
+
+    local procedure ClearShipmentDates(var Rec: Record "Sales Line"; OverrideAssembly: Boolean)
     var
         SalesHeader: Record "Sales Header";
         AssembleToOrderLink: Record "Assemble-to-Order Link";
     begin
         if not SalesHeader.Get(Rec."Document Type", Rec."Document No.") or Rec.IsTemporary or (SalesHeader."Shipment Date" <> 0D)
                 or not (Rec."Document Type" in [Rec."Document Type"::Quote, Rec."Document Type"::Order])
-                  or AssembleToOrderLink.AsmExistsForSalesLine(Rec)
-                 then
+                then
             exit;
+        if not OverrideAssembly then
+            if AssembleToOrderLink.AsmExistsForSalesLine(Rec) then
+                exit;
         Rec.Validate("Shipment Date", 0D);
     end;
 
@@ -3250,12 +3258,7 @@ codeunit 75010 "BA SEI Subscibers"
         ATOLink: Record "Assemble-to-Order Link";
         AssemblyHeader: Record "Assembly Header";
     begin
-        ATOLink.SetCurrentKey(Type, "Document Type", "Document No.", "Document Line No.");
-        ATOLink.SetRange(Type, ATOLink.Type::Sale);
-        ATOLink.SetRange("Document Type", SalesLine."Document Type");
-        ATOLink.SetRange("Document No.", SalesLine."Document No.");
-        ATOLink.SetRange("Document Line No.", SalesLine."Line No.");
-        if not ATOLink.FindFirst() or not AssemblyHeader.Get(ATOLink."Assembly Document Type", ATOLink."Assembly Document No.") then
+        if not ATOLink.AsmExistsForSalesLine(SalesLine) or not AssemblyHeader.Get(ATOLink."Assembly Document Type", ATOLink."Assembly Document No.") then
             exit;
         AssemblyHeader."Due Date" := SalesLine."Shipment Date";
         AssemblyHeader."Starting Date" := SalesLine."Shipment Date";
