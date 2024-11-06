@@ -3187,10 +3187,11 @@ codeunit 75010 "BA SEI Subscibers"
         SalesInvHeader: Record "Sales Invoice Header";
         ServiceInvHeader: Record "Service Invoice Header";
         CompInfo: Record "Company Information";
-        OrderNo: Code[20];
-        Sales: Boolean;
         SalesPerson: Record "Salesperson/Purchaser";
         UserSetup: Record "User Setup";
+        CustName: Text;
+        OrderNo: Code[20];
+        Sales: Boolean;
     begin
         if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
             exit;
@@ -3198,14 +3199,17 @@ codeunit 75010 "BA SEI Subscibers"
             HideDialog := true;
         IsFromPostedDoc := false;
         Sales := SalesInvHeader.Get(PostedDocNo);
-        if Sales then
-            OrderNo := SalesInvHeader."Order No."
-        else
+        if Sales then begin
+            OrderNo := SalesInvHeader."Order No.";
+            CustName := SalesInvHeader."Sell-to Customer Name";
+        end else begin
             OrderNo := ServiceInvHeader."Order No.";
+            CustName := ServiceInvHeader.Name;
+        end;
         if OrderNo = '' then
             OrderNo := PostedDocNo;
         CompInfo.Get();
-        TempEmailItem.Subject := StrSubstNo(ShipmentDetailsSubject, CompInfo.Name, OrderNo);
+        TempEmailItem.Subject := StrSubstNo(ShipmentDetailsSubject, CompInfo.Name, OrderNo, CustName);
         TempEmailItem."Message Type" := GetShipmentTrackingInfoReportUsage();
         TempEmailItem."Attachment File Path" := '';
         if (SalesInvHeader."Salesperson Code" <> '') and SalesPerson.Get(SalesInvHeader."Salesperson Code") then begin
@@ -3278,6 +3282,6 @@ codeunit 75010 "BA SEI Subscibers"
         CustNoLengthErr: Label '%1 must be between 6 to 8 characters, currently %2.';
         ShipmentInfoSentMsg: Label 'Shipment Details sent successfully.';
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
-        ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation';
+        ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation for %3';
 }
 
