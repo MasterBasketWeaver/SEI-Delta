@@ -40,6 +40,7 @@ report 50088 "BA Shipment Tracking Info"
             column(SalesInvHeader_PackageTrackingNo; "Package Tracking No.") { }
             column(SalesInvHeader_PackageTrackingURL; TrackingURL) { }
             column(SalesInvHeader_FreightCarrier; ShipAgentName) { }
+            column(SalesInvHeader_CustDetails; StrSubstNo(CustTok, "Sell-to Customer No.", "Sell-to Customer Name")) { }
 
             trigger OnPreDataItem()
             begin
@@ -71,6 +72,7 @@ report 50088 "BA Shipment Tracking Info"
             column(ServiceInvHeader_PackageTrackingNo; "ENC Package Tracking No.") { }
             column(ServiceInvHeader_PackageTrackingURL; TrackingURL) { }
             column(ServiceInvHeader_FreightCarrier; ShipAgentName) { }
+            column(ServiceInvHeader_CustDetails; StrSubstNo(CustTok, "Customer No.", "Name")) { }
 
             trigger OnPreDataItem()
             begin
@@ -112,4 +114,5 @@ report 50088 "BA Shipment Tracking Info"
         ShipAgentName: Text;
 
         TrackingLbl: Label 'Tracking URL: %1%2';
+        CustTok: Label '%1 - %2';
 }

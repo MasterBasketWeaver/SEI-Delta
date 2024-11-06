@@ -47,6 +47,11 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             DataClassification = CustomerContent;
             Caption = 'Can Edit Booking Dates';
         }
+        field(80040; "BA Email SP On Tracking Emails"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Email SP On Tracking Emails';
+        }
         field(80099; "BA Service Order Open"; Boolean)
         {
             DataClassification = CustomerContent;

@@ -45,6 +45,10 @@ pageextension 80044 "BA User Setup" extends "User Setup"
             {
                 ApplicationArea = all;
             }
+            field("BA Email SP On Tracking Emails"; Rec."BA Email SP On Tracking Emails")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 
