@@ -128,6 +128,8 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SalesLineOnAfterValdiateShipmentDate(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
     var
         SalesHeader: Record "Sales Header";
+        ATOLink: Record "Assemble-to-Order Link";
+        AssemblyHeader: Record "Assembly Header";
     begin
         Rec.Validate("BA Skip Reservation Date Check", false);
         if not SalesHeader.Get(Rec."Document Type", Rec."Document No.") or Rec.IsTemporary or (Rec."Shipment Date" = xRec."Shipment Date")
@@ -137,6 +139,11 @@ codeunit 75010 "BA SEI Subscibers"
             exit;
         Rec.Validate("Planned Delivery Date", 0D);
         Rec.Validate("Planned Shipment Date", 0D);
+        if ATOLink.AsmExistsForSalesLine(Rec) then
+            if AssemblyHeader.Get(ATOLink."Assembly Document Type", ATOLink."Assembly Document No.") then begin
+                CheckToResetAssemblyHeaderDates(AssemblyHeader);
+                AssemblyHeader.Modify(true);
+            end;
     end;
 
 
@@ -3260,9 +3267,8 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if not ATOLink.AsmExistsForSalesLine(SalesLine) or not AssemblyHeader.Get(ATOLink."Assembly Document Type", ATOLink."Assembly Document No.") then
             exit;
-        AssemblyHeader."Due Date" := SalesLine."Shipment Date";
-        AssemblyHeader."Starting Date" := SalesLine."Shipment Date";
-        AssemblyHeader."Ending Date" := SalesLine."Shipment Date";
+
+        SaveTempAssemblyHeaderDates(AssemblyHeader, SalesLine."Shipment Date");
         AssemblyHeader.Modify(false);
         SalesLine.Validate("BA Skip Reservation Date Check", true);
         SalesLine.Modify(true);
@@ -3272,11 +3278,63 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Table, Database::"Assemble-to-Order Link", 'OnSynchronizeAsmFromSalesLineOnAfterGetAsmHeader', '', false, false)]
     local procedure AssembleToOrderLinkOnSynchronizeAsmFromSalesLineOnAfterGetAsmHeader(var NewSalesLine: Record "Sales Line"; var AssemblyHeader: Record "Assembly Header")
     begin
-        if NewSalesLine."Shipment Date" = 0D then begin
-            AssemblyHeader."Due Date" := NewSalesLine."Shipment Date";
-            AssemblyHeader."Starting Date" := NewSalesLine."Shipment Date";
-            AssemblyHeader."Ending Date" := NewSalesLine."Shipment Date";
-        end;
+        if NewSalesLine."Shipment Date" = 0D then
+            SaveTempAssemblyHeaderDates(AssemblyHeader, NewSalesLine."Shipment Date");
+    end;
+
+    local procedure SaveTempAssemblyHeaderDates(var AssemblyHeader: Record "Assembly Header"; NewShipmentDate: Date)
+    begin
+        AssemblyHeader."BA Modified Date Fields" := true;
+        AssemblyHeader."BA Temp Due Date" := AssemblyHeader."Due Date";
+        AssemblyHeader."BA Temp Starting Date" := AssemblyHeader."Starting Date";
+        AssemblyHeader."BA Temp Ending Date" := AssemblyHeader."Ending Date";
+        AssemblyHeader."Due Date" := NewShipmentDate;
+        AssemblyHeader."Starting Date" := NewShipmentDate;
+        AssemblyHeader."Ending Date" := NewShipmentDate;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Assemble-to-Order Link", 'OnBeforeAsmHeaderModify', '', false, false)]
+    local procedure AssembleToOrderLinkOnBeforeAsmHeaderModify(var AssemblyHeader: Record "Assembly Header")
+    begin
+        CheckToResetAssemblyHeaderDates(AssemblyHeader);
+    end;
+
+    local procedure CheckToResetAssemblyHeaderDates(var AssemblyHeader: Record "Assembly Header")
+    var
+        ATOLink: Record "Assemble-to-Order Link";
+        TempATOLink: Record "Assemble-to-Order Link" temporary;
+        ReservMgt: Codeunit "Reservation Management";
+        // ReservationCheckDateConfl: Codeunit "Reservation-Check Date Confl.";
+
+        // c1: Codeunit "Assembly Header-Reserve";
+        // r1: Record "Reservation Entry";
+
+    begin
+        if not AssemblyHeader."BA Modified Date Fields" then
+            exit;
+
+        AssemblyHeader."BA Modified Date Fields" := false;
+        AssemblyHeader."Due Date" := AssemblyHeader."BA Temp Due Date";
+        AssemblyHeader."Starting Date" := AssemblyHeader."BA Temp Starting Date";
+        AssemblyHeader."Ending Date" := AssemblyHeader."BA Temp Ending Date";
+        AssemblyHeader.CalcFields("Assemble to Order");
+        if AssemblyHeader."Assemble to Order" then begin
+            ATOLink.Get(AssemblyHeader."Document Type", AssemblyHeader."No.");
+            TempATOLink := ATOLink;
+            ATOLink.Delete(false);
+            AssemblyHeader.Validate("Due Date");
+            ATOLink := TempATOLink;
+            ATOLink.Insert(false);
+        end else
+            AssemblyHeader.Validate("Due Date");
+
+        // if not confirm(format(c1.FindReservEntry(AssemblyHeader, r1))) then
+        //     Error('');
+
+        // ReservationCheckDateConfl.AssemblyHeaderCheck(AssemblyHeader, true);
+        // ReservMgt.SetAssemblyHeader(AssemblyHeader);
+        // ReservMgt.ClearSurplus;
+        // ReservMgt.AutoTrack(AssemblyHeader."Remaining Quantity (Base)");
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reservation-Check Date Confl.", 'OnSalesLineCheckOnBeforeIssueError', '', false, false)]
@@ -3305,6 +3363,8 @@ codeunit 75010 "BA SEI Subscibers"
             if not Confirm(StrSubstNo(MultiShipmentDateMsg, SalesHeader."No.")) then
                 Error('');
     end;
+
+
 
 
 
