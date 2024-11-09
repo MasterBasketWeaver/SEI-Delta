@@ -3878,6 +3878,16 @@ codeunit 75010 "BA SEI Subscibers"
         SalesLine.Get(SalesLine.RecordId());
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"Assemble-to-Order Link", 'OnSynchronizeAsmFromSalesLineOnAfterGetAsmHeader', '', false, false)]
+    local procedure AssembleToOrderLinkOnSynchronizeAsmFromSalesLineOnAfterGetAsmHeader(var NewSalesLine: Record "Sales Line"; var AssemblyHeader: Record "Assembly Header")
+    begin
+        if NewSalesLine."Shipment Date" = 0D then begin
+            AssemblyHeader."Due Date" := NewSalesLine."Shipment Date";
+            AssemblyHeader."Starting Date" := NewSalesLine."Shipment Date";
+            AssemblyHeader."Ending Date" := NewSalesLine."Shipment Date";
+        end;
+    end;
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reservation-Check Date Confl.", 'OnSalesLineCheckOnBeforeIssueError', '', false, false)]
     local procedure ReservationCheckDateConflOnSalesLineCheckOnBeforeIssueError(var SalesLine: Record "Sales Line"; var IsHandled: Boolean)
     begin
