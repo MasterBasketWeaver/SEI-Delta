@@ -26,5 +26,11 @@ tableextension 80125 "BA Assembly Header" extends "Assembly Header"
             Caption = 'Temp Ending Date';
             Editable = false;
         }
+        field(80004; "BA Reset Linked Sales Line"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Reset Linked Sales Line';
+            Editable = false;
+        }
     }
 }
