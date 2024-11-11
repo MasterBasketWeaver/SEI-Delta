@@ -81,7 +81,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SalesLineOnAfterValdiateQuantity(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
     begin
         if Rec.Quantity <> xRec.Quantity then
-            ClearShipmentDates(Rec);
+            ClearShipmentDates(Rec, true);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeSalesLineByChangedFieldNo', '', false, false)]
@@ -94,32 +94,58 @@ codeunit 75010 "BA SEI Subscibers"
             IsHandled := true;
     end;
 
+
     local procedure ClearShipmentDates(var Rec: Record "Sales Line")
+    begin
+        ClearShipmentDates(Rec, false);
+    end;
+
+    local procedure ClearShipmentDates(var Rec: Record "Sales Line"; OverrideAssembly: Boolean)
     var
         SalesHeader: Record "Sales Header";
         AssembleToOrderLink: Record "Assemble-to-Order Link";
     begin
         if not SalesHeader.Get(Rec."Document Type", Rec."Document No.") or Rec.IsTemporary or (SalesHeader."Shipment Date" <> 0D)
                 or not (Rec."Document Type" in [Rec."Document Type"::Quote, Rec."Document Type"::Order])
-                  or AssembleToOrderLink.AsmExistsForSalesLine(Rec)
-                 then
+                then
             exit;
+        if not OverrideAssembly then
+            if AssembleToOrderLink.AsmExistsForSalesLine(Rec) then
+                exit;
+        Rec.Validate("Shipment Date", Rec."Shipment Date");
+        Rec.Validate("BA Skip Reservation Date Check", true);
         Rec.Validate("Shipment Date", 0D);
+        Rec.Validate("BA Skip Reservation Date Check", false);
+    end;
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnBeforeValidateEvent', 'Shipment Date', false, false)]
+    local procedure SalesLineOnBeforeValdiateShipmentDate(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
+    var
+        AssemblyHeader: Record "Assembly Header";
+    begin
+        if (xRec."Shipment Date" <> 0D) and (Rec."Shipment Date" = 0D) then
+            if GetLinkedAssemblyHeader(Rec, AssemblyHeader) then
+                SaveAssemblyHeaderDates(AssemblyHeader, Rec."Shipment Date");
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Shipment Date', false, false)]
     local procedure SalesLineOnAfterValdiateShipmentDate(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
     var
         SalesHeader: Record "Sales Header";
+        AssemblyHeader: Record "Assembly Header";
     begin
         if not SalesHeader.Get(Rec."Document Type", Rec."Document No.") or Rec.IsTemporary or (Rec."Shipment Date" = xRec."Shipment Date")
-                or not (Rec."Document Type" in [Rec."Document Type"::Quote, Rec."Document Type"::Order]) then
+        or not (Rec."Document Type" in [Rec."Document Type"::Quote, Rec."Document Type"::Order]) then
             exit;
         if Rec."Shipment Date" <> 0D then
             exit;
         Rec.Validate("Planned Delivery Date", 0D);
         Rec.Validate("Planned Shipment Date", 0D);
+        if GetLinkedAssemblyHeader(Rec, AssemblyHeader) then
+            RestoreAssemblyHeaderDates(AssemblyHeader, Rec);
     end;
+
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse.-Activity-Post", 'OnBeforeCheckLines', '', false, false)]
@@ -3249,32 +3275,6 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     procedure ImportFreightInvoicesToFixUpdate()
     var
         SalesInvHeader: Record "Sales Invoice Header";
@@ -3324,6 +3324,95 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    local procedure GetLinkedAssemblyHeader(var SalesLine: Record "Sales Line"; var AssemblyHeader: Record "Assembly Header"): Boolean
+    var
+        ATOLink: Record "Assemble-to-Order Link";
+    begin
+        exit(ATOLink.AsmExistsForSalesLine(SalesLine) and AssemblyHeader.Get(ATOLink."Assembly Document Type", ATOLink."Assembly Document No."));
+    end;
+
+    local procedure SaveAssemblyHeaderDates(var AssemblyHeader: Record "Assembly Header"; NewShipmentDate: Date)
+    begin
+        AssemblyHeader."BA Modified Date Fields" := true;
+        AssemblyHeader."BA Temp Due Date" := AssemblyHeader."Due Date";
+        AssemblyHeader."BA Temp Starting Date" := AssemblyHeader."Starting Date";
+        AssemblyHeader."BA Temp Ending Date" := AssemblyHeader."Ending Date";
+        AssemblyHeader."Due Date" := NewShipmentDate;
+        AssemblyHeader."Starting Date" := NewShipmentDate;
+        AssemblyHeader."Ending Date" := NewShipmentDate;
+        AssemblyHeader.Modify(false);
+    end;
+
+    local procedure RestoreAssemblyHeaderDates(var AssemblyHeader: Record "Assembly Header"; var SalesLine: Record "Sales Line")
+    var
+        ATOLink: Record "Assemble-to-Order Link";
+        TempATOLink: Record "Assemble-to-Order Link" temporary;
+    begin
+        if not AssemblyHeader."BA Modified Date Fields" then
+            exit;
+        AssemblyHeader."BA Modified Date Fields" := false;
+        if ATOLink.Get(AssemblyHeader."Document Type", AssemblyHeader."No.") then begin
+            TempATOLink := ATOLink;
+            ATOLink.Delete(false);
+            AssemblyHeader.Validate("Due Date", AssemblyHeader."BA Temp Due Date");
+            ATOLink := TempATOLink;
+            ATOLink.Insert(false);
+        end else
+            AssemblyHeader.Validate("Due Date", AssemblyHeader."BA Temp Due Date");
+        if AssemblyHeader."Starting Date" <> AssemblyHeader."BA Temp Starting Date" then
+            AssemblyHeader."Starting Date" := AssemblyHeader."BA Temp Starting Date";
+        if AssemblyHeader."Ending Date" <> AssemblyHeader."BA Temp Ending Date" then
+            AssemblyHeader."Ending Date" := AssemblyHeader."BA Temp Ending Date";
+        AssemblyHeader.Modify(true);
+        ATOLink.ReserveAsmToSale(SalesLine, SalesLine.Quantity, SalesLine."Quantity (Base)");
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Assemble-to-Order Link", 'OnSynchronizeAsmFromSalesLineOnAfterGetAsmHeader', '', false, false)]
+    local procedure AssembleToOrderLinkOnSynchronizeAsmFromSalesLineOnAfterGetAsmHeader(var AssemblyHeader: Record "Assembly Header"; var NewSalesLine: Record "Sales Line")
+    begin
+        if NewSalesLine."Shipment Date" = 0D then begin
+            NewSalesLine."Shipment Date" := AssemblyHeader."Due Date";
+            AssemblyHeader."BA Reset Linked Sales Line" := true;
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Assemble-to-Order Link", 'OnBeforeAsmHeaderModify', '', false, false)]
+    local procedure AssembleToOrderLinkOnBeforeAsmHeaderModify(var AssemblyHeader: Record "Assembly Header"; var SalesLine: Record "Sales Line")
+    begin
+        if AssemblyHeader."BA Reset Linked Sales Line" then begin
+            SalesLine."Shipment Date" := 0D;
+            AssemblyHeader."BA Reset Linked Sales Line" := false;
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Reservation-Check Date Confl.", 'OnSalesLineCheckOnBeforeIssueError', '', false, false)]
+    local procedure ReservationCheckDateConflOnSalesLineCheckOnBeforeIssueError(var SalesLine: Record "Sales Line"; var IsHandled: Boolean)
+    begin
+        if SalesLine."BA Skip Reservation Date Check" then
+            IsHandled := true;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnUpdateSalesLinesByFieldNoOnAfterCalcShouldConfirmReservationDateConflict', '', false, false)]
+    local procedure SalesHeaderOnUpdateSalesLinesByFieldNoOnAfterCalcShouldConfirmReservationDateConflict(var SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
+        SalesLine2: Record "Sales Line";
+    begin
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        if SalesLine.IsEmpty() then
+            exit;
+        SalesLine.SetFilter("Shipment Date", '<>%1', 0D);
+        if not SalesLine.FindFirst() then
+            exit;
+        SalesLine2.CopyFilters(SalesLine);
+        SalesLine2.SetFilter("Shipment Date", '<>%1&<>%2', 0D, SalesLine."Shipment Date");
+        if not SalesLine2.IsEmpty() then
+            if not Confirm(StrSubstNo(MultiShipmentDateMsg, SalesHeader."No.")) then
+                Error('');
+    end;
+
+
 
 
 
@@ -3363,5 +3452,7 @@ codeunit 75010 "BA SEI Subscibers"
         ShipmentInfoSentMsg: Label 'Shipment Details sent successfully.';
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation for %3';
+        MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
+
 }
 
