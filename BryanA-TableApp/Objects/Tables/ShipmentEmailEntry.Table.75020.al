@@ -1,4 +1,4 @@
-table 75014 "BA Shipment Email Entry"
+table 75020 "BA Shipment Email Entry"
 {
     DataClassification = CustomerContent;
     Caption = 'Shipment Email Entry';
