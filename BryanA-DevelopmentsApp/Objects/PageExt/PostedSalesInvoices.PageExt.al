@@ -54,6 +54,8 @@ pageextension 80123 "BA Posted Sales Invoices" extends "Posted Sales Invoices"
                 PromotedOnly = true;
                 Image = UpdateUnitCost;
                 Caption = 'Update Booking Dates';
+                Visible = IsdebugUser;
+                Enabled = IsdebugUser;
 
                 trigger OnAction()
                 var
@@ -88,6 +90,9 @@ pageextension 80123 "BA Posted Sales Invoices" extends "Posted Sales Invoices"
                 PromotedOnly = true;
                 Image = CalculateShipment;
                 Caption = 'Update Freight Carrier';
+                Visible = IsdebugUser;
+                Enabled = IsdebugUser;
+
 
                 trigger OnAction()
                 var
@@ -98,4 +103,16 @@ pageextension 80123 "BA Posted Sales Invoices" extends "Posted Sales Invoices"
             }
         }
     }
+
+    var
+        [InDataSet]
+        IsdebugUser: Boolean;
+
+    trigger OnOpenPage()
+    var
+        Subscribers: Codeunit "BA SEI Subscibers";
+    begin
+        IsdebugUser := Subscribers.IsDebugUser();
+    end;
+
 }

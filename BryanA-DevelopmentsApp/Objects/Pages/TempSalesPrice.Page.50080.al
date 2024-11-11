@@ -4,6 +4,7 @@ page 50080 "BA Temp Sales Price"
     PageType = List;
     SourceTableTemporary = true;
     Editable = false;
+    Caption = 'Temp Sales Price';
 
     layout
     {

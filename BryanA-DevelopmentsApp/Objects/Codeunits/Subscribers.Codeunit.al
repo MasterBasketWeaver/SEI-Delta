@@ -3847,6 +3847,13 @@ codeunit 75010 "BA SEI Subscibers"
                 TempEmailItem."Send to" := ServiceInvHeader."Ship-to E-Mail";
     end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnAfterEmailSentSuccesfully', '', false, false)]
+    local procedure DocMailingOnAfterEmailSentSuccesfully(var TempEmailItem: Record "Email Item"; ReportUsage: Integer; PostedDocNo: Code[20])
+    begin
+        if ReportUsage = GetShipmentTrackingInfoReportUsage() then
+            AddShippingEmailEntry(TempEmailItem, PostedDocNo);
+    end;
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Mail Management", 'OnBeforeRunMailDialog', '', false, false)]
     local procedure MailMgtOnBeforeRunMailDialog(var TempEmailItem: Record "Email Item"; var IsHandled: Boolean)
     begin
@@ -3854,7 +3861,26 @@ codeunit 75010 "BA SEI Subscibers"
             IsHandled := TempEmailItem."Message Type" = GetShipmentTrackingInfoReportUsage();
     end;
 
-
+    local procedure AddShippingEmailEntry(var TempEmailItem: Record "Email Item"; PostedDocNo: Code[20])
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ShippingEmailEntry: Record "BA Shipment Email Entry";
+        EntryNo: Integer;
+    begin
+        SalesInvHeader.Get(PostedDocNo);
+        if ShippingEmailEntry.FindLast() then
+            EntryNo := ShippingEmailEntry."Entry No.";
+        ShippingEmailEntry.Init();
+        ShippingEmailEntry.Validate("Entry No.", EntryNo + 1);
+        ShippingEmailEntry.Validate("User ID", UserId());
+        ShippingEmailEntry.Validate("Sent DateTime", CurrentDateTime());
+        ShippingEmailEntry.Validate("Customer No.", SalesInvHeader."Sell-to Customer No.");
+        ShippingEmailEntry.Validate("Invoice No.", SalesInvHeader."No.");
+        ShippingEmailEntry.Validate("Order No.", SalesInvHeader."Order No.");
+        ShippingEmailEntry.Validate("Package Tracking No.", SalesInvHeader."Package Tracking No.");
+        ShippingEmailEntry.Validate("Sent-to Email", TempEmailItem."Send to");
+        ShippingEmailEntry.Insert(true);
+    end;
 
 
     procedure IsDebugUser(): Boolean
@@ -4063,7 +4089,8 @@ codeunit 75010 "BA SEI Subscibers"
         CustNoLengthErr: Label '%1 must be between 6 to 8 characters, currently %2.';
         ShipmentInfoSentMsg: Label 'Shipment Details sent successfully.';
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
-        MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation for %3';
+        MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
+
 }
 
