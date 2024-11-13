@@ -19,7 +19,8 @@ table 75020 "BA Shipment Email Entry"
         {
             DataClassification = CustomerContent;
             Editable = false;
-            TableRelation = "Sales Invoice Header"."No.";
+            TableRelation = if ("Document Type" = const ("Sales Invoice")) "Sales Invoice Header"."No." else
+            if ("Document Type" = const ("Service Invoice")) "Service Invoice Header"."No.";
         }
         field(4; "Order No."; Code[20])
         {
@@ -46,6 +47,24 @@ table 75020 "BA Shipment Email Entry"
         {
             DataClassification = CustomerContent;
             Editable = false;
+        }
+        field(9; "Package Tracking No. Date"; DateTime)
+        {
+            DataClassification = CustomerContent;
+            Editable = false;
+            Caption = 'Package Tracking No. Last Modified';
+        }
+        field(10; "Posting Date"; Date)
+        {
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(11; "Document Type"; Option)
+        {
+            DataClassification = CustomerContent;
+            Editable = false;
+            OptionMembers = "Sales Invoice","Service Invoice";
+            OptionCaption = 'Sales Invoice,Service Invoice';
         }
     }
 

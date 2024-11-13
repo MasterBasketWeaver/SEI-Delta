@@ -3864,20 +3864,34 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure AddShippingEmailEntry(var TempEmailItem: Record "Email Item"; PostedDocNo: Code[20])
     var
         SalesInvHeader: Record "Sales Invoice Header";
+        ServiceInvHeader: Record "Service Invoice Header";
         ShippingEmailEntry: Record "BA Shipment Email Entry";
         EntryNo: Integer;
     begin
-        SalesInvHeader.Get(PostedDocNo);
         if ShippingEmailEntry.FindLast() then
             EntryNo := ShippingEmailEntry."Entry No.";
         ShippingEmailEntry.Init();
         ShippingEmailEntry.Validate("Entry No.", EntryNo + 1);
         ShippingEmailEntry.Validate("User ID", UserId());
         ShippingEmailEntry.Validate("Sent DateTime", CurrentDateTime());
-        ShippingEmailEntry.Validate("Customer No.", SalesInvHeader."Sell-to Customer No.");
-        ShippingEmailEntry.Validate("Invoice No.", SalesInvHeader."No.");
-        ShippingEmailEntry.Validate("Order No.", SalesInvHeader."Order No.");
-        ShippingEmailEntry.Validate("Package Tracking No.", SalesInvHeader."Package Tracking No.");
+        if SalesInvHeader.Get(PostedDocNo) then begin
+            ShippingEmailEntry.Validate("Document Type", ShippingEmailEntry."Document Type"::"Sales Invoice");
+            ShippingEmailEntry.Validate("Customer No.", SalesInvHeader."Sell-to Customer No.");
+            ShippingEmailEntry.Validate("Invoice No.", SalesInvHeader."No.");
+            ShippingEmailEntry.Validate("Order No.", SalesInvHeader."Order No.");
+            ShippingEmailEntry.Validate("Package Tracking No.", SalesInvHeader."Package Tracking No.");
+            ShippingEmailEntry.Validate("Package Tracking No. Date", SalesInvHeader."BA Package Tracking No. Date");
+            ShippingEmailEntry.Validate("Posting Date", SalesInvHeader."Posting Date");
+        end else begin
+            ServiceInvHeader.Get(PostedDocNo);
+            ShippingEmailEntry.Validate("Document Type", ShippingEmailEntry."Document Type"::"Service Invoice");
+            ShippingEmailEntry.Validate("Customer No.", ServiceInvHeader."Customer No.");
+            ShippingEmailEntry.Validate("Invoice No.", ServiceInvHeader."No.");
+            ShippingEmailEntry.Validate("Order No.", ServiceInvHeader."Order No.");
+            ShippingEmailEntry.Validate("Package Tracking No.", ServiceInvHeader."ENC Package Tracking No.");
+            ShippingEmailEntry.Validate("Package Tracking No. Date", ServiceInvHeader."BA Package Tracking No. Date");
+            ShippingEmailEntry.Validate("Posting Date", ServiceInvHeader."Posting Date");
+        end;
         ShippingEmailEntry.Validate("Sent-to Email", TempEmailItem."Send to");
         ShippingEmailEntry.Insert(true);
     end;
