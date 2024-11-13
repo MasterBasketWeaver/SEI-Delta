@@ -22,6 +22,10 @@ page 50081 "BA Shipment Email Entries"
                 {
                     ApplicationArea = all;
                 }
+                field("Document Type"; Rec."Document Type")
+                {
+                    ApplicationArea = all;
+                }
                 field("Invoice No."; Rec."Invoice No.")
                 {
                     ApplicationArea = all;
@@ -39,6 +43,14 @@ page 50081 "BA Shipment Email Entries"
                     ApplicationArea = all;
                 }
                 field("Package Tracking No."; Rec."Package Tracking No.")
+                {
+                    ApplicationArea = all;
+                }
+                field("Package Tracking No. Date"; Rec."Package Tracking No. Date")
+                {
+                    ApplicationArea = all;
+                }
+                field("Posting Date"; Rec."Posting Date")
                 {
                     ApplicationArea = all;
                 }
