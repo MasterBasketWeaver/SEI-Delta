@@ -3216,6 +3216,7 @@ codeunit 75010 "BA SEI Subscibers"
         SalesPerson: Record "Salesperson/Purchaser";
         UserSetup: Record "User Setup";
         CustName: Text;
+        SalespersonCode: Code[20];
         OrderNo: Code[20];
         Sales: Boolean;
     begin
@@ -3228,9 +3229,12 @@ codeunit 75010 "BA SEI Subscibers"
         if Sales then begin
             OrderNo := SalesInvHeader."Order No.";
             CustName := SalesInvHeader."Sell-to Customer Name";
+            SalespersonCode := SalesInvHeader."Salesperson Code";
         end else begin
+            ServiceInvHeader.Get(PostedDocNo);
             OrderNo := ServiceInvHeader."Order No.";
             CustName := ServiceInvHeader.Name;
+            SalespersonCode := ServiceInvHeader."Salesperson Code";
         end;
         if OrderNo = '' then
             OrderNo := PostedDocNo;
@@ -3238,7 +3242,7 @@ codeunit 75010 "BA SEI Subscibers"
         TempEmailItem.Subject := StrSubstNo(ShipmentDetailsSubject, CompInfo.Name, OrderNo, CustName);
         TempEmailItem."Message Type" := GetShipmentTrackingInfoReportUsage();
         TempEmailItem."Attachment File Path" := '';
-        if (SalesInvHeader."Salesperson Code" <> '') and SalesPerson.Get(SalesInvHeader."Salesperson Code") then begin
+        if (SalespersonCode <> '') and SalesPerson.Get(SalespersonCode) then begin
             UserSetup.SetRange("Salespers./Purch. Code", SalesPerson.Code);
             UserSetup.SetRange("BA Email SP On Tracking Emails", true);
             if UserSetup.FindFirst() then
@@ -3250,6 +3254,7 @@ codeunit 75010 "BA SEI Subscibers"
             else
                 TempEmailItem."Send to" := ServiceInvHeader."Ship-to E-Mail";
     end;
+
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnAfterEmailSentSuccesfully', '', false, false)]
     local procedure DocMailingOnAfterEmailSentSuccesfully(var TempEmailItem: Record "Email Item"; ReportUsage: Integer; PostedDocNo: Code[20])
