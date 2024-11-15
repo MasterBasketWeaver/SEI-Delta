@@ -159,5 +159,26 @@ tableextension 80030 "BA Customer" extends Customer
             Caption = 'Ship-to Email';
             ExtendedDatatype = EMail;
         }
+        field(80100; "BA Approval Group"; Code[10])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Group';
+            TableRelation = "BA Approval Group".Code;
+            Editable = false;
+        }
+        field(80101; "BA Government (CDN/US)"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Government (CDN/US)';
+        }
+        field(80102; "BA Trusted Agent"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Trusted Agent';
+        }
+        modify("ENC Military")
+        {
+            Caption = 'Military (CDN/US)';
+        }
     }
 }

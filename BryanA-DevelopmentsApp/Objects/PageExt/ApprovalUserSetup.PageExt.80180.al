@@ -1,5 +1,16 @@
 pageextension 80176 "BA Approval User Setup" extends "Approval User Setup"
 {
+    layout
+    {
+        addlast(Control1)
+        {
+            field("BA Receive Prod. Approvals"; Rec."BA Receive Prod. Approvals")
+            {
+                ApplicationArea = all;
+            }
+        }
+    }
+
     actions
     {
         addlast(Processing)

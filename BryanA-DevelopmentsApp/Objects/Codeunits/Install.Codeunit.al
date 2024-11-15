@@ -20,10 +20,23 @@ codeunit 75011 "BA Install Codeunit"
         // UpdateItemDescriptions();
         // DefineNonTaxTaxGroup();
         // InitiateDeptCodesPurchaseLookup();
-        PopulateShipmentTrackingInfoReportUsage();
-        PopulateShipToContactDetails();
+        // PopulateShipmentTrackingInfoReportUsage();
+        // PopulateShipToContactDetails();
+        PopulateApprovalGroups();
     end;
 
+
+    local procedure PopulateApprovalGroups()
+    var
+        Customer: Record Customer;
+        SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+    begin
+        Customer.SetRange("BA Approval Group", '');
+        if Customer.FindSet(true) then
+            repeat
+                SalesApprovalMgt.UpdateCustomerApprovalGroup(Customer, false);
+            until Customer.Next() = 0;
+    end;
 
 
     local procedure PopulateShipToContactDetails()

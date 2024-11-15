@@ -85,6 +85,14 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
                         ShowMandatoryFields := not Rec."BA Non-Mandatory Customer";
                     end;
                 }
+                field("BA Trusted Agent"; Rec."BA Trusted Agent")
+                {
+                    ApplicationArea = all;
+                }
+                field("BA Approval Group"; Rec."BA Approval Group")
+                {
+                    ApplicationArea = all;
+                }
             }
 
         }
@@ -330,6 +338,10 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
                 ApplicationArea = all;
             }
             field("BA Constrained"; Rec."BA Constrained")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Government (CDN/US)"; Rec."BA Government (CDN/US)")
             {
                 ApplicationArea = all;
             }
