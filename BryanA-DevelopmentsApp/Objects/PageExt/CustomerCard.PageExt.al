@@ -431,13 +431,8 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
     end;
 
     local procedure UpdateBalanaceDisplay()
-    var
-        CustPostingGroup: Record "Customer Posting Group";
     begin
-        if Rec."Customer Posting Group" = '' then
-            ShowLCYBalances := true
-        else
-            ShowLCYBalances := CustPostingGroup.Get(Rec."Customer Posting Group") and not CustPostingGroup."BA Show Non-Local Currency";
+        ShowLCYBalances := SalesApprovalMgt.UseLocalAmounts(Rec);
     end;
 
 
@@ -502,6 +497,7 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
 
     var
         Subscribers: Codeunit "BA SEI Subscibers";
+        SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         AdjmtCost: Decimal;
         AdjCustProfit: Decimal;
         AdjProfitPct: Decimal;

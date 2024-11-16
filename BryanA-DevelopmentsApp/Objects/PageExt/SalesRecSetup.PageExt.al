@@ -4,7 +4,11 @@ pageextension 80075 "BA Sales & Rec. Setup" extends "Sales & Receivables Setup"
     {
         addlast(General)
         {
-            field("BA Default Reason Code"; "BA Default Reason Code")
+            field("BA Default Reason Code"; Rec."BA Default Reason Code")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Prepaid Order Limit"; Rec."BA Prepaid Order Limit")
             {
                 ApplicationArea = all;
             }
