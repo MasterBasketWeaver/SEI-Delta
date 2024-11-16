@@ -19,5 +19,11 @@ tableextension 80036 "BA Sales & Rec. Setup" extends "Sales & Receivables Setup"
             Caption = 'Default Reason Code';
             TableRelation = "Reason Code".Code;
         }
+        field(80005; "BA Prepaid Order Limit"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Prepaid Order Increase Limit';
+            MinValue = 0;
+        }
     }
 }
