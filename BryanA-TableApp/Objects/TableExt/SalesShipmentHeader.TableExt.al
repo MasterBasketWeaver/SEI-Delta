@@ -82,5 +82,17 @@ tableextension 80060 "BA Sales Shpt. Header" extends "Sales Shipment Header"
             ExtendedDatatype = EMail;
             Editable = false;
         }
+        field(80110; "BA Approval Count"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Count';
+            Editable = false;
+        }
+        field(80111; "BA Last Approval Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Last Approval Amount';
+            Editable = false;
+        }
     }
 }

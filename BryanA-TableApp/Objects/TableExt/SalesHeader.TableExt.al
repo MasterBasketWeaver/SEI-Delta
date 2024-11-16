@@ -103,5 +103,23 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Caption = 'Ship-to Email';
             ExtendedDatatype = EMail;
         }
+        field(80110; "BA Approval Count"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Count';
+            Editable = false;
+        }
+        field(80111; "BA Last Approval Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Last Approval Amount';
+            Editable = false;
+        }
+        field(80112; "BA Use Default Workflow"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Use Default Workflow';
+            Editable = false;
+        }
     }
 }
