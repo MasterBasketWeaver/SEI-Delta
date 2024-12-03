@@ -190,6 +190,17 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
                 ApplicationArea = all;
             }
         }
+        addlast(General)
+        {
+            field("BA Approval Count"; Rec."BA Approval Count")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Last Approval Amount"; Rec."BA Last Approval Amount")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
 

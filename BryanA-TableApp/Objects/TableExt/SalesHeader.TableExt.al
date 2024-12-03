@@ -121,5 +121,11 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Caption = 'Use Default Workflow';
             Editable = false;
         }
+        field(80113; "BA Use Custom Workflow Start"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Use Custom Workflow Start';
+            Editable = false;
+        }
     }
 }

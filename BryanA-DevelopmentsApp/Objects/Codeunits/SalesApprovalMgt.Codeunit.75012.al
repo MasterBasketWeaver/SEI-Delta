@@ -96,20 +96,45 @@ codeunit 75012 "BA Sales Approval Mgt."
         RecRef.SetTable(SalesHeader);
         if SalesHeader."BA Use Default Workflow" then begin
             SalesHeader."BA Use Default Workflow" := false;
+            SalesHeader.Modify(false);
             exit;
         end;
 
-        if FunctionName = WorkflowEventHandling.RunWorkflowOnSendSalesDocForApprovalCode() then
-            if WorkflowMgt.FindWorkflowStepInstance(Variant, Variant, WorkflowStepInstance, FunctionName) then
-                SendSalespersonApproval(IsHandled, SalesHeader, FunctionName);
+        case FunctionName of
+            WorkflowEventHandling.RunWorkflowOnCancelSalesApprovalRequestCode():
+                Message('cancelling');
+            WorkflowEventHandling.RunWorkflowOnSendSalesDocForApprovalCode():
+                if WorkflowMgt.FindWorkflowStepInstance(Variant, Variant, WorkflowStepInstance, FunctionName) then
+                    SendSalespersonApproval(IsHandled, SalesHeader, FunctionName);
+            WorkflowEventHandling.RunWorkflowOnAfterReleaseSalesDocCode():
+                UpdateApprovalFields(SalesHeader);
+        end
+    end;
 
 
-        // case true of
-        //     (FunctionName = WorkflowEventHandling.RunWorkflowOnSendSalesDocForApprovalCode()) and (RecRef.Number = Database::"Sales Header"):
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Management", 'OnBeforeFindMatchingWorkflowStepInstance', '', false, false)]
+    local procedure WorkflowMgtOnBeforeFindMatchingWorkflowStepInstance(var RecordRef: RecordRef; var WorkflowStepInstanceLoop: Record "Workflow Step Instance"; FunctionName: Code[128]; StartWorkFlow: Boolean; var IsHandled: Boolean; var Result: Boolean)
+    var
+        SalesHeader: Record "Sales Header";
+    begin
+        IF RecordRef.Number <> Database::"Sales Header" then
+            exit;
+        RecordRef.SetTable(SalesHeader);
+        if SalesHeader."BA Use Custom Workflow Start" then begin
+            IsHandled := true;
+            Result := false;
+        end;
+    end;
 
-        //         // (FunctionName = WorkflowEventHandling.RunWorkflowOnSendPurchaseDocForApprovalCode()) and (RecRef.Number = Database::"Purchase Header"):
-        //         //     SendPurchaserApproval(IsHandled, RecRef, Variant, FunctionName);
-        // end;
+
+    local procedure UpdateApprovalFields(var SalesHeader: Record "Sales Header")
+    begin
+        if SalesHeader."BA Use Custom Workflow Start" then
+            exit;
+        SalesHeader.CalcFields(Amount);
+        SalesHeader.Validate("BA Last Approval Amount", SalesHeader.Amount);
+        SalesHeader.Validate("BA Approval Count", SalesHeader."BA Approval Count" + 1);
+        SalesHeader.Modify(true);
     end;
 
     [TryFunction]
@@ -122,7 +147,6 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         Customer: Record Customer;
         ApprovalGroup: Record "BA Approval Group";
-        FirstApproval: Boolean;
     begin
         Customer.Get(SalesHeader."Bill-to Customer No.");
         if Customer."BA Approval Group" = '' then
@@ -130,24 +154,17 @@ codeunit 75012 "BA Sales Approval Mgt."
         if not ApprovalGroup.Get(Customer."BA Approval Group") then
             exit;
 
-        FirstApproval := SalesHeader."BA Approval Count" = 0;
-        SalesHeader.Validate("BA Approval Count", SalesHeader."BA Approval Count" + 1);
-        SalesHeader.Modify(false);
-
         SalesHeader.CalcFields(Amount);
         Customer.CalcFields(Balance, "Balance (LCY)");
         case true of
             ApprovalGroup."Is Prepaid":
-                SendPrepaidApproval(SalesHeader, FirstApproval);
+                SendPrepaidApproval(SalesHeader, SalesHeader."BA Approval Count" = 0);
             ApprovalGroup."Is Government" or ApprovalGroup."Is Military":
                 SendGovernmentMilitaryApproval(SalesHeader, Customer);
             else
                 SendApprovalOnOverDue(SalesHeader, Customer, ApprovalGroup);
         end;
 
-        SalesHeader.Get(SalesHeader.RecordId());
-        SalesHeader.Validate("BA Last Approval Amount", SalesHeader.Amount);
-        SalesHeader.Modify(false);
         IsHandled := true;
     end;
 
@@ -162,7 +179,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         if FirstApproval or (SalesHeader.Amount > (SalesHeader."BA Last Approval Amount" + SalesRecSetup."BA Prepaid Order Limit")) then
             SendApprovalRequest(SalesHeader)
         else
-            ReleaseSalesDocument.PerformManualRelease(SalesHeader);
+            ReleaseSalesDoc(SalesHeader);
     end;
 
     local procedure SendGovernmentMilitaryApproval(var SalesHeader: Record "Sales Header"; var Customer: Record Customer)
@@ -171,10 +188,10 @@ codeunit 75012 "BA Sales Approval Mgt."
         CreditLimit: Decimal;
     begin
         if HasZeroCreditLimit(Customer, CreditLimit) then
-            ReleaseSalesDocument.PerformManualRelease(SalesHeader)
+            ReleaseSalesDoc(SalesHeader)
         else
             if (SalesHeader.Amount + Customer.Balance) <= CreditLimit then
-                ReleaseSalesDocument.PerformManualRelease(SalesHeader)
+                ReleaseSalesDoc(SalesHeader)
             else
                 SendApprovalRequest(SalesHeader);
     end;
@@ -185,11 +202,21 @@ codeunit 75012 "BA Sales Approval Mgt."
     begin
         if ApprovalGroup."Is Trusted Agent" then
             if HasZeroCreditLimit(Customer, CreditLimit) then
-                Error('Customer %1 has credit terms but no credit limit setup. Please contact the accounting department.', Customer."No.");
+                Error(CreditLimitErr, Customer."No.");
         if ((SalesHeader.Amount + Customer.Balance) <= CreditLimit) and CustomerHasNoOverDueInvoices(Customer, ApprovalGroup) then
-            ReleaseSalesDocument.PerformManualRelease(SalesHeader)
+            ReleaseSalesDoc(SalesHeader)
         else
             SendApprovalRequest(SalesHeader);
+    end;
+
+    local procedure ReleaseSalesDoc(var SalesHeader: Record "Sales Header")
+    begin
+        SalesHeader.Validate("BA Use Custom Workflow Start", true);
+        SalesHeader.Modify(true);
+        ReleaseSalesDocument.PerformManualRelease(SalesHeader);
+        SalesHeader.Get(SalesHeader.RecordId());
+        SalesHeader.Validate("BA Use Custom Workflow Start", false);
+        SalesHeader.Modify(true);
     end;
 
     local procedure SendApprovalRequest(var SalesHeader: Record "Sales Header")
@@ -249,6 +276,9 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         ApprovalMgt: Codeunit "Approvals Mgmt.";
         ReleaseSalesDocument: Codeunit "Release Sales Document";
+
+
+        CreditLimitErr: Label 'Customer %1 has credit terms but no credit limit setup. Please contact the accounting department.';
 
 
         // procedure CreateSalespersonApprovalRequest(var SalesHeader: Record "Sales Header"; ApproverUserId: Code[50]; WorkflowID: Guid)
