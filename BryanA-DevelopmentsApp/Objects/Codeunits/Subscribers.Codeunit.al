@@ -1225,12 +1225,11 @@ codeunit 75010 "BA SEI Subscibers"
         Rec.Modify(false);
     end;
 
-    local procedure UseLCYCreditLimit(var Customer: Record Customer): Boolean
+    procedure UseLCYCreditLimit(var Customer: Record Customer): Boolean
     var
         CustPostingGroup: Record "Customer Posting Group";
     begin
-        exit((Customer."Customer Posting Group" = '') or
-            (CustPostingGroup.Get(Customer."Customer Posting Group") and not CustPostingGroup."BA Show Non-Local Currency"));
+        exit((Customer."Customer Posting Group" = '') or (CustPostingGroup.Get(Customer."Customer Posting Group") and not CustPostingGroup."BA Show Non-Local Currency"));
     end;
 
 

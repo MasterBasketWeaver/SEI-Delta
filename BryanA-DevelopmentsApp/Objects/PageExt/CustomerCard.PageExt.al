@@ -432,7 +432,7 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
 
     local procedure UpdateBalanaceDisplay()
     begin
-        ShowLCYBalances := SalesApprovalMgt.UseLocalAmounts(Rec);
+        ShowLCYBalances := Subscribers.UseLCYCreditLimit(Rec);
     end;
 
 
@@ -497,7 +497,6 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
 
     var
         Subscribers: Codeunit "BA SEI Subscibers";
-        SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         AdjmtCost: Decimal;
         AdjCustProfit: Decimal;
         AdjProfitPct: Decimal;

@@ -231,7 +231,7 @@ codeunit 75012 "BA Sales Approval Mgt."
 
     local procedure HasZeroCreditLimit(var Customer: Record Customer; var CreditLimit: Decimal): Boolean
     begin
-        if UseLocalAmounts(Customer) then
+        if Subscribers.UseLCYCreditLimit(Customer) then
             CreditLimit := Customer."Credit Limit (LCY)"
         else
             CreditLimit := Customer."BA Credit Limit";
@@ -260,15 +260,6 @@ codeunit 75012 "BA Sales Approval Mgt."
         exit(CustLedgerEntry.IsEmpty());
     end;
 
-    procedure UseLocalAmounts(var Customer: Record Customer): Boolean
-    var
-        CustPostingGroup: Record "Customer Posting Group";
-    begin
-        if Customer."Customer Posting Group" = '' then
-            exit(true);
-        exit(CustPostingGroup.Get(Customer."Customer Posting Group") and not CustPostingGroup."BA Show Non-Local Currency");
-    end;
-
 
 
 
@@ -276,6 +267,7 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         ApprovalMgt: Codeunit "Approvals Mgmt.";
         ReleaseSalesDocument: Codeunit "Release Sales Document";
+        Subscribers: Codeunit "BA SEI Subscibers";
 
 
         CreditLimitErr: Label 'Customer %1 has credit terms but no credit limit setup. Please contact the accounting department.';
