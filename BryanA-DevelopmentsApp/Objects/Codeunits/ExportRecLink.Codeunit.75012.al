@@ -20,7 +20,7 @@ codeunit 75012 "BA Export Record Link"
         RecCount: Integer;
         i: Integer;
     begin
-
+        exit;
         if not Subscribers.IsDebugUser() then
             exit;
 
