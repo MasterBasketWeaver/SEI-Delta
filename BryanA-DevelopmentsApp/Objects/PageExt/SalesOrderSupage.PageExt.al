@@ -87,6 +87,10 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
                 ApplicationArea = all;
                 Editable = CanEditBookingDate;
             }
+            field("BA New Business - TDG"; Rec."BA New Business - TDG")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 
