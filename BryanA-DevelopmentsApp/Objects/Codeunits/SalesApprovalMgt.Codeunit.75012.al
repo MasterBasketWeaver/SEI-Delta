@@ -75,6 +75,10 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
 
+
+
+
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Management", 'OnBeforeHandleEventWithxRec', '', false, false)]
     local procedure WorkflowMgtOnBeforeHandleEventWithxRec(FunctionName: Code[128]; Variant: Variant; var IsHandled: Boolean)
     var
@@ -84,8 +88,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         WorkflowMgt: Codeunit "Workflow Management";
         RecRef: RecordRef;
     begin
-        if not Confirm(FunctionName) then
-            Error('');
+
 
 
 
@@ -94,6 +97,10 @@ codeunit 75012 "BA Sales Approval Mgt."
         if RecRef.Number <> Database::"Sales Header" then
             exit;
         RecRef.SetTable(SalesHeader);
+
+        if not Confirm('%1, %2', false, FunctionName, SalesHeader."BA Use Default Workflow") then
+            Error('');
+
         if SalesHeader."BA Use Default Workflow" then begin
             SalesHeader."BA Use Default Workflow" := false;
             SalesHeader.Modify(false);
@@ -101,8 +108,8 @@ codeunit 75012 "BA Sales Approval Mgt."
         end;
 
         case FunctionName of
-            WorkflowEventHandling.RunWorkflowOnCancelSalesApprovalRequestCode():
-                Message('cancelling');
+            // WorkflowEventHandling.RunWorkflowOnCancelSalesApprovalRequestCode():
+            //     Message('cancelling');
             WorkflowEventHandling.RunWorkflowOnSendSalesDocForApprovalCode():
                 if WorkflowMgt.FindWorkflowStepInstance(Variant, Variant, WorkflowStepInstance, FunctionName) then
                     SendSalespersonApproval(IsHandled, SalesHeader, FunctionName);
@@ -153,7 +160,6 @@ codeunit 75012 "BA Sales Approval Mgt."
             UpdateCustomerApprovalGroup(Customer);
         if not ApprovalGroup.Get(Customer."BA Approval Group") then
             exit;
-
         SalesHeader.CalcFields(Amount);
         Customer.CalcFields(Balance, "Balance (LCY)");
         case true of
@@ -184,26 +190,25 @@ codeunit 75012 "BA Sales Approval Mgt."
 
     local procedure SendGovernmentMilitaryApproval(var SalesHeader: Record "Sales Header"; var Customer: Record Customer)
     var
-        SalesRecSetup: Record "Sales & Receivables Setup";
-        CreditLimit: Decimal;
+        ApprovalGroup: Record "BA Approval Group";
     begin
-        if HasZeroCreditLimit(Customer, CreditLimit) then
-            ReleaseSalesDoc(SalesHeader)
-        else
-            if (SalesHeader.Amount + Customer.Balance) <= CreditLimit then
-                ReleaseSalesDoc(SalesHeader)
-            else
-                SendApprovalRequest(SalesHeader);
+        SendApprovalOnCreditLimitExceeded(SalesHeader, Customer, ApprovalGroup, true);
     end;
 
     local procedure SendApprovalOnOverDue(var SalesHeader: Record "Sales Header"; var Customer: Record Customer; var ApprovalGroup: Record "BA Approval Group")
+    begin
+        SendApprovalOnCreditLimitExceeded(SalesHeader, Customer, ApprovalGroup, false);
+    end;
+
+
+    local procedure SendApprovalOnCreditLimitExceeded(var SalesHeader: Record "Sales Header"; var Customer: Record Customer; var ApprovalGroup: Record "BA Approval Group"; ByPassLimit: Boolean)
     var
+        Balance: Decimal;
         CreditLimit: Decimal;
     begin
-        if ApprovalGroup."Is Trusted Agent" then
-            if HasZeroCreditLimit(Customer, CreditLimit) then
-                Error(CreditLimitErr, Customer."No.");
-        if ((SalesHeader.Amount + Customer.Balance) <= CreditLimit) and CustomerHasNoOverDueInvoices(Customer, ApprovalGroup) then
+        if HasZeroCreditLimit(Customer, CreditLimit, Balance) and not ByPassLimit and ApprovalGroup."Is Trusted Agent" then
+            Error(CreditLimitErr, Customer."No.");
+        if ((SalesHeader.Amount + Balance) < CreditLimit) and (ByPassLimit or CustomerHasNoOverDueInvoices(Customer, ApprovalGroup)) then
             ReleaseSalesDoc(SalesHeader)
         else
             SendApprovalRequest(SalesHeader);
@@ -229,12 +234,15 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
 
-    local procedure HasZeroCreditLimit(var Customer: Record Customer; var CreditLimit: Decimal): Boolean
+    local procedure HasZeroCreditLimit(var Customer: Record Customer; var CreditLimit: Decimal; var Balance: Decimal): Boolean
     begin
-        if Subscribers.UseLCYCreditLimit(Customer) then
-            CreditLimit := Customer."Credit Limit (LCY)"
-        else
+        if Subscribers.UseLCYCreditLimit(Customer) then begin
+            CreditLimit := Customer."Credit Limit (LCY)";
+            Balance := Customer."Balance (LCY)";
+        end else begin
             CreditLimit := Customer."BA Credit Limit";
+            Balance := Customer.Balance;
+        end;
         exit(CreditLimit = 0);
     end;
 
@@ -253,9 +261,9 @@ codeunit 75012 "BA Sales Approval Mgt."
 
         ApprovalGroup.TestField("Overdue Date Formulate");
         CustLedgerEntry.SetCurrentKey("Customer No.", Open, Positive, "Due Date", "Currency Code");
-        CustLedgerEntry.SetRange("Customer No.");
+        CustLedgerEntry.SetRange("Customer No.", Customer."No.");
         CustLedgerEntry.SetRange(Open, true);
-        CustLedgerEntry.SetFilter("Due Date", '<%1', OverdueDate);
+        CustLedgerEntry.SetFilter("Due Date", '>=%1', OverdueDate);
         CustLedgerEntry.SetRange("Document Type", CustLedgerEntry."Document Type"::Invoice);
         exit(CustLedgerEntry.IsEmpty());
     end;
