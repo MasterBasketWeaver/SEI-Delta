@@ -20,8 +20,8 @@ codeunit 75011 "BA Install Codeunit"
         // UpdateItemDescriptions();
         // DefineNonTaxTaxGroup();
         // InitiateDeptCodesPurchaseLookup();
-        PopulateShipmentTrackingInfoReportUsage();
-        PopulateShipToContactDetails();
+        // PopulateShipmentTrackingInfoReportUsage();
+        // PopulateShipToContactDetails();
     end;
 
 
