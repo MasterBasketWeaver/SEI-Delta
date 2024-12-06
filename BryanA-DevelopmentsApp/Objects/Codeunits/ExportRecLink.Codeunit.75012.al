@@ -1,10 +1,5 @@
 codeunit 75012 "BA Export Record Link"
 {
-    trigger OnRun()
-    begin
-        // ExportRecordLinkToExcel();
-    end;
-
 
     //OnBeforeCreateExcelFile
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export Analysis View", 'OnBeforeCreateExcelFile', '', false, false)]
@@ -14,6 +9,7 @@ codeunit 75012 "BA Export Record Link"
         RecordLink: Record "Record Link";
         ExcelBuffer2: Record "Excel Buffer" temporary;
         TypeHelper: Codeunit "Type Helper";
+        Subscribers: Codeunit "BA SEI Subscibers";
         RecRef: RecordRef;
         FldRef: FieldRef;
         Window: Dialog;
@@ -24,7 +20,10 @@ codeunit 75012 "BA Export Record Link"
         RecCount: Integer;
         i: Integer;
     begin
-        RecordLink.SetRange("Link ID", 90, 130);
+
+        if not Subscribers.IsDebugUser() then
+            exit;
+
 
 
         if not RecordLink.FindSet() then
