@@ -34,5 +34,11 @@ tableextension 80106 "BA Sales Line Archive" extends "Sales Line Archive"
             Editable = false;
             OptionMembers = " ","Open","Closed/Lost","Closed/Other","Archive";
         }
+        field(80065; "BA New Business - TDG"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business - TDG';
+            Editable = false;
+        }
     }
 }

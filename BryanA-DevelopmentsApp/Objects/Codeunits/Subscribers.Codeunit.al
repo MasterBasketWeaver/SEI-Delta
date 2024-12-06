@@ -3907,13 +3907,19 @@ codeunit 75010 "BA SEI Subscibers"
         exit(UserId() = 'SEI-IND\BRYANBCDEV');
     end;
 
+    //do not pass as reference else page cannot save
     procedure UpdateBookingDate(SalesInvLine: Record "Sales Invoice Line"; NewDate: Date)
     begin
         SalesInvLine.Validate("BA Booking Date", NewDate);
         SalesInvLine.Modify(true);
     end;
 
-
+    //do not pass as reference else page cannot save
+    procedure UpdateNewBusiness(SalesInvLine: Record "Sales Invoice Line"; NewBusiness: Boolean)
+    begin
+        SalesInvLine.Validate("BA New Business - TDG", NewBusiness);
+        SalesInvLine.Modify(true);
+    end;
 
 
     local procedure GetLinkedAssemblyHeader(var SalesLine: Record "Sales Line"; var AssemblyHeader: Record "Assembly Header"): Boolean

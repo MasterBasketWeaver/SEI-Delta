@@ -12,5 +12,10 @@ tableextension 80080 "BA Sales Invoice Line" extends "Sales Invoice Line"
             DataClassification = CustomerContent;
             Caption = 'Booking Date';
         }
+        field(80065; "BA New Business - TDG"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business - TDG';
+        }
     }
 }
