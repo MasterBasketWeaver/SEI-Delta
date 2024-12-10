@@ -41,5 +41,10 @@ tableextension 80002 "BA Sales Line" extends "Sales Line"
             Editable = false;
             Description = 'System field to allow Shipment Date to be deleted when there is a linked Assembly Header.';
         }
+        field(80065; "BA New Business - TDG"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business - TDG';
+        }
     }
 }

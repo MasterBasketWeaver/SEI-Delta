@@ -64,6 +64,13 @@ pageextension 80076 "BA Sales Quote Subpage" extends "Sales Quote Subform"
                 exit(Text <> '');
             end;
         }
+        addlast(Control1)
+        {
+            field("BA New Business - TDG"; Rec."BA New Business - TDG")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     trigger OnOpenPage()
