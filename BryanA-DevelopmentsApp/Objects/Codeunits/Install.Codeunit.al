@@ -22,20 +22,54 @@ codeunit 75011 "BA Install Codeunit"
         // InitiateDeptCodesPurchaseLookup();
         // PopulateShipmentTrackingInfoReportUsage();
         // PopulateShipToContactDetails();
-        PopulateApprovalGroups();
+        PopulateCustomerApprovalGroups();
     end;
 
 
-    local procedure PopulateApprovalGroups()
+    local procedure PopulateCustomerApprovalGroups()
     var
         Customer: Record Customer;
+        ApprovalGroup: Record "BA Approval Group";
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
     begin
+        if ApprovalGroup.IsEmpty() then
+            PopulateApprovalGroups();
         Customer.SetRange("BA Approval Group", '');
         if Customer.FindSet(true) then
             repeat
                 SalesApprovalMgt.UpdateCustomerApprovalGroup(Customer, false);
             until Customer.Next() = 0;
+    end;
+
+    local procedure PopulateApprovalGroups()
+    var
+        ApprovalGroup: Record "BA Approval Group";
+    begin
+        ApprovalGroup.Init();
+        ApprovalGroup.Code := 'A';
+        ApprovalGroup.Description := 'Prepaid';
+        ApprovalGroup."Is Prepaid" := true;
+        ApprovalGroup.Insert();
+
+        ApprovalGroup.Init();
+        ApprovalGroup.Code := 'B';
+        ApprovalGroup.Description := 'Net XX';
+        Evaluate(ApprovalGroup."Overdue Date Formula", '<+15D>');
+        ApprovalGroup.Insert();
+
+        ApprovalGroup.Init();
+        ApprovalGroup.Code := 'C';
+        ApprovalGroup.Description := 'Military/Government';
+        ApprovalGroup."Is Military" := true;
+        ApprovalGroup."Is Government" := true;
+        ApprovalGroup.Insert();
+
+        ApprovalGroup.Init();
+        ApprovalGroup.Code := 'D';
+        ApprovalGroup.Description := 'Trusted Agent';
+        ApprovalGroup."Is Trusted Agent" := true;
+        Evaluate(ApprovalGroup."Overdue Date Formula", '<+30D>');
+        ApprovalGroup.Insert();
     end;
 
 
