@@ -22,7 +22,7 @@ page 50082 "BA Approval Groups"
                 {
                     ApplicationArea = all;
                 }
-                field("Overdue Date Formulate"; Rec."Overdue Date Formulate")
+                field("Overdue Date Formulate"; Rec."Overdue Date Formula")
                 {
                     ApplicationArea = all;
                     ShowMandatory = NeedOverDue;

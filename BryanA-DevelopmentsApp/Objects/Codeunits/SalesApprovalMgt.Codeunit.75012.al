@@ -257,9 +257,9 @@ codeunit 75012 "BA Sales Approval Mgt."
         PaymentTerms.Get(Customer."Payment Terms Code");
         PaymentTerms.TestField("Due Date Calculation");
 
-        OverdueDate := CalcDate(ApprovalGroup."Overdue Date Formulate", Today());
+        OverdueDate := CalcDate(ApprovalGroup."Overdue Date Formula", Today());
 
-        ApprovalGroup.TestField("Overdue Date Formulate");
+        ApprovalGroup.TestField("Overdue Date Formula");
         CustLedgerEntry.SetCurrentKey("Customer No.", Open, Positive, "Due Date", "Currency Code");
         CustLedgerEntry.SetRange("Customer No.", Customer."No.");
         CustLedgerEntry.SetRange(Open, true);
@@ -279,57 +279,6 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
         CreditLimitErr: Label 'Customer %1 has credit terms but no credit limit setup. Please contact the accounting department.';
-
-
-        // procedure CreateSalespersonApprovalRequest(var SalesHeader: Record "Sales Header"; ApproverUserId: Code[50]; WorkflowID: Guid)
-        // begin
-        //     if SalesHeader.Status = SalesHeader.Status::Released then
-        //         Error(SalesOrderAlreadyReleasedErr, SalesHeader."No.");
-        //     if SalesHeader.Status = SalesHeader.Status::"Pending Approval" then
-        //         Error(SalesOrderAlreadyPendingApprovalErr, SalesHeader."No.");
-        //     CreateSalespersonPurchaseApprovalEntry(Database::"Sales Header", Enum::"Approval Document Type"::Order, SalesHeader."No.", SalesHeader.RecordId(), ApproverUserId, WorkflowID);
-        //     SalesHeader.Validate(Status, SalesHeader.Status::"Pending Approval");
-        //     SalesHeader.Modify(true);
-        // end;
-
-        // procedure CreatePurchaserApprovalRequest(var PurchaseHeader: Record "Purchase Header"; ApproverUserId: Code[50]; WorkflowID: Guid)
-        // begin
-        //     if PurchaseHeader.Status = PurchaseHeader.Status::Released then
-        //         Error(PurchaseInvoiceAlreadyReleasedErr, PurchaseHeader."No.");
-        //     if PurchaseHeader.Status = PurchaseHeader.Status::"Pending Approval" then
-        //         Error(PurchaseInvoiceAlreadyPendingApprovalErr, PurchaseHeader."No.");
-        //     CreateSalespersonPurchaseApprovalEntry(Database::"Purchase Header", Enum::"Approval Document Type"::Invoice, PurchaseHeader."No.", PurchaseHeader.RecordId(), ApproverUserId, WorkflowID);
-        //     PurchaseHeader.Validate(Status, PurchaseHeader.Status::"Pending Approval");
-        //     PurchaseHeader.Modify(true);
-        // end;
-
-        // local procedure CreateSalespersonPurchaseApprovalEntry(TableNo: Integer; DocType: Enum "Approval Document Type"; DocNo: Code[20]; RecId: RecordId; ApproverID: Code[50]; WorkflowID: Guid)
-        // var
-        //     ApprovalEntry: Record "Approval Entry";
-        //     CurrentTime: DateTime;
-        //     EntryNo: Integer;
-        // begin
-        //     if ApprovalEntry.FindLast() then
-        //         EntryNo := ApprovalEntry."Entry No.";
-        //     CurrentTime := CurrentDateTime();
-        //     ApprovalEntry.Init();
-        //     ApprovalEntry."Entry No." := EntryNo + 1;
-        //     ApprovalEntry.Validate("Table ID", TableNo);
-        //     ApprovalEntry.Validate("Document Type", DocType);
-        //     ApprovalEntry.Validate("Document No.", DocNo);
-        //     ApprovalEntry.Validate("Sender ID", UserId());
-        //     ApprovalEntry.Validate("Approver ID", ApproverID);
-        //     ApprovalEntry.Validate(Status, ApprovalEntry.Status::Open);
-        //     ApprovalEntry.Validate("Date-Time Sent for Approval", CurrentTime);
-        //     ApprovalEntry.Validate("Last Date-Time Modified", CurrentTime);
-        //     ApprovalEntry.Validate("Last Modified By User ID", UserId());
-        //     ApprovalEntry.Validate("Record ID to Approve", RecId);
-        //     ApprovalEntry.Validate("Workflow Step Instance ID", WorkflowID);
-        //     ApprovalEntry.Validate("TA Sales/Purchase Approval", true);
-        //     ApprovalEntry.Insert(true);
-
-        //     CreateNotification(ApprovalEntry);
-        // end;
 }
 
 

@@ -14,7 +14,7 @@ table 75014 "BA Approval Group"
         {
             DataClassification = CustomerContent;
         }
-        field(3; "Overdue Date Formulate"; DateFormula)
+        field(3; "Overdue Date Formula"; DateFormula)
         {
             DataClassification = CustomerContent;
         }
