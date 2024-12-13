@@ -206,8 +206,12 @@ codeunit 75012 "BA Sales Approval Mgt."
         Balance: Decimal;
         CreditLimit: Decimal;
     begin
-        if HasZeroCreditLimit(Customer, CreditLimit, Balance) and not ByPassLimit and ApprovalGroup."Is Trusted Agent" then
-            Error(CreditLimitErr, Customer."No.");
+        if HasZeroCreditLimit(Customer, CreditLimit, Balance) then //and not ByPassLimit and  then
+            if ByPassLimit then
+                ReleaseSalesDoc(SalesHeader)
+            else
+                if ApprovalGroup."Is Trusted Agent" then
+                    Error(CreditLimitErr, Customer."No.");
         if ((SalesHeader.Amount + Balance) < CreditLimit) and (ByPassLimit or CustomerHasNoOverDueInvoices(Customer, ApprovalGroup)) then
             ReleaseSalesDoc(SalesHeader)
         else
