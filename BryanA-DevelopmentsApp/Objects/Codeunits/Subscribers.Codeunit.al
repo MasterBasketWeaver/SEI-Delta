@@ -1209,7 +1209,7 @@ codeunit 75010 "BA SEI Subscibers"
         SalesHeader: Record "Sales Header";
         RecRef: RecordRef;
     begin
-        if not RecRef.Get(Rec."Record ID to Approve") or (RecRef.Number <> Database::"Sales Header") then
+        if not RecRef.Get(Rec."Record ID to Approve") or (RecRef.Number() <> Database::"Sales Header") then
             exit;
         RecRef.SetTable(SalesHeader);
         Rec."BA Customer Name" := SalesHeader."Bill-to Name";
@@ -1222,6 +1222,7 @@ codeunit 75010 "BA SEI Subscibers"
         else
             Rec."BA Credit Limit" := Customer."BA Credit Limit";
         Rec.CalcFields("BA Last Sales Activity");
+        Rec."BA Approval Group" := Customer."BA Approval Group";
         Rec.Modify(false);
     end;
 
