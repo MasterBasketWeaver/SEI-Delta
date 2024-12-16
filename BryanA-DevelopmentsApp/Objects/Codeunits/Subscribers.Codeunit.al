@@ -3412,26 +3412,26 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnAfterInsertEvent', '', false, false)]
-    local procedure PaymentTermsOnAfterInsertEvent()
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeInsertEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeInsertEvent()
     begin
         CheckIfCanEditPaymentTerms();
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnAfterModifyEvent', '', false, false)]
-    local procedure PaymentTermsOnAfterModifyEvent()
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeModifyEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeModifyEvent()
     begin
         CheckIfCanEditPaymentTerms();
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnAfterDeleteEvent', '', false, false)]
-    local procedure PaymentTermsOnAfterDeleteEvent()
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeDeleteEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeDeleteEvent()
     begin
         CheckIfCanEditPaymentTerms();
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnAfterRenameEvent', '', false, false)]
-    local procedure PaymentTermsOnAfterRenameEvent()
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeRenameEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeRenameEvent()
     begin
         CheckIfCanEditPaymentTerms();
     end;
