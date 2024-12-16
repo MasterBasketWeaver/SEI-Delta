@@ -57,6 +57,11 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             DataClassification = CustomerContent;
             Caption = 'Receive Production Approvals';
         }
+        field(80065; "BA Allow Changing Pay. Terms"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Allow Changing Payment Terms';
+        }
         field(80099; "BA Service Order Open"; Boolean)
         {
             DataClassification = CustomerContent;

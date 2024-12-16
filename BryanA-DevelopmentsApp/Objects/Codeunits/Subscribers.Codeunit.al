@@ -3412,7 +3412,37 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnAfterInsertEvent', '', false, false)]
+    local procedure PaymentTermsOnAfterInsertEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
 
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnAfterModifyEvent', '', false, false)]
+    local procedure PaymentTermsOnAfterModifyEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnAfterDeleteEvent', '', false, false)]
+    local procedure PaymentTermsOnAfterDeleteEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnAfterRenameEvent', '', false, false)]
+    local procedure PaymentTermsOnAfterRenameEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
+
+    local procedure CheckIfCanEditPaymentTerms()
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Changing Pay. Terms" then
+            Error(PaymentTermsPermErr);
+    end;
 
 
     var
@@ -3452,6 +3482,7 @@ codeunit 75010 "BA SEI Subscibers"
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation for %3';
         MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
+        PaymentTermsPermErr: Label 'You do not have permission to change Payment Terms.';
 
 }
 
