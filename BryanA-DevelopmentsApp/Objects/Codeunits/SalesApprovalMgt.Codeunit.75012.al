@@ -1,6 +1,6 @@
 codeunit 75012 "BA Sales Approval Mgt."
 {
-
+    //
     procedure UpdateCustomerApprovalGroup(var Customer: Record Customer)
     begin
         UpdateCustomerApprovalGroup(Customer, true);
