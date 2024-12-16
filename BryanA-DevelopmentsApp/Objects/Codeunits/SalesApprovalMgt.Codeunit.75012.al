@@ -87,10 +87,6 @@ codeunit 75012 "BA Sales Approval Mgt."
         WorkflowMgt: Codeunit "Workflow Management";
         RecRef: RecordRef;
     begin
-
-
-
-
         if not TryToGetRecord(RecRef, Variant) then
             exit;
         if RecRef.Number <> Database::"Sales Header" then
@@ -111,7 +107,7 @@ codeunit 75012 "BA Sales Approval Mgt."
             //     Message('cancelling');
             WorkflowEventHandling.RunWorkflowOnSendSalesDocForApprovalCode():
                 if WorkflowMgt.FindWorkflowStepInstance(Variant, Variant, WorkflowStepInstance, FunctionName) then
-                    SendSalespersonApproval(IsHandled, SalesHeader, FunctionName);
+                    SendSalesApproval(IsHandled, SalesHeader, FunctionName);
             WorkflowEventHandling.RunWorkflowOnAfterReleaseSalesDocCode():
                 UpdateApprovalFields(SalesHeader);
         end
@@ -149,16 +145,19 @@ codeunit 75012 "BA Sales Approval Mgt."
         RecRef.GetTable(Rec);
     end;
 
-    local procedure SendSalespersonApproval(var IsHandled: Boolean; var SalesHeader: Record "Sales Header"; FunctionName: Code[128])
+    local procedure SendSalesApproval(var IsHandled: Boolean; var SalesHeader: Record "Sales Header"; FunctionName: Code[128])
     var
         Customer: Record Customer;
         ApprovalGroup: Record "BA Approval Group";
     begin
         Customer.Get(SalesHeader."Bill-to Customer No.");
+        if Customer."Payment Terms Code" = '' then
+            Error(MissingCredLimitErr, Customer."No.");
         if Customer."BA Approval Group" = '' then
             UpdateCustomerApprovalGroup(Customer);
         if not ApprovalGroup.Get(Customer."BA Approval Group") then
-            exit;
+            Error(InvalidApprovalGroupErr, Customer."BA Approval Group", Customer."No.");
+
         SalesHeader.CalcFields(Amount);
         Customer.CalcFields(Balance, "Balance (LCY)");
         case true of
@@ -169,7 +168,6 @@ codeunit 75012 "BA Sales Approval Mgt."
             else
                 SendApprovalOnOverDue(SalesHeader, Customer, ApprovalGroup);
         end;
-
         IsHandled := true;
     end;
 
@@ -284,6 +282,8 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
         CreditLimitErr: Label 'Customer %1 has credit terms but no credit limit setup. Please contact the accounting department.';
+        MissingCredLimitErr: Label 'Customer %1 must have a Payment Terms assigned before it any related sales documents can be sent for approval.';
+        InvalidApprovalGroupErr: Label 'Invalid Approval Group %1 for Customer %2.';
 }
 
 
