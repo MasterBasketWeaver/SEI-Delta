@@ -1,6 +1,5 @@
 codeunit 75012 "BA Sales Approval Mgt."
 {
-    //
     procedure UpdateCustomerApprovalGroup(var Customer: Record Customer)
     begin
         UpdateCustomerApprovalGroup(Customer, true);
@@ -206,12 +205,12 @@ codeunit 75012 "BA Sales Approval Mgt."
         Balance: Decimal;
         CreditLimit: Decimal;
     begin
-        if HasZeroCreditLimit(Customer, CreditLimit, Balance) then //and not ByPassLimit and  then
-            if ByPassLimit then
-                ReleaseSalesDoc(SalesHeader)
-            else
-                if ApprovalGroup."Is Trusted Agent" then
-                    Error(CreditLimitErr, Customer."No.");
+        if HasZeroCreditLimit(Customer, CreditLimit, Balance) then begin
+            if not ByPassLimit then
+                Error(CreditLimitErr, Customer."No.");
+            ReleaseSalesDoc(SalesHeader);
+            exit;
+        end;
         if ((SalesHeader.Amount + Balance) < CreditLimit) and (ByPassLimit or CustomerHasNoOverDueInvoices(Customer, ApprovalGroup)) then
             ReleaseSalesDoc(SalesHeader)
         else
@@ -254,20 +253,22 @@ codeunit 75012 "BA Sales Approval Mgt."
     local procedure CustomerHasNoOverDueInvoices(var Customer: Record Customer; var ApprovalGroup: Record "BA Approval Group"): Boolean
     var
         CustLedgerEntry: Record "Cust. Ledger Entry";
-        PaymentTerms: Record "Payment Terms";
         OverdueDate: Date;
+        DueDateFormulaText: Text;
     begin
-        Customer.TestField("Payment Terms Code");
-        PaymentTerms.Get(Customer."Payment Terms Code");
-        PaymentTerms.TestField("Due Date Calculation");
+        DueDateFormulaText := Format(ApprovalGroup."Overdue Date Formula");
+        if DueDateFormulaText = '' then
+            exit(false);
 
+        if not DueDateFormulaText.Contains('-') then
+            Evaluate(ApprovalGroup."Overdue Date Formula", StrSubstNo('-%1', ApprovalGroup."Overdue Date Formula"));
         OverdueDate := CalcDate(ApprovalGroup."Overdue Date Formula", Today());
 
         ApprovalGroup.TestField("Overdue Date Formula");
         CustLedgerEntry.SetCurrentKey("Customer No.", Open, Positive, "Due Date", "Currency Code");
         CustLedgerEntry.SetRange("Customer No.", Customer."No.");
         CustLedgerEntry.SetRange(Open, true);
-        CustLedgerEntry.SetFilter("Due Date", '>=%1', OverdueDate);
+        CustLedgerEntry.SetFilter("Due Date", '<%1', OverdueDate);
         CustLedgerEntry.SetRange("Document Type", CustLedgerEntry."Document Type"::Invoice);
         exit(CustLedgerEntry.IsEmpty());
     end;

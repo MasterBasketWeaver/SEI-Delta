@@ -54,7 +54,7 @@ codeunit 75011 "BA Install Codeunit"
         ApprovalGroup.Init();
         ApprovalGroup.Code := 'B';
         ApprovalGroup.Description := 'Net XX';
-        Evaluate(ApprovalGroup."Overdue Date Formula", '<+15D>');
+        Evaluate(ApprovalGroup."Overdue Date Formula", '<15D>');
         ApprovalGroup.Insert();
 
         ApprovalGroup.Init();
@@ -68,7 +68,7 @@ codeunit 75011 "BA Install Codeunit"
         ApprovalGroup.Code := 'D';
         ApprovalGroup.Description := 'Trusted Agent';
         ApprovalGroup."Is Trusted Agent" := true;
-        Evaluate(ApprovalGroup."Overdue Date Formula", '<+30D>');
+        Evaluate(ApprovalGroup."Overdue Date Formula", '<30D>');
         ApprovalGroup.Insert();
     end;
 
