@@ -23,6 +23,29 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateShipmentTrackingInfoReportUsage();
         // PopulateShipToContactDetails();
         PopulateCustomerApprovalGroups();
+        PopulateProdOrderNotificationReportUsage();
+    end;
+
+
+
+
+
+    local procedure PopulateProdOrderNotificationReportUsage()
+    var
+        ReportSelections: Record "Report Selections";
+        SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+    begin
+        ReportSelections.SetRange(Usage, SalesApprovalMgt.GetProdApprovalReportUsage());
+        ReportSelections.SetRange("Report ID", Report::"BA Prod. Order Approval");
+        if not ReportSelections.IsEmpty() then
+            exit;
+        ReportSelections.Init();
+        ReportSelections.Validate(Usage, SalesApprovalMgt.GetProdApprovalReportUsage());
+        ReportSelections.Validate(Sequence, '1');
+        ReportSelections.Validate("Report ID", Report::"BA Prod. Order Approval");
+        ReportSelections.Validate("Use for Email Attachment", false);
+        ReportSelections.Validate("Use for Email Body", true);
+        ReportSelections.Insert(true);
     end;
 
 
@@ -87,6 +110,7 @@ codeunit 75011 "BA Install Codeunit"
             end;
     end;
 
+
     local procedure PopulateShipmentTrackingInfoReportUsage()
     var
         ReportSelections: Record "Report Selections";
@@ -104,7 +128,6 @@ codeunit 75011 "BA Install Codeunit"
         ReportSelections.Validate("Use for Email Body", true);
         ReportSelections.Insert(true);
     end;
-
 
     local procedure InitiateDeptCodesPurchaseLookup()
     var
