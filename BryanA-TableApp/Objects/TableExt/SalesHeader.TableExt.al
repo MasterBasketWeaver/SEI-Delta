@@ -127,5 +127,12 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Caption = 'Use Custom Workflow Start';
             Editable = false;
         }
+        field(80114; "BA Approval Email"; Text[100])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Email';
+            Editable = false;
+            ExtendedDatatype = EMail;
+        }
     }
 }

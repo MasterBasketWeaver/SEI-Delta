@@ -109,9 +109,16 @@ codeunit 75012 "BA Sales Approval Mgt."
                 if WorkflowMgt.FindWorkflowStepInstance(Variant, Variant, WorkflowStepInstance, FunctionName) then
                     SendSalesApproval(IsHandled, SalesHeader, FunctionName);
             WorkflowEventHandling.RunWorkflowOnAfterReleaseSalesDocCode():
-                UpdateApprovalFields(SalesHeader);
+                begin
+                    UpdateApprovalFields(SalesHeader);
+                    SendProductionNotificationEmails(SalesHeader);
+                end;
         end
     end;
+
+
+
+
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Management", 'OnBeforeFindMatchingWorkflowStepInstance', '', false, false)]
@@ -272,6 +279,75 @@ codeunit 75012 "BA Sales Approval Mgt."
     end;
 
 
+
+
+
+
+    procedure GetProdApprovalReportUsage(): Integer
+    begin
+        exit(80001);
+    end;
+
+    local procedure SendProductionNotificationEmails(var SalesHeader: Record "Sales Header")
+    var
+        UserSetup: Record "User Setup";
+        ReportID: Integer;
+    begin
+        UserSetup.SetRange("BA Receive Prod. Approvals", true);
+        UserSetup.SetFilter("E-Mail", '<>%1', '');
+
+        if not Confirm('%1 -> %2', false, UserSetup.GetFilters, UserSetup.Count) then
+            Error('');
+
+        if not UserSetup.FindSet() then
+            exit;
+        ReportID := GetProdApprovalReportUsage();
+        repeat
+            SalesHeader."BA Approval Email" := UserSetup."E-Mail";
+            // if Subscribers.TryToSendEmail(ReportID, SalesHeader, SalesHeader."No.", SalesHeader."Bill-to Customer No.") then;
+            Subscribers.TryToSendEmail(ReportID, SalesHeader, SalesHeader."No.", SalesHeader."Bill-to Customer No.");
+            SalesHeader."BA Approval Email" := '';
+        until UserSetup.Next() = 0;
+    end;
+
+    procedure SetProdNotificationEmailToAddress(var RecVar: Variant; var IsHandled: Boolean; var ToAddress: Text)
+    var
+        SalesHeader: Record "Sales Header";
+        RecRef: RecordRef;
+    begin
+        SalesHeader := RecVar;
+        if not Confirm('%1 -> %2', false, ToAddress, SalesHeader."BA Approval Email") then
+            Error('');
+        ToAddress := SalesHeader."BA Approval Email";
+        IsHandled := true;
+    end;
+
+    procedure SetProdNotificationEmailFilters(var RecordVariant: Variant)
+    var
+        SalesHeader: Record "Sales Header";
+    begin
+        SalesHeader := RecordVariant;
+        SalesHeader.Reset();
+        SalesHeader.SetRange("Document Type", SalesHeader."Document Type");
+        SalesHeader.SetRange("No.", SalesHeader."No.");
+    end;
+
+    procedure UpdateProdNotificationSettings(var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var TempEmailItem: Record "Email Item")
+    var
+    // SalesInvHeader: Record "Sales Invoice Header";
+    // ServiceInvHeader: Record "Service Invoice Header";
+    // CompInfo: Record "Company Information";
+    // SalesPerson: Record "Salesperson/Purchaser";
+    // UserSetup: Record "User Setup";
+    // CustName: Text;
+    // OrderNo: Code[20];
+    begin
+        // if not IsDebugUser() then
+        //     HideDialog := true;
+        TempEmailItem.Subject := StrSubstNo('%1 has been approved - %2 - %3');
+        TempEmailItem."Message Type" := GetProdApprovalReportUsage();
+        TempEmailItem."Attachment File Path" := '';
+    end;
 
 
 
