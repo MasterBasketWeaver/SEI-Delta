@@ -127,12 +127,38 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Caption = 'Use Custom Workflow Start';
             Editable = false;
         }
-        field(80114; "BA Approval Email"; Text[100])
+        // field(80114; "BA Approval Email"; Text[100])
+        // {
+        //     DataClassification = CustomerContent;
+        //     Caption = 'Approval Email';
+        //     Editable = false;
+        //     ExtendedDatatype = EMail;
+        // }
+        field(80115; "BA Appr. Reject. Reason Code"; Code[20])
         {
             DataClassification = CustomerContent;
-            Caption = 'Approval Email';
+            Caption = 'Approval Reject Reason Code';
             Editable = false;
-            ExtendedDatatype = EMail;
+            TableRelation = "BA Approval Rejection".Code;
+
+            trigger OnValidate()
+            begin
+                Rec.CalcFields("BA Rejection Reason");
+            end;
+        }
+        field(80116; "BA Rejection Reason"; Text[100])
+        {
+            Caption = 'Approval Email User ID';
+            FieldClass = FlowField;
+            CalcFormula = lookup ("BA Approval Rejection".Description where (Code = field ("BA Appr. Reject. Reason Code")));
+            Editable = false;
+        }
+        field(80117; "BA Approval Email User ID"; Code[50])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Email User ID';
+            Editable = false;
+            TableRelation = User."User Name";
         }
     }
 }
