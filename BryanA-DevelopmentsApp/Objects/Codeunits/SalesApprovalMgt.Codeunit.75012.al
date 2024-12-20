@@ -83,7 +83,7 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         SalesHeader: Record "Sales Header";
         WorkflowStepInstance: Record "Workflow Step Instance";
-        WorkflowEventHandling: Codeunit "Workflow Event Handling";
+
         WorkflowMgt: Codeunit "Workflow Management";
         RecRef: RecordRef;
     begin
@@ -93,8 +93,8 @@ codeunit 75012 "BA Sales Approval Mgt."
             exit;
         RecRef.SetTable(SalesHeader);
 
-        if not Confirm('%1, %2', false, FunctionName, SalesHeader."BA Use Default Workflow") then
-            Error('');
+        // if not Confirm('%1, %2', false, FunctionName, SalesHeader."BA Use Default Workflow") then
+        //     Error('');
 
         if SalesHeader."BA Use Default Workflow" then begin
             SalesHeader."BA Use Default Workflow" := false;
@@ -103,19 +103,42 @@ codeunit 75012 "BA Sales Approval Mgt."
         end;
 
         case FunctionName of
-            // WorkflowEventHandling.RunWorkflowOnCancelSalesApprovalRequestCode():
-            //     Message('cancelling');
             WorkflowEventHandling.RunWorkflowOnSendSalesDocForApprovalCode():
                 if WorkflowMgt.FindWorkflowStepInstance(Variant, Variant, WorkflowStepInstance, FunctionName) then
                     SendSalesApproval(IsHandled, SalesHeader, FunctionName);
             WorkflowEventHandling.RunWorkflowOnAfterReleaseSalesDocCode():
                 begin
                     UpdateApprovalFields(SalesHeader);
-                    SendProductionNotificationEmails(SalesHeader);
+                    SendProductionNotificationEmails(SalesHeader, true);
                 end;
         end
     end;
 
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Management", 'OnBeforeHandleEventWithxRecOnKnownWorkflowInstance', '', false, false)]
+    local procedure WorkflowMgtOnBeforeHandleEventWithxRecOnKnownWorkflowInstance(FunctionName: Code[128]; var RecordRef: RecordRef)
+    var
+        ApprovalEntry: Record "Approval Entry";
+        SalesHeader: Record "Sales Header";
+        SelectRejectionReason: Page "BA Select Rejection Reason";
+        FldRef: FieldRef;
+        RejectionCode: Code[20];
+    begin
+        if (FunctionName <> WorkflowEventHandling.RunWorkflowOnRejectApprovalRequestCode()) or (RecordRef.Number() <> Database::"Approval Entry") then
+            exit;
+        RecordRef.SetTable(ApprovalEntry);
+        if not SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
+            exit;
+        Commit();
+        if SelectRejectionReason.RunModal() <> Action::OK then
+            Error('');
+        RejectionCode := SelectRejectionReason.GetReasonCode();
+        if RejectionCode = '' then
+            Error(NoReasonCodeErr);
+        SendProductionNotificationEmails(SalesHeader, false);
+        SalesHeader.Validate("BA Appr. Reject. Reason Code", RejectionCode);
+        SalesHeader.Modify(true);
+    end;
 
 
 
@@ -143,6 +166,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         SalesHeader.CalcFields(Amount);
         SalesHeader.Validate("BA Last Approval Amount", SalesHeader.Amount);
         SalesHeader.Validate("BA Approval Count", SalesHeader."BA Approval Count" + 1);
+        SalesHeader.Validate("BA Appr. Reject. Reason Code", '');
         SalesHeader.Modify(true);
     end;
 
@@ -210,6 +234,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         Balance: Decimal;
         CreditLimit: Decimal;
     begin
+        HasZeroCreditLimit(Customer, CreditLimit, Balance);
         if HasZeroCreditLimit(Customer, CreditLimit, Balance) then begin
             if not ByPassLimit then
                 Error(CreditLimitErr, Customer."No.");
@@ -225,6 +250,7 @@ codeunit 75012 "BA Sales Approval Mgt."
     local procedure ReleaseSalesDoc(var SalesHeader: Record "Sales Header")
     begin
         SalesHeader.Validate("BA Use Custom Workflow Start", true);
+        SalesHeader.Validate("BA Appr. Reject. Reason Code", '');
         SalesHeader.Modify(true);
         ReleaseSalesDocument.PerformManualRelease(SalesHeader);
         SalesHeader.Get(SalesHeader.RecordId());
@@ -236,6 +262,7 @@ codeunit 75012 "BA Sales Approval Mgt."
     begin
         ApprovalMgt.CheckSalesApprovalPossible(SalesHeader);
         SalesHeader.Validate("BA Use Default Workflow", true);
+        SalesHeader.Validate("BA Appr. Reject. Reason Code", '');
         SalesHeader.Modify(false);
         ApprovalMgt.OnSendSalesDocForApproval(SalesHeader);
     end;
@@ -288,66 +315,69 @@ codeunit 75012 "BA Sales Approval Mgt."
         exit(80001);
     end;
 
-    local procedure SendProductionNotificationEmails(var SalesHeader: Record "Sales Header")
+    local procedure SendProductionNotificationEmails(var SalesHeader: Record "Sales Header"; Approved: Boolean)
     var
         UserSetup: Record "User Setup";
-        ReportID: Integer;
+        Addresses: List of [Text];
+        AddressText: TextBuilder;
+        Address: Text;
+        Subject: Text;
     begin
         UserSetup.SetRange("BA Receive Prod. Approvals", true);
         UserSetup.SetFilter("E-Mail", '<>%1', '');
-
-        if not Confirm('%1 -> %2', false, UserSetup.GetFilters, UserSetup.Count) then
-            Error('');
-
         if not UserSetup.FindSet() then
             exit;
-        ReportID := GetProdApprovalReportUsage();
+        if Approved then
+            Subject := StrSubstNo(ApprovalEmailSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name")
+        else
+            Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name");
         repeat
-            SalesHeader."BA Approval Email" := UserSetup."E-Mail";
-            // if Subscribers.TryToSendEmail(ReportID, SalesHeader, SalesHeader."No.", SalesHeader."Bill-to Customer No.") then;
-            Subscribers.TryToSendEmail(ReportID, SalesHeader, SalesHeader."No.", SalesHeader."Bill-to Customer No.");
-            SalesHeader."BA Approval Email" := '';
+            SalesHeader."BA Approval Email User ID" := UserSetup."User ID";
+            SalesHeader.Modify(false);
+            if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject) then
+                if not Addresses.Contains(UserSetup."E-Mail") then
+                    Addresses.Add(UserSetup."E-Mail");
         until UserSetup.Next() = 0;
+        SalesHeader."BA Appr. Reject. Reason Code" := '';
+        SalesHeader.Modify(false);
+        case Addresses.Count() of
+            0:
+                exit;
+            1:
+                if Addresses.Get(1, Address) then
+                    Message(SingleFailedToSendErr, Address);
+            else begin
+                    foreach Address in Addresses do
+                        AddressText.AppendLine(Address);
+                    Message(MultiFailedToSendErr, AddressText.ToText());
+                end;
+        end;
     end;
 
-    procedure SetProdNotificationEmailToAddress(var RecVar: Variant; var IsHandled: Boolean; var ToAddress: Text)
+
+    [TryFunction]
+
+    local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text)
     var
-        SalesHeader: Record "Sales Header";
-        RecRef: RecordRef;
+        SalesHeader2: Record "Sales Header";
+        SMTPSetup: Record "SMTP Mail Setup";
+        SMTPMail: Codeunit "SMTP Mail";
+        MailMgt: Codeunit "Mail Management";
+        FileMgt: Codeunit "File Management";
+        BodyFilePath: Text;
+        BodyText: Text;
     begin
-        SalesHeader := RecVar;
-        if not Confirm('%1 -> %2', false, ToAddress, SalesHeader."BA Approval Email") then
-            Error('');
-        ToAddress := SalesHeader."BA Approval Email";
-        IsHandled := true;
+        SMTPSetup.GetSetup;
+        BodyFilePath := FileMgt.ServerTempFileName('html');
+        SalesHeader2.SetRange("Document Type", SalesHeader."Document Type");
+        SalesHeader2.SetRange("No.", SalesHeader."No.");
+        Report.SaveAsHtml(Report::"BA Prod. Order Approval", BodyFilePath, SalesHeader2);
+        if BodyFilePath <> '' then
+            BodyText := FileMgt.GetFileContent(BodyFilePath);
+        SMTPMail.CreateMessage('', MailMgt.GetSenderEmailAddress, EmailAddr, Subject, BodyText, true);
+        SMTPMail.Send;
     end;
 
-    procedure SetProdNotificationEmailFilters(var RecordVariant: Variant)
-    var
-        SalesHeader: Record "Sales Header";
-    begin
-        SalesHeader := RecordVariant;
-        SalesHeader.Reset();
-        SalesHeader.SetRange("Document Type", SalesHeader."Document Type");
-        SalesHeader.SetRange("No.", SalesHeader."No.");
-    end;
-
-    procedure UpdateProdNotificationSettings(var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var TempEmailItem: Record "Email Item")
-    var
-    // SalesInvHeader: Record "Sales Invoice Header";
-    // ServiceInvHeader: Record "Service Invoice Header";
-    // CompInfo: Record "Company Information";
-    // SalesPerson: Record "Salesperson/Purchaser";
-    // UserSetup: Record "User Setup";
-    // CustName: Text;
-    // OrderNo: Code[20];
-    begin
-        // if not IsDebugUser() then
-        //     HideDialog := true;
-        TempEmailItem.Subject := StrSubstNo('%1 has been approved - %2 - %3');
-        TempEmailItem."Message Type" := GetProdApprovalReportUsage();
-        TempEmailItem."Attachment File Path" := '';
-    end;
 
 
 
@@ -355,11 +385,17 @@ codeunit 75012 "BA Sales Approval Mgt."
         ApprovalMgt: Codeunit "Approvals Mgmt.";
         ReleaseSalesDocument: Codeunit "Release Sales Document";
         Subscribers: Codeunit "BA SEI Subscibers";
+        WorkflowEventHandling: Codeunit "Workflow Event Handling";
 
 
         CreditLimitErr: Label 'Customer %1 has credit terms but no credit limit setup. Please contact the accounting department.';
         MissingCredLimitErr: Label 'Customer %1 must have a Payment Terms assigned before it any related sales documents can be sent for approval.';
         InvalidApprovalGroupErr: Label 'Invalid Approval Group %1 for Customer %2.';
+        SingleFailedToSendErr: Label 'Unable to send production order approval email to the following address: %1';
+        MultiFailedToSendErr: Label 'Unable to send production order approval email to the following addresses:\%1';
+        ApprovalEmailSubject: Label '%1 Has Been Approved - %2 - %3';
+        RejectionEmailSubject: Label '%1 Has Been Rejected - %2 - %3';
+        NoReasonCodeErr: Label 'Rejection reason must be selected.';
 }
 
 
