@@ -1,7 +1,5 @@
 page 50084 "BA Select Rejection Reason"
 {
-    ApplicationArea = all;
-    UsageCategory = Lists;
     PageType = StandardDialog;
     LinksAllowed = false;
     Caption = 'Select Rejection Reason';
