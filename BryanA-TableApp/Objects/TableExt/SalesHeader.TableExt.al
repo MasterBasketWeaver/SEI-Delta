@@ -160,5 +160,11 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Editable = false;
             TableRelation = User."User Name";
         }
+        field(80118; "BA Sent for Invoice Request"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Sent for Invoice Request';
+            Editable = false;
+        }
     }
 }

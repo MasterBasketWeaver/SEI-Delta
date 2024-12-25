@@ -215,6 +215,29 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
     }
 
 
+    actions
+    {
+        addlast(Processing)
+        {
+            action("BA Send for Invoicing")
+            {
+                ApplicationArea = all;
+                Image = SendEmailPDFNoAttach;
+                Promoted = true;
+                PromotedCategory = Category9;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Send for Invoicing';
+
+                trigger OnAction()
+                var
+                    SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+                begin
+                    SalesApprovalMgt.SendOrderForInvoicing(Rec);
+                end;
+            }
+        }
+    }
 
 
     var

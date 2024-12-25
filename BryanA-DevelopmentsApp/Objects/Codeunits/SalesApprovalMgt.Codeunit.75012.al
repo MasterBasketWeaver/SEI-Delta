@@ -330,7 +330,7 @@ codeunit 75012 "BA Sales Approval Mgt."
             Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name");
             if (SalesHeader."Assigned User ID" <> '') and UserSetup.Get(SalesHeader."Assigned User ID") then begin
                 if UserSetup."E-Mail" <> '' then
-                    if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, UserSetup."User ID") then
+                    if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, UserSetup."User ID", Report::"BA Prod. Order Approval") then
                         if not Addresses.Contains(UserSetup."E-Mail") then
                             Addresses.Add(UserSetup."E-Mail");
                 UserSetup.SetFilter("User ID", '<>%1', SalesHeader."Assigned User ID");
@@ -342,7 +342,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         if not UserSetup.FindSet() then
             exit;
         repeat
-            if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, UserSetup."User ID") then
+            if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, UserSetup."User ID", Report::"BA Prod. Order Approval") then
                 if not Addresses.Contains(UserSetup."E-Mail") then
                     Addresses.Add(UserSetup."E-Mail");
         until UserSetup.Next() = 0;
@@ -365,7 +365,7 @@ codeunit 75012 "BA Sales Approval Mgt."
 
     [TryFunction]
 
-    local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; UserID: Code[50])
+    local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; UserIDCode: Code[50]; ReportID: Integer)
     var
         SalesHeader2: Record "Sales Header";
         SMTPSetup: Record "SMTP Mail Setup";
@@ -377,17 +377,37 @@ codeunit 75012 "BA Sales Approval Mgt."
     begin
         SMTPSetup.GetSetup;
         BodyFilePath := FileMgt.ServerTempFileName('html');
-        SalesHeader."BA Approval Email User ID" := UserID;
+        SalesHeader."BA Approval Email User ID" := UserIDCode;
         SalesHeader.Modify(false);
         SalesHeader2.SetRange("Document Type", SalesHeader."Document Type");
         SalesHeader2.SetRange("No.", SalesHeader."No.");
-        Report.SaveAsHtml(Report::"BA Prod. Order Approval", BodyFilePath, SalesHeader2);
+        Report.SaveAsHtml(ReportID, BodyFilePath, SalesHeader2);
         if BodyFilePath <> '' then
             BodyText := FileMgt.GetFileContent(BodyFilePath);
         SMTPMail.CreateMessage('', MailMgt.GetSenderEmailAddress, EmailAddr, Subject, BodyText, true);
         SMTPMail.Send;
     end;
 
+
+
+
+    procedure SendOrderForInvoicing(var SalesHeader: Record "Sales Header")
+    var
+        UserSetup: Record "User Setup";
+    begin
+        SalesHeader.TestField(Status, SalesHeader.Status::Released);
+        SalesHeader."BA Sent for Invoice Request" := true;
+        UserSetup.Get(UserId());
+        UserSetup.TestField("Approver ID");
+        UserSetup.Get(UserSetup."Approver ID");
+        UserSetup.TestField("E-Mail");
+        TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo(InvRequestSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name"), UserSetup."User ID", Report::"BA Prod. Order Approval");
+        SalesHeader.Get(SalesHeader.RecordId());
+        SalesHeader."BA Sent for Invoice Request" := false;
+        SalesHeader.Modify(false);
+        SalesHeader.Get(SalesHeader.RecordId());
+        Message('Sent invoice request to %1', UserSetup."E-Mail");
+    end;
 
 
 
@@ -405,6 +425,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         MultiFailedToSendErr: Label 'Unable to send production order approval email to the following addresses:\%1';
         ApprovalEmailSubject: Label '%1 Has Been Approved - %2 - %3';
         RejectionEmailSubject: Label '%1 Has Been Rejected - %2 - %3';
+        InvRequestSubject: Label 'Invoice Request: %1 - %2 - %3';
         NoReasonCodeErr: Label 'Rejection reason must be selected.';
 }
 
