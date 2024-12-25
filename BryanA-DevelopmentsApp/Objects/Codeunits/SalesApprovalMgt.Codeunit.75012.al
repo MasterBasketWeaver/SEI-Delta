@@ -135,9 +135,9 @@ codeunit 75012 "BA Sales Approval Mgt."
         RejectionCode := SelectRejectionReason.GetReasonCode();
         if RejectionCode = '' then
             Error(NoReasonCodeErr);
-        SendProductionNotificationEmails(SalesHeader, false);
         SalesHeader.Validate("BA Appr. Reject. Reason Code", RejectionCode);
         SalesHeader.Modify(true);
+        SendProductionNotificationEmails(SalesHeader, false);
     end;
 
 
@@ -322,23 +322,31 @@ codeunit 75012 "BA Sales Approval Mgt."
         AddressText: TextBuilder;
         Address: Text;
         Subject: Text;
+        AssignedUserID: Code[50];
     begin
         UserSetup.SetRange("BA Receive Prod. Approvals", true);
         UserSetup.SetFilter("E-Mail", '<>%1', '');
+        if not Approved then begin
+            Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name");
+            if (SalesHeader."Assigned User ID" <> '') and UserSetup.Get(SalesHeader."Assigned User ID") then begin
+                if UserSetup."E-Mail" <> '' then
+                    if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, UserSetup."User ID") then
+                        if not Addresses.Contains(UserSetup."E-Mail") then
+                            Addresses.Add(UserSetup."E-Mail");
+                UserSetup.SetFilter("User ID", '<>%1', SalesHeader."Assigned User ID");
+                SalesHeader."BA Approval Email User ID" := '';
+                SalesHeader.Modify(false);
+            end;
+        end else
+            Subject := StrSubstNo(ApprovalEmailSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name");
         if not UserSetup.FindSet() then
             exit;
-        if Approved then
-            Subject := StrSubstNo(ApprovalEmailSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name")
-        else
-            Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name");
         repeat
-            SalesHeader."BA Approval Email User ID" := UserSetup."User ID";
-            SalesHeader.Modify(false);
-            if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject) then
+            if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, UserSetup."User ID") then
                 if not Addresses.Contains(UserSetup."E-Mail") then
                     Addresses.Add(UserSetup."E-Mail");
         until UserSetup.Next() = 0;
-        SalesHeader."BA Appr. Reject. Reason Code" := '';
+        SalesHeader."BA Approval Email User ID" := '';
         SalesHeader.Modify(false);
         case Addresses.Count() of
             0:
@@ -357,7 +365,7 @@ codeunit 75012 "BA Sales Approval Mgt."
 
     [TryFunction]
 
-    local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text)
+    local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; UserID: Code[50])
     var
         SalesHeader2: Record "Sales Header";
         SMTPSetup: Record "SMTP Mail Setup";
@@ -369,6 +377,8 @@ codeunit 75012 "BA Sales Approval Mgt."
     begin
         SMTPSetup.GetSetup;
         BodyFilePath := FileMgt.ServerTempFileName('html');
+        SalesHeader."BA Approval Email User ID" := UserID;
+        SalesHeader.Modify(false);
         SalesHeader2.SetRange("Document Type", SalesHeader."Document Type");
         SalesHeader2.SetRange("No.", SalesHeader."No.");
         Report.SaveAsHtml(Report::"BA Prod. Order Approval", BodyFilePath, SalesHeader2);
