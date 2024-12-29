@@ -506,10 +506,6 @@ codeunit 75012 "BA Sales Approval Mgt."
             FileNames.Get(FileName, FilePath);
             SMTPMail.AddAttachment(FilePath, FileName);
         end;
-
-        if not Confirm('sending: %1\%2\%3', false, GetSenderEmail(), Addresses, CCAddresses) then
-            Error('');
-
         if not SMTPMail.TrySend() then
             Error(FailedToSendInvoicePackingSlipErr, SMTPMail.GetLastSendMailErrorText());
     end;
@@ -558,8 +554,8 @@ codeunit 75012 "BA Sales Approval Mgt."
         InvPackSlipSubject: Label '%1 Has Been Invoiced - %2 - %3';
         NoReasonCodeErr: Label 'Rejection reason must be selected.';
         SentInvoiceMsg: Label 'Sent invoice request to %1';
-        SentSingleInvoiceMsg: Label 'Sent invoice & related packing slip email.';
-        SentMultiInvoiceMsg: Label 'Sent invoice & related packing slips email.';
+        SentSingleInvoiceMsg: Label 'Sent invoice and related packing slip email.';
+        SentMultiInvoiceMsg: Label 'Sent invoice and related packing slips email.';
         NoRelatedPackingSlipsErr: Label 'Unable to send invoice email due to no related packing slips found for Invoice %1, Order No. %2.';
         NoEmailBodyErr: Label 'Unable to create email body:%1';
         InvoiceFileName: Label '%1-%2-%3-Sales Invoice.pdf';
