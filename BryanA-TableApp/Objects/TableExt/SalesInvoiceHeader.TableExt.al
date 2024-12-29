@@ -92,7 +92,14 @@ tableextension 80061 "BA Sales Invoice Header" extends "Sales Invoice Header"
             Caption = 'Last Approval Amount';
             Editable = false;
         }
+        field(80112; "BA Invoice/Packing Slip Users"; Text[2048])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Invoice/Packing Slip Usernames';
+            Editable = false;
+        }
     }
+
 
     keys
     {
