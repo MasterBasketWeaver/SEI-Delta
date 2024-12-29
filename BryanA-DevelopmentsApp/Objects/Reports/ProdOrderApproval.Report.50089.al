@@ -16,7 +16,7 @@ report 50089 "BA Prod. Order Approval"
             column(RejectReason; RejectReason) { }
             column(CustomerNo; "Sell-to Customer No.") { }
             column(CustomerName; "Sell-to Customer Name") { }
-            column(OrderLink_UrlText; StrSubstNo('Sales Order %1', "No.")) { }
+            column(OrderLink_UrlText; StrSubstNo(UrlLbl, "No.")) { }
             column(OrderLink_Url; GetUrl(ClientType::Windows, CompanyName(), ObjectType::Page, Page::"Sales Order", SalesHeader)) { }
             column(AmountText; AmountText) { }
 
@@ -29,8 +29,8 @@ report 50089 "BA Prod. Order Approval"
             begin
                 Username := GetUserFullName(SalesHeader."BA Approval Email User ID");
                 if "BA Sent for Invoice Request" then begin
-                    ApprovalAction := 'has been requested for invoicing.';
-                    RejectReason := StrSubstNo('Sent by %1', GetUserFullName(UserId()));
+                    ApprovalAction := RequestForInvoicingLbl;
+                    RejectReason := StrSubstNo(SentByLbl, GetUserFullName(UserId()));
                     if SalesHeader."Currency Code" = '' then begin
                         GLSetup.Get();
                         GLSetup.TestField("LCY Code");
@@ -38,29 +38,22 @@ report 50089 "BA Prod. Order Approval"
                     end else
                         CurrencyCode := SalesHeader."Currency Code";
                     SalesHeader.CalcFields("Amount Including VAT");
-                    AmountText := StrSubstNo('Amount %1 %2', CurrencyCode, SalesHeader."Amount Including VAT");
+                    AmountText := StrSubstNo(AmountLbl, CurrencyCode, SalesHeader."Amount Including VAT");
                 end else
                     if SalesHeader."BA Appr. Reject. Reason Code" <> '' then begin
-                        ApprovalAction := 'has been rejected for approval.';
+                        ApprovalAction := RejectedLbl;
                         ApprovalRejection.Get(SalesHeader."BA Appr. Reject. Reason Code");
                         if ApprovalRejection.Description <> '' then
                             RejectReason := ApprovalRejection.Description
                         else
                             RejectReason := ApprovalRejection.Code;
                     end else
-                        ApprovalAction := 'has been approved.';
+                        ApprovalAction := ApprovedLbl;
             end;
         }
     }
 
-
-    var
-        Username: Text;
-        RejectReason: Text;
-        ApprovalAction: Text;
-        AmountText: Text;
-
-    local procedure GetUserFullName(UserIDCode: Code[50]): Text;
+    procedure GetUserFullName(UserIDCode: Code[50]): Text;
     var
         User: Record User;
     begin
@@ -72,4 +65,18 @@ report 50089 "BA Prod. Order Approval"
         exit(User."User Name");
     end;
 
+
+    var
+        Username: Text;
+        RejectReason: Text;
+        ApprovalAction: Text;
+        AmountText: Text;
+
+
+        UrlLbl: Label 'Sales Order %1';
+        RequestForInvoicingLbl: Label 'has been requested for invoicing.';
+        RejectedLbl: Label 'has been rejected for approval.';
+        ApprovedLbl: Label 'has been approved.';
+        SentByLbl: Label 'Sent by %1';
+        AmountLbl: Label 'Amount %1 %2';
 }
