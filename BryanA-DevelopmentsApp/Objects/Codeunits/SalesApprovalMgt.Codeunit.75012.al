@@ -181,7 +181,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         Customer: Record Customer;
         ApprovalGroup: Record "BA Approval Group";
     begin
-        Customer.Get(SalesHeader."Bill-to Customer No.");
+        Customer.Get(SalesHeader."Sell-to Customer No.");
         if Customer."Payment Terms Code" = '' then
             Error(MissingCredLimitErr, Customer."No.");
         if Customer."BA Approval Group" = '' then
@@ -327,7 +327,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         UserSetup.SetRange("BA Receive Prod. Approvals", true);
         UserSetup.SetFilter("E-Mail", '<>%1', '');
         if not Approved then begin
-            Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name");
+            Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
             if (SalesHeader."Assigned User ID" <> '') and UserSetup.Get(SalesHeader."Assigned User ID") then begin
                 if UserSetup."E-Mail" <> '' then
                     if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, UserSetup."User ID", Report::"BA Prod. Order Approval") then
@@ -338,7 +338,7 @@ codeunit 75012 "BA Sales Approval Mgt."
                 SalesHeader.Modify(false);
             end;
         end else
-            Subject := StrSubstNo(ApprovalEmailSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name");
+            Subject := StrSubstNo(ApprovalEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
         if not UserSetup.FindSet() then
             exit;
         repeat
@@ -369,12 +369,14 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         SalesHeader2: Record "Sales Header";
         SMTPMail: Codeunit "SMTP Mail";
+        RecVar: Variant;
     begin
         SalesHeader."BA Approval Email User ID" := UserIDCode;
         SalesHeader.Modify(false);
         SalesHeader2.SetRange("Document Type", SalesHeader."Document Type");
         SalesHeader2.SetRange("No.", SalesHeader."No.");
-        SMTPMail.CreateMessage('', GetSenderEmail(), EmailAddr, Subject, GetBodyHTMLText(SalesHeader2), true);
+        RecVar := SalesHeader2;
+        SMTPMail.CreateMessage('', GetSenderEmail(), EmailAddr, Subject, GetBodyHTMLText(RecVar, ReportID), true);
         SMTPMail.Send;
     end;
 
@@ -388,7 +390,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         UserSetup.TestField("Approver ID");
         UserSetup.Get(UserSetup."Approver ID");
         UserSetup.TestField("E-Mail");
-        TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo(InvRequestSubject, SalesHeader."No.", SalesHeader."Bill-to Customer No.", SalesHeader."Bill-to Name"), UserSetup."User ID", Report::"BA Prod. Order Approval");
+        TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo(InvRequestSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), UserSetup."User ID", Report::"BA Prod. Order Approval");
         SalesHeader.Get(SalesHeader.RecordId());
         SalesHeader."BA Sent for Invoice Request" := false;
         SalesHeader.Modify(false);
@@ -401,8 +403,9 @@ codeunit 75012 "BA Sales Approval Mgt."
 
     procedure SendShipmentAndInvoice(var SalesInvHeader: Record "Sales Invoice Header")
     var
-        SalesHeader: Record "Sales Header";
+        SalesInvHeader2: Record "Sales Invoice Header";
         SalesShptHeader: Record "Sales Shipment Header";
+        RecVar: Variant;
         FileNames: Dictionary of [Text, Text];
         Emails: List of [Text];
         EmailsCC: List of [Text];
@@ -412,13 +415,11 @@ codeunit 75012 "BA Sales Approval Mgt."
         if not SalesShptHeader.FindSet() then
             Error(NoRelatedPackingSlipsErr, SalesInvHeader."No.", SalesInvHeader."Order No.");
 
-        PopulateAttachments(SalesInvHeader, SalesShptHeader, FileNames);
+        PopulateAttachments(SalesInvHeader, SalesInvHeader2, SalesShptHeader, FileNames);
         PopulateEmailAddresses(SalesInvHeader, Emails, EmailsCC);
 
-        // SalesHeader.Init();
-        SalesHeader.SetRange("No.", SalesInvHeader."Order No.");
-
-        SendInvoiceShipmentEmail(FileNames, Emails, EmailsCC, GetBodyHTMLText(SalesHeader), StrSubstNo(InvPackSlipSubject, SalesInvHeader."Order No.", SalesInvHeader."Bill-to Customer No.", SalesInvHeader."Bill-to Customer No."));
+        RecVar := SalesInvHeader2;
+        SendInvoiceShipmentEmail(FileNames, Emails, EmailsCC, GetBodyHTMLText(RecVar, Report::"BA Invoice/Shpt Email Body"), StrSubstNo(InvPackSlipSubject, SalesInvHeader."Order No.", SalesInvHeader."Sell-to Customer No.", SalesInvHeader."Sell-to Customer No."));
         if SalesShptHeader.Count() = 1 then
             Message(SentSingleInvoiceMsg)
         else
@@ -426,22 +427,21 @@ codeunit 75012 "BA Sales Approval Mgt."
     end;
 
 
-    local procedure GetBodyHTMLText(var SalesHeader: Record "Sales Header"): Text
+    local procedure GetBodyHTMLText(var RecVar: Variant; ReportID: Integer): Text
     var
         BodyFilePath: Text;
         BodyText: Text;
     begin
         BodyFilePath := FileMgt.ServerTempFileName('html');
-        if not Report.SaveAsHtml(Report::"BA Prod. Order Approval", BodyFilePath, SalesHeader) then
+        if not Report.SaveAsHtml(ReportID, BodyFilePath, RecVar) then
             Error(NoEmailBodyErr, GetLastErrorText());
         BodyText := FileMgt.GetFileContent(BodyFilePath);
         exit(BodyText);
     end;
 
 
-    local procedure PopulateAttachments(var SalesInvHeader: Record "Sales Invoice Header"; var SalesShptHeader: Record "Sales Shipment Header"; var FileNames: Dictionary of [Text, Text])
+    local procedure PopulateAttachments(var SalesInvHeader: Record "Sales Invoice Header"; var SalesInvHeader2: Record "Sales Invoice Header"; var SalesShptHeader: Record "Sales Shipment Header"; var FileNames: Dictionary of [Text, Text])
     var
-        SalesInvHeader2: Record "Sales Invoice Header";
         SalesShptHeader2: Record "Sales Shipment Header";
         ReportSelections: Record "Report Selections";
         FileName: Text;
@@ -453,7 +453,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         FileName := FileMgt.ServerTempFileName('pdf');
         SalesInvHeader2.SetRange("No.", SalesInvHeader."No.");
         Report.SaveAsPdf(ReportSelections."Report ID", FileName, SalesInvHeader2);
-        FileNames.Add(StrSubstNo(InvoiceFileName, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Bill-to Customer No."), FileName);
+        FileNames.Add(StrSubstNo(InvoiceFileName, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Sell-to Customer No."), FileName);
 
         ReportSelections.SetRange(Usage, ReportSelections.Usage::"S.Shipment");
         ReportSelections.FindFirst();
@@ -463,9 +463,9 @@ codeunit 75012 "BA Sales Approval Mgt."
             Report.SaveAsPdf(ReportSelections."Report ID", FileName, SalesShptHeader2);
             i += 1;
             if i = 1 then
-                FileNames.Add(StrSubstNo(SingleShptFilename, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Bill-to Customer No."), FileName)
+                FileNames.Add(StrSubstNo(SingleShptFilename, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Sell-to Customer No."), FileName)
             else
-                FileNames.Add(StrSubstNo(MultiShptFileName, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Bill-to Customer No.", i), FileName);
+                FileNames.Add(StrSubstNo(MultiShptFileName, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Sell-to Customer No.", i), FileName);
         until SalesShptHeader.Next() = 0;
     end;
 
