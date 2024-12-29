@@ -368,28 +368,15 @@ codeunit 75012 "BA Sales Approval Mgt."
     local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; UserIDCode: Code[50]; ReportID: Integer)
     var
         SalesHeader2: Record "Sales Header";
-        SMTPSetup: Record "SMTP Mail Setup";
         SMTPMail: Codeunit "SMTP Mail";
-        MailMgt: Codeunit "Mail Management";
-        FileMgt: Codeunit "File Management";
-        BodyFilePath: Text;
-        BodyText: Text;
     begin
-        SMTPSetup.GetSetup;
-        BodyFilePath := FileMgt.ServerTempFileName('html');
         SalesHeader."BA Approval Email User ID" := UserIDCode;
         SalesHeader.Modify(false);
         SalesHeader2.SetRange("Document Type", SalesHeader."Document Type");
         SalesHeader2.SetRange("No.", SalesHeader."No.");
-        Report.SaveAsHtml(ReportID, BodyFilePath, SalesHeader2);
-        if BodyFilePath <> '' then
-            BodyText := FileMgt.GetFileContent(BodyFilePath);
-        SMTPMail.CreateMessage('', MailMgt.GetSenderEmailAddress, EmailAddr, Subject, BodyText, true);
+        SMTPMail.CreateMessage('', GetSenderEmail(), EmailAddr, Subject, GetBodyHTMLText(SalesHeader2), true);
         SMTPMail.Send;
     end;
-
-
-
 
     procedure SendOrderForInvoicing(var SalesHeader: Record "Sales Header")
     var
@@ -406,7 +393,146 @@ codeunit 75012 "BA Sales Approval Mgt."
         SalesHeader."BA Sent for Invoice Request" := false;
         SalesHeader.Modify(false);
         SalesHeader.Get(SalesHeader.RecordId());
-        Message('Sent invoice request to %1', UserSetup."E-Mail");
+        Message(SentInvoiceMsg, UserSetup."E-Mail");
+    end;
+
+
+
+
+    procedure SendShipmentAndInvoice(var SalesInvHeader: Record "Sales Invoice Header")
+    var
+        SalesHeader: Record "Sales Header";
+        SalesShptHeader: Record "Sales Shipment Header";
+        FileNames: Dictionary of [Text, Text];
+        Emails: List of [Text];
+        EmailsCC: List of [Text];
+    begin
+        SalesInvHeader.TestField("Order No.");
+        SalesShptHeader.SetRange("Order No.", SalesInvHeader."Order No.");
+        if not SalesShptHeader.FindSet() then
+            Error(NoRelatedPackingSlipsErr, SalesInvHeader."No.", SalesInvHeader."Order No.");
+
+        PopulateAttachments(SalesInvHeader, SalesShptHeader, FileNames);
+        PopulateEmailAddresses(SalesInvHeader, Emails, EmailsCC);
+
+        // SalesHeader.Init();
+        SalesHeader.SetRange("No.", SalesInvHeader."Order No.");
+
+        SendInvoiceShipmentEmail(FileNames, Emails, EmailsCC, GetBodyHTMLText(SalesHeader), StrSubstNo(InvPackSlipSubject, SalesInvHeader."Order No.", SalesInvHeader."Bill-to Customer No.", SalesInvHeader."Bill-to Customer No."));
+        if SalesShptHeader.Count() = 1 then
+            Message(SentSingleInvoiceMsg)
+        else
+            Message(SentMultiInvoiceMsg);
+    end;
+
+
+    local procedure GetBodyHTMLText(var SalesHeader: Record "Sales Header"): Text
+    var
+        BodyFilePath: Text;
+        BodyText: Text;
+    begin
+        BodyFilePath := FileMgt.ServerTempFileName('html');
+        if not Report.SaveAsHtml(Report::"BA Prod. Order Approval", BodyFilePath, SalesHeader) then
+            Error(NoEmailBodyErr, GetLastErrorText());
+        BodyText := FileMgt.GetFileContent(BodyFilePath);
+        exit(BodyText);
+    end;
+
+
+    local procedure PopulateAttachments(var SalesInvHeader: Record "Sales Invoice Header"; var SalesShptHeader: Record "Sales Shipment Header"; var FileNames: Dictionary of [Text, Text])
+    var
+        SalesInvHeader2: Record "Sales Invoice Header";
+        SalesShptHeader2: Record "Sales Shipment Header";
+        ReportSelections: Record "Report Selections";
+        FileName: Text;
+        i: Integer;
+    begin
+        ReportSelections.SetRange(Usage, ReportSelections.Usage::"S.Invoice");
+        ReportSelections.SetFilter("Report ID", '<>%1', 0);
+        ReportSelections.FindFirst();
+        FileName := FileMgt.ServerTempFileName('pdf');
+        SalesInvHeader2.SetRange("No.", SalesInvHeader."No.");
+        Report.SaveAsPdf(ReportSelections."Report ID", FileName, SalesInvHeader2);
+        FileNames.Add(StrSubstNo(InvoiceFileName, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Bill-to Customer No."), FileName);
+
+        ReportSelections.SetRange(Usage, ReportSelections.Usage::"S.Shipment");
+        ReportSelections.FindFirst();
+        repeat
+            FileName := FileMgt.ServerTempFileName('pdf');
+            SalesShptHeader2.SetRange("No.", SalesShptHeader."No.");
+            Report.SaveAsPdf(ReportSelections."Report ID", FileName, SalesShptHeader2);
+            i += 1;
+            if i = 1 then
+                FileNames.Add(StrSubstNo(SingleShptFilename, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Bill-to Customer No."), FileName)
+            else
+                FileNames.Add(StrSubstNo(MultiShptFileName, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Bill-to Customer No.", i), FileName);
+        until SalesShptHeader.Next() = 0;
+    end;
+
+    local procedure PopulateEmailAddresses(var SalesInvHeader: Record "Sales Invoice Header"; var Emails: List of [Text]; var EmailsCC: List of [Text])
+    var
+        UserSetup: Record "User Setup";
+        Salesperson: Record "Salesperson/Purchaser";
+    begin
+        UserSetup.SetRange("BA Receive Prod. Approvals", true);
+        UserSetup.SetFilter("E-Mail", '<>%1', '');
+        if UserSetup.FindSet() then
+            repeat
+                if not Emails.Contains(UserSetup."E-Mail") then
+                    Emails.Add(UserSetup."E-Mail");
+            until UserSetup.Next() = 0;
+        if UserSetup.Get(SalesInvHeader."ENC Assigned User ID") and (UserSetup."E-Mail" <> '') then
+            if not EmailsCC.Contains(UserSetup."E-Mail") then
+                EmailsCC.Add(UserSetup."E-Mail");
+        if (SalesInvHeader."Salesperson Code" <> '') and (Salesperson.Get(SalesInvHeader."Salesperson Code")) then
+            if (Salesperson."E-Mail" <> '') and not EmailsCC.Contains(Salesperson."E-Mail") then
+                EmailsCC.Add(Salesperson."E-Mail");
+    end;
+
+    local procedure SendInvoiceShipmentEmail(var FileNames: Dictionary of [Text, Text]; var Emails: List of [Text]; var EmailsCC: List of [Text]; BodyText: Text; Subject: Text)
+    var
+        SMTPMail: Codeunit "SMTP Mail";
+        FilePath: Text;
+        FileName: Text;
+        Addresses: Text;
+        CCAddresses: Text;
+    begin
+        Addresses := GetEmailsAsText(Emails);
+        CCAddresses := GetEmailsAsText(EmailsCC);
+        SMTPMail.CreateMessage('', GetSenderEmail(), Addresses, Subject, BodyText, true);
+        if CCAddresses <> '' then
+            SMTPMail.AddCC(CCAddresses);
+        foreach FileName in FileNames.Keys() do begin
+            FileNames.Get(FileName, FilePath);
+            SMTPMail.AddAttachment(FilePath, FileName);
+        end;
+
+        if not Confirm('sending: %1\%2\%3', false, GetSenderEmail(), Addresses, CCAddresses) then
+            Error('');
+
+        if not SMTPMail.TrySend() then
+            Error(FailedToSendInvoicePackingSlipErr, SMTPMail.GetLastSendMailErrorText());
+    end;
+
+    local procedure GetEmailsAsText(var Emails: List of [Text]): Text
+    var
+        EmailText: Text;
+        Email: Text;
+    begin
+        Emails.Get(1, EmailText);
+        Emails.RemoveAt(1);
+        foreach Email in Emails do
+            EmailText += ';' + Email;
+        exit(EmailText);
+    end;
+
+    local procedure GetSenderEmail(): Text;
+    var
+        MailMgt: Codeunit "Mail Management";
+    begin
+        if SenderEmail = '' then
+            SenderEmail := MailMgt.GetSenderEmailAddress();
+        exit(SenderEmail);
     end;
 
 
@@ -416,6 +542,9 @@ codeunit 75012 "BA Sales Approval Mgt."
         ReleaseSalesDocument: Codeunit "Release Sales Document";
         Subscribers: Codeunit "BA SEI Subscibers";
         WorkflowEventHandling: Codeunit "Workflow Event Handling";
+        FileMgt: Codeunit "File Management";
+        SenderEmail: Text;
+
 
 
         CreditLimitErr: Label 'Customer %1 has credit terms but no credit limit setup. Please contact the accounting department.';
@@ -426,7 +555,17 @@ codeunit 75012 "BA Sales Approval Mgt."
         ApprovalEmailSubject: Label '%1 Has Been Approved - %2 - %3';
         RejectionEmailSubject: Label '%1 Has Been Rejected - %2 - %3';
         InvRequestSubject: Label 'Invoice Request: %1 - %2 - %3';
+        InvPackSlipSubject: Label '%1 Has Been Invoiced - %2 - %3';
         NoReasonCodeErr: Label 'Rejection reason must be selected.';
+        SentInvoiceMsg: Label 'Sent invoice request to %1';
+        SentSingleInvoiceMsg: Label 'Sent invoice & related packing slip email.';
+        SentMultiInvoiceMsg: Label 'Sent invoice & related packing slips email.';
+        NoRelatedPackingSlipsErr: Label 'Unable to send invoice email due to no related packing slips found for Invoice %1, Order No. %2.';
+        NoEmailBodyErr: Label 'Unable to create email body:%1';
+        InvoiceFileName: Label '%1-%2-%3-Sales Invoice.pdf';
+        SingleShptFilename: Label '%1-%2-%3-Packing Slip.pdf';
+        MultiShptFileName: Label '%1-%2-%3-Packing Slip (%4).pdf';
+        FailedToSendInvoicePackingSlipErr: Label 'Unable to send invoice & packing slip email due to the following error:\%1';
 }
 
 
