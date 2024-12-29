@@ -10,38 +10,20 @@ report 50090 "BA Invoice/Shpt Email Body"
         dataitem(SalesInvHeader; "Sales Invoice Header")
         {
             column(No; "No.") { }
-            column(Username; Username) { }
+            column(Username; "BA Invoice/Packing Slip Users") { }
             column(CompanyName; CompanyName()) { }
-            column(ApprovalAction; ApprovalAction) { }
+            column(ApprovalAction; DescriptionLbl) { }
             column(CustomerNo; "Sell-to Customer No.") { }
             column(CustomerName; "Sell-to Customer Name") { }
-            column(OrderLink_UrlText; StrSubstNo('Posted Sales Invoice %1', "No.")) { }
+            column(OrderLink_UrlText; StrSubstNo(UrlLbl, "No.")) { }
             column(OrderLink_Url; GetUrl(ClientType::Windows, CompanyName(), ObjectType::Page, Page::"Posted Sales Invoice", SalesInvHeader)) { }
-
-
-            trigger OnAfterGetRecord()
-            begin
-                ApprovalAction := 'has been invoiced. Please see invoice and packing slip(s) attached.';
-                Username := 'Username';
-            end;
         }
     }
 
 
     var
-        Username: Text;
         ApprovalAction: Text;
 
-    local procedure GetUserFullName(UserIDCode: Code[50]): Text;
-    var
-        User: Record User;
-    begin
-        User.SetRange("User Name", UserIDCode);
-        if not User.FindFirst() then
-            exit(UserIDCode);
-        if User."Full Name" <> '' then
-            exit(User."Full Name");
-        exit(User."User Name");
-    end;
-
+        UrlLbl: Label 'Posted Sales Invoice %1';
+        DescriptionLbl: Label 'has been invoiced. Please see invoice and packing slip(s) attached.';
 }

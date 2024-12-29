@@ -1,5 +1,7 @@
 codeunit 75012 "BA Sales Approval Mgt."
 {
+    Permissions = tabledata "Sales Invoice Header" = m;
+
     procedure UpdateCustomerApprovalGroup(var Customer: Record Customer)
     begin
         UpdateCustomerApprovalGroup(Customer, true);
@@ -453,6 +455,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         FileName := FileMgt.ServerTempFileName('pdf');
         SalesInvHeader2.SetRange("No.", SalesInvHeader."No.");
         Report.SaveAsPdf(ReportSelections."Report ID", FileName, SalesInvHeader2);
+        SalesInvHeader.Get(SalesInvHeader."No.");
         FileNames.Add(StrSubstNo(InvoiceFileName, SalesInvHeader."No.", SalesInvHeader."Order No.", SalesInvHeader."Sell-to Customer No."), FileName);
 
         ReportSelections.SetRange(Usage, ReportSelections.Usage::"S.Shipment");
@@ -473,21 +476,57 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         UserSetup: Record "User Setup";
         Salesperson: Record "Salesperson/Purchaser";
+        ProdOrderApproval: Report "BA Prod. Order Approval";
+        Usernames: List of [Text];
     begin
         UserSetup.SetRange("BA Receive Prod. Approvals", true);
         UserSetup.SetFilter("E-Mail", '<>%1', '');
-        if UserSetup.FindSet() then
-            repeat
-                if not Emails.Contains(UserSetup."E-Mail") then
-                    Emails.Add(UserSetup."E-Mail");
-            until UserSetup.Next() = 0;
+        if not UserSetup.FindSet() then
+            Error(NoProdStaffAssignedErr);
+        repeat
+            if not Emails.Contains(UserSetup."E-Mail") then begin
+                Emails.Add(UserSetup."E-Mail");
+                Usernames.Add(ProdOrderApproval.GetUserFullName(UserSetup."User ID"));
+            end;
+        until UserSetup.Next() = 0;
         if UserSetup.Get(SalesInvHeader."ENC Assigned User ID") and (UserSetup."E-Mail" <> '') then
             if not EmailsCC.Contains(UserSetup."E-Mail") then
                 EmailsCC.Add(UserSetup."E-Mail");
         if (SalesInvHeader."Salesperson Code" <> '') and (Salesperson.Get(SalesInvHeader."Salesperson Code")) then
             if (Salesperson."E-Mail" <> '') and not EmailsCC.Contains(Salesperson."E-Mail") then
                 EmailsCC.Add(Salesperson."E-Mail");
+        SetEmailUsernames(SalesInvHeader, Usernames);
     end;
+
+    local procedure SetEmailUsernames(var SalesInvHeader: Record "Sales Invoice Header"; var Usernames: List of [Text])
+    var
+        Username: Text;
+        LastUsername: Text;
+        FieldLength: Integer;
+    begin
+        FieldLength := MaxStrLen(SalesInvHeader."BA Invoice/Packing Slip Users");
+        case Usernames.Count() of
+            1:
+                Usernames.Get(1, SalesInvHeader."BA Invoice/Packing Slip Users");
+            2:
+                begin
+                    Usernames.Get(1, SalesInvHeader."BA Invoice/Packing Slip Users");
+                    Usernames.Get(2, Username);
+                    SalesInvHeader."BA Invoice/Packing Slip Users" := CopyStr(StrSubstNo(DoubleTok, SalesInvHeader."BA Invoice/Packing Slip Users", Username), 1, FieldLength);
+                end;
+            else begin
+                    Usernames.Get(1, SalesInvHeader."BA Invoice/Packing Slip Users");
+                    Usernames.Get(Usernames.Count(), LastUsername);
+                    Usernames.RemoveAt(Usernames.Count());
+                    Usernames.RemoveAt(1);
+                    foreach Username in Usernames do
+                        SalesInvHeader."BA Invoice/Packing Slip Users" := CopyStr(StrSubstNo(MultiTok, SalesInvHeader."BA Invoice/Packing Slip Users", Username), 1, FieldLength);
+                    SalesInvHeader."BA Invoice/Packing Slip Users" := CopyStr(StrSubstNo(LastTok, SalesInvHeader."BA Invoice/Packing Slip Users", LastUsername), 1, FieldLength);
+                end;
+        end;
+        SalesInvHeader.Modify(false);
+    end;
+
 
     local procedure SendInvoiceShipmentEmail(var FileNames: Dictionary of [Text, Text]; var Emails: List of [Text]; var EmailsCC: List of [Text]; BodyText: Text; Subject: Text)
     var
@@ -562,6 +601,10 @@ codeunit 75012 "BA Sales Approval Mgt."
         SingleShptFilename: Label '%1-%2-%3-Packing Slip.pdf';
         MultiShptFileName: Label '%1-%2-%3-Packing Slip (%4).pdf';
         FailedToSendInvoicePackingSlipErr: Label 'Unable to send invoice & packing slip email due to the following error:\%1';
+        NoProdStaffAssignedErr: Label 'No production control staff have been assigned.';
+        DoubleTok: Label '%1 and %2';
+        MultiTok: Label '%1, %2';
+        LastTok: Label '%1, and %2';
 }
 
 
