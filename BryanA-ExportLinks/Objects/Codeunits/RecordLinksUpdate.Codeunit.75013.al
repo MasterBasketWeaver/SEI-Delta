@@ -193,7 +193,7 @@ codeunit 75013 "BA Record Links Update"
                     if Evaluate(RecID, ExcelBuffer2."Cell Value as Text") then
                         if RecRef.Get(RecordLink."Record ID") then begin
                             ExcelBuffer2.Get(ExcelBuffer."Row No.", 3);
-                            RecordLink.URL1 := CopyStr(ExcelBuffer2."Cell Value as Text", 1, MaxStrLen(RecordLink.URL1));
+                            RecordLink.URL1 := 'W' + CopyStr(ExcelBuffer2."Cell Value as Text", 2, MaxStrLen(RecordLink.URL1));
                             RecordLink.Modify(false);
                             i2 += 1;
                         end;

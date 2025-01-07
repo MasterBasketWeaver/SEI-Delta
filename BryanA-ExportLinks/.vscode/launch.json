@@ -12,26 +12,26 @@
         //     // "schemaUpdateMode": "ForceSync"
         // }
         // ,
-        {
-            "type": "al",
-            "request": "launch",
-            "name": "Test",
-            "server": "http://localhost",
-            "port": 7114,
-            "serverInstance": "Test",
-            "authentication": "UserPassword",
-            "schemaUpdateMode": "Synchronize"
-        }
-        // ,
         // {
         //     "type": "al",
         //     "request": "launch",
-        //     "name": "Live",
+        //     "name": "Test",
         //     "server": "http://localhost",
-        //     "port": 7109,
-        //     "serverInstance": "SEI140",
+        //     "port": 7114,
+        //     "serverInstance": "Test",
         //     "authentication": "UserPassword",
         //     "schemaUpdateMode": "Synchronize"
         // }
+        // ,
+        {
+            "type": "al",
+            "request": "launch",
+            "name": "Live",
+            "server": "http://localhost",
+            "port": 7109,
+            "serverInstance": "SEI140",
+            "authentication": "UserPassword",
+            "schemaUpdateMode": "Synchronize"
+        }
     ]
 }
