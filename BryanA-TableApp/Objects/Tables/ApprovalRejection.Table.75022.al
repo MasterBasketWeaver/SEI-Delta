@@ -1,4 +1,4 @@
-table 75015 "BA Approval Rejection"
+table 75022 "BA Approval Rejection"
 {
     DataClassification = CustomerContent;
     Caption = 'Approval Rejection';
