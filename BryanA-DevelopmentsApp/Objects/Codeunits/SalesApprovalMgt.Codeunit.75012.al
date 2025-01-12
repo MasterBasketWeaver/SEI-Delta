@@ -85,7 +85,6 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         SalesHeader: Record "Sales Header";
         WorkflowStepInstance: Record "Workflow Step Instance";
-
         WorkflowMgt: Codeunit "Workflow Management";
         RecRef: RecordRef;
     begin
@@ -94,10 +93,6 @@ codeunit 75012 "BA Sales Approval Mgt."
         if RecRef.Number <> Database::"Sales Header" then
             exit;
         RecRef.SetTable(SalesHeader);
-
-        // if not Confirm('%1, %2', false, FunctionName, SalesHeader."BA Use Default Workflow") then
-        //     Error('');
-
         if SalesHeader."BA Use Default Workflow" then begin
             SalesHeader."BA Use Default Workflow" := false;
             SalesHeader.Modify(false);
@@ -151,7 +146,7 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         SalesHeader: Record "Sales Header";
     begin
-        IF RecordRef.Number <> Database::"Sales Header" then
+        if RecordRef.Number <> Database::"Sales Header" then
             exit;
         RecordRef.SetTable(SalesHeader);
         if SalesHeader."BA Use Custom Workflow Start" then begin
@@ -267,11 +262,21 @@ codeunit 75012 "BA Sales Approval Mgt."
         SalesHeader.Validate("BA Appr. Reject. Reason Code", '');
         SalesHeader.Modify(false);
         ApprovalMgt.OnSendSalesDocForApproval(SalesHeader);
+        SendApprovalAdminEmail(SalesHeader);
+    end;
+
+    procedure SendApprovalAdminEmail(var SalesHeader: Record "Sales Header")
+    var
+        UserSetup: Record "User Setup";
+    begin
+        UserSetup.SetRange("Approval Administrator", true);
+        UserSetup.FindFirst();
+        UserSetup.TestField("E-Mail");
+        TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo('Order Approval Request %1 - %2 - %3', SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), Report::"BA Sales Order Approval Note.");
     end;
 
 
-
-    local procedure HasZeroCreditLimit(var Customer: Record Customer; var CreditLimit: Decimal; var Balance: Decimal): Boolean
+    procedure HasZeroCreditLimit(var Customer: Record Customer; var CreditLimit: Decimal; var Balance: Decimal): Boolean
     begin
         if Subscribers.UseLCYCreditLimit(Customer) then begin
             CreditLimit := Customer."Credit Limit (LCY)";
@@ -366,15 +371,23 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
     [TryFunction]
+    local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; ReportID: Integer)
+    begin
+        TryToSendEmail(SalesHeader, EmailAddr, Subject, '', ReportID);
+    end;
 
+
+    [TryFunction]
     local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; UserIDCode: Code[50]; ReportID: Integer)
     var
         SalesHeader2: Record "Sales Header";
         SMTPMail: Codeunit "SMTP Mail";
         RecVar: Variant;
     begin
-        SalesHeader."BA Approval Email User ID" := UserIDCode;
-        SalesHeader.Modify(false);
+        if UserIDCode <> '' then begin
+            SalesHeader."BA Approval Email User ID" := UserIDCode;
+            SalesHeader.Modify(false);
+        end;
         SalesHeader2.SetRange("Document Type", SalesHeader."Document Type");
         SalesHeader2.SetRange("No.", SalesHeader."No.");
         RecVar := SalesHeader2;
@@ -569,6 +582,35 @@ codeunit 75012 "BA Sales Approval Mgt."
             SenderEmail := MailMgt.GetSenderEmailAddress();
         exit(SenderEmail);
     end;
+
+
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeGetHTMLBodyText', '', false, false)]
+    // local procedure NotificationEntryDispatcherOnBeforeCreateMailAndDispatch(var NotificationEntry: Record "Notification Entry"; var Result: Boolean; var IsHandled: Boolean; var BodyTextOut: Text)
+    // var
+    //     FileMgt: Codeunit "File Management";
+    //     RecRef: RecordRef;
+    //     HtmlBodyFilePath: Text;
+    // begin
+
+    //     // if not Confirm('%1, %2, %3', false, NotificationEntry.ID, NotificationEntry.Type, NotificationEntry."Triggered By Record") then
+    //     //     Error('');
+
+    //     if (NotificationEntry.Type <> NotificationEntry.Type::Approval) and (NotificationEntry."Triggered By Record".TableNo() <> Database::"Sales Header") then
+    //         exit;
+    //     IsHandled := true;
+    //     HtmlBodyFilePath := FileMgt.ServerTempFileName('html');
+    //     Result := Report.SaveAsHtml(Report::"BA Prod. Order Approval", HtmlBodyFilePath, NotificationEntry);
+    //     if not Result then begin
+    //         NotificationEntry.SetErrorMessage(GetLastErrorText());
+    //         ClearLastError();
+    //         NotificationEntry.Modify(true);
+    //         Result := false;
+    //     end else
+    //         BodyTextOut := FileMgt.GetFileContent(HtmlBodyFilePath);
+    // end;
+
+
+
 
 
 

@@ -47,6 +47,7 @@ report 50089 "BA Prod. Order Approval"
                             RejectReason := ApprovalRejection.Description
                         else
                             RejectReason := ApprovalRejection.Code;
+                        RejectReason := StrSubstNo('Rejection Reason: %1', RejectReason);
                     end else
                         ApprovalAction := ApprovedLbl;
             end;
