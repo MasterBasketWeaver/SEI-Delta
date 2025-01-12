@@ -49,6 +49,14 @@ pageextension 80044 "BA User Setup" extends "User Setup"
             {
                 ApplicationArea = all;
             }
+            field("BA Allow Changing Pay. Terms"; Rec."BA Allow Changing Pay. Terms")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Receive Prod. Approvals"; Rec."BA Receive Prod. Approvals")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 

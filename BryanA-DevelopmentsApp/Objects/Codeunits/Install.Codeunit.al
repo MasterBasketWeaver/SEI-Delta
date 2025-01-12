@@ -28,10 +28,80 @@ codeunit 75011 "BA Install Codeunit"
         // UpdateItemDescriptions();
         // DefineNonTaxTaxGroup();
         // InitiateDeptCodesPurchaseLookup();
-        PopulateShipmentTrackingInfoReportUsage();
-        PopulateShipToContactDetails();
+        // PopulateShipmentTrackingInfoReportUsage();
+        // PopulateShipToContactDetails();
+        PopulateCustomerApprovalGroups();
+        PopulateProdOrderNotificationReportUsage();
     end;
 
+
+
+
+
+    local procedure PopulateProdOrderNotificationReportUsage()
+    var
+        ReportSelections: Record "Report Selections";
+        SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+    begin
+        ReportSelections.SetRange(Usage, SalesApprovalMgt.GetProdApprovalReportUsage());
+        ReportSelections.SetRange("Report ID", Report::"BA Prod. Order Approval");
+        if not ReportSelections.IsEmpty() then
+            exit;
+        ReportSelections.Init();
+        ReportSelections.Validate(Usage, SalesApprovalMgt.GetProdApprovalReportUsage());
+        ReportSelections.Validate(Sequence, '1');
+        ReportSelections.Validate("Report ID", Report::"BA Prod. Order Approval");
+        ReportSelections.Validate("Use for Email Attachment", false);
+        ReportSelections.Validate("Use for Email Body", true);
+        ReportSelections.Insert(true);
+    end;
+
+
+    local procedure PopulateCustomerApprovalGroups()
+    var
+        Customer: Record Customer;
+        ApprovalGroup: Record "BA Approval Group";
+        SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+    begin
+        if ApprovalGroup.IsEmpty() then
+            PopulateApprovalGroups();
+        Customer.SetRange("BA Approval Group", '');
+        if Customer.FindSet(true) then
+            repeat
+                SalesApprovalMgt.UpdateCustomerApprovalGroup(Customer, false);
+            until Customer.Next() = 0;
+    end;
+
+    local procedure PopulateApprovalGroups()
+    var
+        ApprovalGroup: Record "BA Approval Group";
+    begin
+        ApprovalGroup.Init();
+        ApprovalGroup.Code := 'A';
+        ApprovalGroup.Description := 'Prepaid';
+        ApprovalGroup."Is Prepaid" := true;
+        ApprovalGroup.Insert();
+
+        ApprovalGroup.Init();
+        ApprovalGroup.Code := 'B';
+        ApprovalGroup.Description := 'Net XX';
+        Evaluate(ApprovalGroup."Overdue Date Formula", '<15D>');
+        ApprovalGroup.Insert();
+
+        ApprovalGroup.Init();
+        ApprovalGroup.Code := 'C';
+        ApprovalGroup.Description := 'Military/Government';
+        ApprovalGroup."Is Military" := true;
+        ApprovalGroup."Is Government" := true;
+        ApprovalGroup.Insert();
+
+        ApprovalGroup.Init();
+        ApprovalGroup.Code := 'D';
+        ApprovalGroup.Description := 'Trusted Agent';
+        ApprovalGroup."Is Trusted Agent" := true;
+        Evaluate(ApprovalGroup."Overdue Date Formula", '<30D>');
+        ApprovalGroup.Insert();
+    end;
 
 
     local procedure PopulateShipToContactDetails()
@@ -47,6 +117,7 @@ codeunit 75011 "BA Install Codeunit"
                 CompInfo.Modify(true);
             end;
     end;
+
 
     local procedure PopulateShipmentTrackingInfoReportUsage()
     var
@@ -65,7 +136,6 @@ codeunit 75011 "BA Install Codeunit"
         ReportSelections.Validate("Use for Email Body", true);
         ReportSelections.Insert(true);
     end;
-
 
     local procedure InitiateDeptCodesPurchaseLookup()
     var

@@ -217,7 +217,7 @@ tableextension 80105 "BA Sales Header Archive" extends "Sales Header Archive"
             DataClassification = CustomerContent;
             Caption = 'SEI Barbados Order';
             Editable = false;
-        }        
+        }
         field(80051; "BA EORI No."; Code[20])
         {
             DataClassification = CustomerContent;
@@ -234,6 +234,18 @@ tableextension 80105 "BA Sales Header Archive" extends "Sales Header Archive"
         {
             DataClassification = CustomerContent;
             Caption = 'Quote Date';
+            Editable = false;
+        }
+        field(80110; "BA Approval Count"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Count';
+            Editable = false;
+        }
+        field(80111; "BA Last Approval Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Last Approval Amount';
             Editable = false;
         }
     }

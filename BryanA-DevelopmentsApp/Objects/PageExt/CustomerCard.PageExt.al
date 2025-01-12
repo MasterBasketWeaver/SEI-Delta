@@ -85,6 +85,14 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
                         ShowMandatoryFields := not Rec."BA Non-Mandatory Customer";
                     end;
                 }
+                field("BA Trusted Agent"; Rec."BA Trusted Agent")
+                {
+                    ApplicationArea = all;
+                }
+                field("BA Approval Group"; Rec."BA Approval Group")
+                {
+                    ApplicationArea = all;
+                }
             }
 
         }
@@ -333,6 +341,10 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
             {
                 ApplicationArea = all;
             }
+            field("BA Government (CDN/US)"; Rec."BA Government (CDN/US)")
+            {
+                ApplicationArea = all;
+            }
         }
         addafter("E-Mail")
         {
@@ -419,13 +431,8 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
     end;
 
     local procedure UpdateBalanaceDisplay()
-    var
-        CustPostingGroup: Record "Customer Posting Group";
     begin
-        if Rec."Customer Posting Group" = '' then
-            ShowLCYBalances := true
-        else
-            ShowLCYBalances := CustPostingGroup.Get(Rec."Customer Posting Group") and not CustPostingGroup."BA Show Non-Local Currency";
+        ShowLCYBalances := Subscribers.UseLCYCreditLimit(Rec);
     end;
 
 

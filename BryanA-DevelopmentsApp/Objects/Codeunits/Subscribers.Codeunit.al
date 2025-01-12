@@ -1562,7 +1562,7 @@ codeunit 75010 "BA SEI Subscibers"
         SalesHeader: Record "Sales Header";
         RecRef: RecordRef;
     begin
-        if not RecRef.Get(Rec."Record ID to Approve") or (RecRef.Number <> Database::"Sales Header") then
+        if not RecRef.Get(Rec."Record ID to Approve") or (RecRef.Number() <> Database::"Sales Header") then
             exit;
         RecRef.SetTable(SalesHeader);
         Rec."BA Customer Name" := SalesHeader."Bill-to Name";
@@ -1575,15 +1575,15 @@ codeunit 75010 "BA SEI Subscibers"
         else
             Rec."BA Credit Limit" := Customer."BA Credit Limit";
         Rec.CalcFields("BA Last Sales Activity");
+        Rec."BA Approval Group" := Customer."BA Approval Group";
         Rec.Modify(false);
     end;
 
-    local procedure UseLCYCreditLimit(var Customer: Record Customer): Boolean
+    procedure UseLCYCreditLimit(var Customer: Record Customer): Boolean
     var
         CustPostingGroup: Record "Customer Posting Group";
     begin
-        exit((Customer."Customer Posting Group" = '') or
-            (CustPostingGroup.Get(Customer."Customer Posting Group") and not CustPostingGroup."BA Show Non-Local Currency"));
+        exit((Customer."Customer Posting Group" = '') or (CustPostingGroup.Get(Customer."Customer Posting Group") and not CustPostingGroup."BA Show Non-Local Currency"));
     end;
 
 
@@ -3718,12 +3718,14 @@ codeunit 75010 "BA SEI Subscibers"
         exit(80000);
     end;
 
+
+
     procedure SendShipmentTrackingInfoEmail(var SalesInvHeader: Record "Sales Invoice Header")
     begin
         SalesInvHeader.TestField("BA Ship-to Email");
         SalesInvHeader.TestField("Shipping Agent Code");
         SalesInvHeader.TestField("Package Tracking No.");
-        if not TryToSendSendShipmentTrackingInfoEmail(SalesInvHeader, SalesInvHeader."No.", SalesInvHeader."Bill-to Customer No.") then
+        if not TryToSendEmail(GetShipmentTrackingInfoReportUsage(), SalesInvHeader, SalesInvHeader."No.", SalesInvHeader."Bill-to Customer No.") then
             Error(ShipmentSendErr, GetLastErrorText());
         Message(ShipmentInfoSentMsg);
     end;
@@ -3733,41 +3735,51 @@ codeunit 75010 "BA SEI Subscibers"
         ServiceInvHeader.TestField("Ship-to E-Mail");
         ServiceInvHeader.TestField("ENC Shipping Agent Code");
         ServiceInvHeader.TestField("ENC Package Tracking No.");
-        if not TryToSendSendShipmentTrackingInfoEmail(ServiceInvHeader, ServiceInvHeader."No.", ServiceInvHeader."Customer No.") then
+        if not TryToSendEmail(GetShipmentTrackingInfoReportUsage(), ServiceInvHeader, ServiceInvHeader."No.", ServiceInvHeader."Customer No.") then
             Error(ShipmentSendErr, GetLastErrorText());
         Message(ShipmentInfoSentMsg);
     end;
 
     [TryFunction]
-    local procedure TryToSendSendShipmentTrackingInfoEmail(RecVar: Variant; DocNo: Code[20]; CustNo: Code[20])
+    procedure TryToSendEmail(ReportId: Integer; RecVar: Variant; DocNo: Code[20]; CustNo: Code[20])
     var
         ReportSelections: Record "Report Selections";
     begin
-        ReportSelections.SendEmailToVendor(GetShipmentTrackingInfoReportUsage(), RecVar, DocNo, '', true, CustNo);
+        ReportSelections.SendEmailToVendor(ReportId, RecVar, DocNo, '', true, CustNo);
     end;
+
 
     [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnFindReportSelections', '', false, false)]
     local procedure ReportSelectionsOnFindReportSelections(var FilterReportSelections: Record "Report Selections"; var IsHandled: Boolean; sender: Record "Report Selections")
     begin
-        if sender.Usage <> GetShipmentTrackingInfoReportUsage() then
+        if not (sender.Usage in [GetShipmentTrackingInfoReportUsage(), SalesApprovalMgt.GetProdApprovalReportUsage()]) then
             exit;
         IsHandled := true;
         FilterReportSelections := sender;
         FilterReportSelections.Insert(false);
-        FilterReportSelections.SetRange(Usage, GetShipmentTrackingInfoReportUsage());
+        FilterReportSelections.SetRange(Usage, sender.Usage);
         FilterReportSelections.SetFilter("Report ID", '<>%1', 0);
         FilterReportSelections.SetRange("Use for Email Body", true);
     end;
 
+
     [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeGetVendorEmailAddress', '', false, false)]
     local procedure ReportSelectionsOnBeforeGetVendorEmailAddress(var IsHandled: Boolean; ReportUsage: Option; var ToAddress: Text; RecVar: Variant; BuyFromVendorNo: Code[20])
+    begin
+        case ReportUsage of
+            GetShipmentTrackingInfoReportUsage():
+                SetSalesServiceEmailToAddress(RecVar, IsHandled, ToAddress);
+                // SalesApprovalMgt.GetProdApprovalReportUsage():
+                //     SalesApprovalMgt.SetProdNotificationEmailToAddress(RecVar, IsHandled, ToAddress);
+        end;
+    end;
+
+    local procedure SetSalesServiceEmailToAddress(var RecVar: Variant; var IsHandled: Boolean; var ToAddress: Text)
     var
         SalesInvHeader: Record "Sales Invoice Header";
         ServiceInvHeader: Record "Service Invoice Header";
         RecRef: RecordRef;
     begin
-        if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
-            exit;
         RecRef.GetTable(RecVar);
         if RecRef.Number() = Database::"Sales Invoice Header" then begin
             RecRef.SetTable(SalesInvHeader);
@@ -3779,15 +3791,24 @@ codeunit 75010 "BA SEI Subscibers"
         IsHandled := true;
     end;
 
+
     [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeDoSaveReportAsHTML', '', false, false)]
     local procedure ReportSelectionsOnBeforeDoSaveReportAsHTML(var FilePath: Text[250]; var RecordVariant: Variant; ReportID: Integer)
+    begin
+        case ReportID of
+            Report::"BA Shipment Tracking Info":
+                SetSalesServiceEmailFilters(RecordVariant);
+                // Report::"BA Prod. Order Approval":
+                //     SalesApprovalMgt.SetProdNotificationEmailFilters(RecordVariant);
+        end;
+    end;
+
+    local procedure SetSalesServiceEmailFilters(var RecordVariant: Variant)
     var
         SalesInvHeader: Record "Sales Invoice Header";
         ServiceInvHeader: Record "Service Invoice Header";
         RecRef: RecordRef;
     begin
-        if ReportID <> Report::"BA Shipment Tracking Info" then
-            exit;
         RecRef.GetTable(RecordVariant);
         RecRef.Reset();
         if RecRef.Number() = Database::"Sales Invoice Header" then begin
@@ -3805,6 +3826,17 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Mailing", 'OnBeforeSendEmail', '', false, false)]
     local procedure DocMailingOnBeforeSendEmail(var ReportUsage: Integer; var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var TempEmailItem: Record "Email Item")
+    begin
+        case ReportUsage of
+            GetShipmentTrackingInfoReportUsage():
+                UpdateSalesServiceEmailSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
+                // SalesApprovalMgt.GetProdApprovalReportUsage():
+                //     SalesApprovalMgt.UpdateProdNotificationSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
+        end;
+    end;
+
+
+    local procedure UpdateSalesServiceEmailSettings(var PostedDocNo: Code[20]; var HideDialog: Boolean; var IsFromPostedDoc: Boolean; var TempEmailItem: Record "Email Item")
     var
         SalesInvHeader: Record "Sales Invoice Header";
         ServiceInvHeader: Record "Service Invoice Header";
@@ -3816,8 +3848,6 @@ codeunit 75010 "BA SEI Subscibers"
         OrderNo: Code[20];
         Sales: Boolean;
     begin
-        if ReportUsage <> GetShipmentTrackingInfoReportUsage() then
-            exit;
         if not IsDebugUser() then
             HideDialog := true;
         IsFromPostedDoc := false;
@@ -3863,7 +3893,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure MailMgtOnBeforeRunMailDialog(var TempEmailItem: Record "Email Item"; var IsHandled: Boolean)
     begin
         if not IsDebugUser() then
-            IsHandled := TempEmailItem."Message Type" = GetShipmentTrackingInfoReportUsage();
+            IsHandled := TempEmailItem."Message Type" in [GetShipmentTrackingInfoReportUsage(), SalesApprovalMgt.GetProdApprovalReportUsage()];
     end;
 
     local procedure AddShippingEmailEntry(var TempEmailItem: Record "Email Item"; PostedDocNo: Code[20])
@@ -4011,6 +4041,11 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeInsertEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeInsertEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
 
     procedure ImportFreightInvoicesToFixUpdate()
     var
@@ -4057,9 +4092,36 @@ codeunit 75010 "BA SEI Subscibers"
         Message('Updated %1 of %2.', i2, RecCount);
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeModifyEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeModifyEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeDeleteEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeDeleteEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeRenameEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeRenameEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
+
+    local procedure CheckIfCanEditPaymentTerms()
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Changing Pay. Terms" then
+            Error(PaymentTermsPermErr);
+    end;
 
 
     var
+        SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
         DefaultBlockReason: Label 'Product Dimension ID must be updated, the default Product ID cannot be used!';
         UpdateCreditLimitMsg: Label 'Do you want to update all USD customer''s credit limit?\This may take a while depending on the number of customers.';
@@ -4116,6 +4178,7 @@ codeunit 75010 "BA SEI Subscibers"
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation for %3';
         MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
+        PaymentTermsPermErr: Label 'You do not have permission to change Payment Terms.';
 
 }
 

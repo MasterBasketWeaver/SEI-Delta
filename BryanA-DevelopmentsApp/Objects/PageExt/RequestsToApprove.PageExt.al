@@ -40,6 +40,10 @@ pageextension 80155 "BA Requests to Approve" extends "Requests to Approve"
             {
                 ApplicationArea = all;
             }
+            field("BA Approval Group"; "BA Approval Group")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 

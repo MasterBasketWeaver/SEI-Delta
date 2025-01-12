@@ -28,6 +28,18 @@ pageextension 80121 "BA Sales Order List" extends "Sales Order List"
             {
                 ApplicationArea = all;
             }
+            field("BA Approval Count"; Rec."BA Approval Count")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Last Approval Amount"; Rec."BA Last Approval Amount")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Appr. Reject. Reason Code"; Rec."BA Appr. Reject. Reason Code")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 }

@@ -81,6 +81,23 @@ pageextension 80123 "BA Posted Sales Invoices" extends "Posted Sales Invoices"
                     Subscribers.SendShipmentTrackingInfoEmail(Rec);
                 end;
             }
+            action("BA Send Invoice & Packing Slip")
+            {
+                ApplicationArea = all;
+                Image = SendElectronicDocument;
+                Promoted = true;
+                PromotedCategory = Category7;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Send Invoice & Packing Slip';
+
+                trigger OnAction()
+                var
+                    SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+                begin
+                    SalesApprovalMgt.SendShipmentAndInvoice(Rec);
+                end;
+            }
             action("BA Update Freight Carrier")
             {
                 ApplicationArea = all;
