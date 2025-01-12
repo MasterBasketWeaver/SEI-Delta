@@ -248,5 +248,49 @@ tableextension 80105 "BA Sales Header Archive" extends "Sales Header Archive"
             Caption = 'Last Approval Amount';
             Editable = false;
         }
+        field(80112; "BA Use Default Workflow"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Use Default Workflow';
+            Editable = false;
+        }
+        field(80113; "BA Use Custom Workflow Start"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Use Custom Workflow Start';
+            Editable = false;
+        }
+        field(80115; "BA Appr. Reject. Reason Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Reject Reason Code';
+            Editable = false;
+            TableRelation = "BA Approval Rejection".Code;
+
+            trigger OnValidate()
+            begin
+                Rec.CalcFields("BA Rejection Reason");
+            end;
+        }
+        field(80116; "BA Rejection Reason"; Text[100])
+        {
+            Caption = 'Rejection Reason';
+            FieldClass = FlowField;
+            CalcFormula = lookup ("BA Approval Rejection".Description where (Code = field ("BA Appr. Reject. Reason Code")));
+            Editable = false;
+        }
+        field(80117; "BA Approval Email User ID"; Code[50])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Email User ID';
+            Editable = false;
+            TableRelation = User."User Name";
+        }
+        field(80118; "BA Sent for Invoice Request"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Sent for Invoice Request';
+            Editable = false;
+        }
     }
 }
