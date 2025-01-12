@@ -61,7 +61,7 @@ tableextension 80101 "BA Approval Entry" extends "Approval Entry"
             Caption = 'Remaining Amount ($)';
             Editable = false;
         }
-        field(80020; "BA Approval Group"; Code[10])
+        field(80025; "BA Approval Group"; Code[10])
         {
             DataClassification = CustomerContent;
             Caption = 'Approval Group';
