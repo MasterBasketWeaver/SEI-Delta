@@ -148,7 +148,7 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
         }
         field(80116; "BA Rejection Reason"; Text[100])
         {
-            Caption = 'Approval Email User ID';
+            Caption = 'Rejection Reason';
             FieldClass = FlowField;
             CalcFormula = lookup ("BA Approval Rejection".Description where (Code = field ("BA Appr. Reject. Reason Code")));
             Editable = false;
