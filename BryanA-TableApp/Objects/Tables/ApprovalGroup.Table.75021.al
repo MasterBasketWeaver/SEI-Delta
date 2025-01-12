@@ -1,4 +1,4 @@
-table 75014 "BA Approval Group"
+table 75021 "BA Approval Group"
 {
     DataClassification = CustomerContent;
     Caption = 'Approval Group';
