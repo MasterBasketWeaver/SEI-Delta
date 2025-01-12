@@ -140,13 +140,6 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Caption = 'Use Custom Workflow Start';
             Editable = false;
         }
-        // field(80114; "BA Approval Email"; Text[100])
-        // {
-        //     DataClassification = CustomerContent;
-        //     Caption = 'Approval Email';
-        //     Editable = false;
-        //     ExtendedDatatype = EMail;
-        // }
         field(80115; "BA Appr. Reject. Reason Code"; Code[20])
         {
             DataClassification = CustomerContent;
@@ -179,5 +172,12 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Caption = 'Sent for Invoice Request';
             Editable = false;
         }
+        //field ID reserved for the following field on Sales Invoice Header:
+        // field(80119; "BA Invoice/Packing Slip Users"; Text[2048])
+        // {
+        //     DataClassification = CustomerContent;
+        //     Caption = 'Invoice/Packing Slip Usernames';
+        //     Editable = false;
+        // }
     }
 }
