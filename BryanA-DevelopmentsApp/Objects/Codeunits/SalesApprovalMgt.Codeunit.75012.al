@@ -420,22 +420,29 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         SalesInvHeader2: Record "Sales Invoice Header";
         SalesShptHeader: Record "Sales Shipment Header";
+        Window: Dialog;
         RecVar: Variant;
         FileNames: Dictionary of [Text, Text];
         Emails: List of [Text];
         EmailsCC: List of [Text];
+        SinglePackSlip: Boolean;
     begin
         SalesInvHeader.TestField("Order No.");
         SalesShptHeader.SetRange("Order No.", SalesInvHeader."Order No.");
         if not SalesShptHeader.FindSet() then
             Error(NoRelatedPackingSlipsErr, SalesInvHeader."No.", SalesInvHeader."Order No.");
-
+        SinglePackSlip := SalesShptHeader.Count() = 1;
+        if SinglePackSlip then
+            Window.Open(SendingInvPackingSlipSingleTitle)
+        else
+            Window.Open(SendingInvPackingSlipMultiTitle);
         PopulateAttachments(SalesInvHeader, SalesInvHeader2, SalesShptHeader, FileNames);
         PopulateEmailAddresses(SalesInvHeader, Emails, EmailsCC);
 
         RecVar := SalesInvHeader2;
         SendInvoiceShipmentEmail(FileNames, Emails, EmailsCC, GetBodyHTMLText(RecVar, Report::"BA Invoice/Shpt Email Body"), StrSubstNo(InvPackSlipSubject, SalesInvHeader."Order No.", SalesInvHeader."Sell-to Customer No.", SalesInvHeader."Sell-to Customer No."));
-        if SalesShptHeader.Count() = 1 then
+        Window.Close();
+        if SinglePackSlip then
             Message(SentSingleInvoiceMsg)
         else
             Message(SentMultiInvoiceMsg);
@@ -560,6 +567,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         end;
         if not SMTPMail.TrySend() then
             Error(FailedToSendInvoicePackingSlipErr, SMTPMail.GetLastSendMailErrorText());
+
     end;
 
     local procedure GetEmailsAsText(var Emails: List of [Text]): Text
@@ -637,6 +645,8 @@ codeunit 75012 "BA Sales Approval Mgt."
         SentInvoiceMsg: Label 'Sent invoice request to %1';
         SentSingleInvoiceMsg: Label 'Sent invoice and related packing slip email.';
         SentMultiInvoiceMsg: Label 'Sent invoice and related packing slips email.';
+        SendingInvPackingSlipSingleTitle: Label 'Sending invoice and packing slip...';
+        SendingInvPackingSlipMultiTitle: Label 'Sending invoice and packing slips...';
         NoRelatedPackingSlipsErr: Label 'Unable to send invoice email due to no related packing slips found for Invoice %1, Order No. %2.';
         NoEmailBodyErr: Label 'Unable to create email body:%1';
         InvoiceFileName: Label '%1-%2-%3-Sales Invoice.pdf';
@@ -647,6 +657,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         DoubleTok: Label '%1 and %2';
         MultiTok: Label '%1, %2';
         LastTok: Label '%1, and %2';
+
 }
 
 
