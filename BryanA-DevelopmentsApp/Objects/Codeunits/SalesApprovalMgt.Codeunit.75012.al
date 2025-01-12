@@ -642,7 +642,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         InvRequestSubject: Label 'Invoice Request: %1 - %2 - %3';
         InvPackSlipSubject: Label '%1 Has Been Invoiced - %2 - %3';
         NoReasonCodeErr: Label 'Rejection reason must be selected.';
-        SentInvoiceMsg: Label 'Sent invoice request to %1';
+        SentInvoiceMsg: Label 'Invoice request sent to %1';
         SentSingleInvoiceMsg: Label 'Sent invoice and related packing slip email.';
         SentMultiInvoiceMsg: Label 'Sent invoice and related packing slips email.';
         SendingInvPackingSlipSingleTitle: Label 'Sending invoice and packing slip...';
