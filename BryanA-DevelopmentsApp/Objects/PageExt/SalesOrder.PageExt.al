@@ -200,18 +200,18 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
             {
                 ApplicationArea = all;
             }
+        }
+        addafter(Status)
+        {
             field("BA Appr. Reject. Reason Code"; "BA Appr. Reject. Reason Code")
             {
                 ApplicationArea = all;
-                Visible = ShowApprovalRejection;
             }
             field("BA Rejection Reason"; "BA Rejection Reason")
             {
                 ApplicationArea = all;
-                Visible = ShowApprovalRejection;
             }
         }
-
     }
 
 
@@ -243,15 +243,15 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
     var
         [InDataSet]
         MandatoryDeliveryDate: Boolean;
-        [InDataSet]
-        ShowApprovalRejection: Boolean;
+        // [InDataSet]
+        // ShowApprovalRejection: Boolean;
 
     trigger OnAfterGetRecord()
     var
         Customer: Record Customer;
     begin
         MandatoryDeliveryDate := Customer.Get(Rec."Bill-to Customer No.") and not Customer."BA Non-Mandatory Delivery Date";
-        ShowApprovalRejection := Rec."BA Appr. Reject. Reason Code" <> '';
+        // ShowApprovalRejection := Rec."BA Appr. Reject. Reason Code" <> '';
     end;
 
 
