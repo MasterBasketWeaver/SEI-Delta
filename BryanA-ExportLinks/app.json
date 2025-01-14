@@ -1,0 +1,25 @@
+{
+  "id": "d30af3a7-247a-5557-80a1-9b82e52ee5a7",
+  "name": "BryanA - Export Links",
+  "publisher": "BryanA BC Developments Inc.",
+  "brief": "Provides custom functionality to export record links.",
+  "description": "",
+  "version": "1.0.0.0",
+  "privacyStatement": "",
+  "EULA": "",
+  "help": "",
+  "url": "",
+  "logo": "",
+  "capabilities": [],
+  "dependencies": [],
+  "screenshots": [],
+  "platform": "14.0.0.0",
+  "application": "14.0.0.0",
+  "idRange": {
+    "from": 50000,
+    "to": 89999
+  },
+  "showMyCode": true,
+  "target": "Internal",
+  "runtime" : "3.2"
+}

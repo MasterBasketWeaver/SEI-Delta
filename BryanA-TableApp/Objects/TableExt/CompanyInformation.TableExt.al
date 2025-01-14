@@ -21,5 +21,15 @@ tableextension 80095 "BA Company Info" extends "Company Information"
             Caption = 'Ship-To Phone No.';
             ExtendedDatatype = PhoneNo;
         }
+        field(80020; "BA Accounting AR Email"; Text[80])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Accounting AR Email';
+            ExtendedDatatype = EMail;
+        }
+        modify("E-Mail")
+        {
+            Caption = 'Sales Email';
+        }
     }
 }
