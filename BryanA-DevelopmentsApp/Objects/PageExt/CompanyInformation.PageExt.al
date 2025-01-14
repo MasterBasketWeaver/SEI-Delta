@@ -28,6 +28,10 @@ pageextension 80135 "BA Company Information" extends "Company Information"
             {
                 ApplicationArea = all;
             }
+            field("BA Accounting AR Email"; Rec."BA Accounting AR Email")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 }
