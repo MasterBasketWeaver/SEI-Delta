@@ -81,7 +81,7 @@ codeunit 75012 "BA Sales Approval Mgt."
     [EventSubscriber(ObjectType::Table, Database::Customer, 'OnAfterValidateEvent', 'ENC Military', false, false)]
     local procedure CustomerOnAfterValidateMilitary(var Rec: Record Customer)
     begin
-        if Rec."ENC Military" <> Rec."ENC Military" then begin
+        if Rec."ENC Military" <> Rec."ENC Military"::" " then begin
             Rec.Validate("BA Government (CDN/US)", true);
             Rec.Modify(true);
             Rec.Get(Rec."No.");
