@@ -23,6 +23,8 @@ report 50091 "BA Sales Order Approval Note."
             column(ApprovalGroup; ApprovalGroup) { }
             column(Balance; Balance) { }
             column(CreditLimit; CreditLimit) { }
+            column(ApprovalCount; "BA Approval Count") { }
+            column(LastApprovalAmount; "BA Last Approval Amount") { }
 
 
             trigger OnAfterGetRecord()
