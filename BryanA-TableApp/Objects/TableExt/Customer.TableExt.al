@@ -176,9 +176,5 @@ tableextension 80030 "BA Customer" extends Customer
             DataClassification = CustomerContent;
             Caption = 'Trusted Agent';
         }
-        modify("ENC Military")
-        {
-            Caption = 'Military (CDN/US)';
-        }
     }
 }
