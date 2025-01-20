@@ -4041,11 +4041,7 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeInsertEvent', '', false, false)]
-    local procedure PaymentTermsOnBeforeInsertEvent()
-    begin
-        CheckIfCanEditPaymentTerms();
-    end;
+
 
     procedure ImportFreightInvoicesToFixUpdate()
     var
@@ -4090,6 +4086,12 @@ codeunit 75010 "BA SEI Subscibers"
         Window.Close();
 
         Message('Updated %1 of %2.', i2, RecCount);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeInsertEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeInsertEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeModifyEvent', '', false, false)]
