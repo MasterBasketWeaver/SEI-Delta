@@ -63,8 +63,7 @@ codeunit 75011 "BA Install Codeunit"
         ApprovalGroup: Record "BA Approval Group";
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
     begin
-        if ApprovalGroup.IsEmpty() then
-            PopulateApprovalGroups();
+        PopulateApprovalGroups();
         Customer.SetRange("BA Approval Group", '');
         if Customer.FindSet(true) then
             repeat
@@ -76,31 +75,46 @@ codeunit 75011 "BA Install Codeunit"
     var
         ApprovalGroup: Record "BA Approval Group";
     begin
-        ApprovalGroup.Init();
-        ApprovalGroup.Code := 'A';
-        ApprovalGroup.Description := 'Prepaid';
-        ApprovalGroup."Is Prepaid" := true;
-        ApprovalGroup.Insert();
+        if not ApprovalGroup.Get('A') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'A';
+            ApprovalGroup.Description := 'Prepaid';
+            ApprovalGroup."Is Prepaid" := true;
+            ApprovalGroup.Insert();
+        end;
 
-        ApprovalGroup.Init();
-        ApprovalGroup.Code := 'B';
-        ApprovalGroup.Description := 'Net XX';
-        Evaluate(ApprovalGroup."Overdue Date Formula", '<15D>');
-        ApprovalGroup.Insert();
+        if not ApprovalGroup.Get('B') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'B';
+            ApprovalGroup.Description := 'Net XX';
+            Evaluate(ApprovalGroup."Overdue Date Formula", '<15D>');
+            ApprovalGroup.Insert();
+        end;
 
-        ApprovalGroup.Init();
-        ApprovalGroup.Code := 'C';
-        ApprovalGroup.Description := 'Military/Government';
-        ApprovalGroup."Is Military" := true;
-        ApprovalGroup."Is Government" := true;
-        ApprovalGroup.Insert();
+        if not ApprovalGroup.Get('C') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'C';
+            ApprovalGroup.Description := 'Military/Government';
+            ApprovalGroup."Is Military" := true;
+            ApprovalGroup."Is Government" := true;
+            ApprovalGroup.Insert();
+        end;
 
-        ApprovalGroup.Init();
-        ApprovalGroup.Code := 'D';
-        ApprovalGroup.Description := 'Trusted Agent';
-        ApprovalGroup."Is Trusted Agent" := true;
-        Evaluate(ApprovalGroup."Overdue Date Formula", '<30D>');
-        ApprovalGroup.Insert();
+        if not ApprovalGroup.Get('D') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'D';
+            ApprovalGroup.Description := 'Trusted Agent';
+            ApprovalGroup."Is Trusted Agent" := true;
+            Evaluate(ApprovalGroup."Overdue Date Formula", '<30D>');
+            ApprovalGroup.Insert();
+        end;
+
+        if not ApprovalGroup.Get('TBD') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'TBD';
+            ApprovalGroup.Description := 'To be determined';
+            ApprovalGroup.Insert();
+        end;
     end;
 
 

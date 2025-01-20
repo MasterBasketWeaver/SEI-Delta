@@ -9,7 +9,7 @@ report 50090 "BA Invoice/Shpt Email Body"
     {
         dataitem(SalesInvHeader; "Sales Invoice Header")
         {
-            column(No; "No.") { }
+            column(No; "Order No.") { }
             column(Username; "BA Invoice/Packing Slip Users") { }
             column(CompanyName; CompanyName()) { }
             column(ApprovalAction; DescriptionLbl) { }

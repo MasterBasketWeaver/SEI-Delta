@@ -30,17 +30,27 @@ codeunit 75012 "BA Sales Approval Mgt."
                     end;
                     Customer.Validate("BA Approval Group", ApprovalGroup.Code);
                 end;
-            PaymentTerms."BA Is Prepaid": //A
+            Customer."Payment Terms Code" = '': //TBD
                 begin
-                    ApprovalGroup.SetRange("Is Prepaid", true);
-                    ApprovalGroup.FindFirst();
-                    Customer.Validate("BA Approval Group", ApprovalGroup.Code);
-                end;
-            else begin //B
                     ApprovalGroup.SetRange("Is Government", false);
                     ApprovalGroup.SetRange("Is Military", false);
                     ApprovalGroup.SetRange("Is Prepaid", false);
                     ApprovalGroup.SetRange("Is Trusted Agent", false);
+                    ApprovalGroup.SetRange("Overdue Date Formula", ApprovalGroup."Overdue Date Formula"); // blank date formula
+                    ApprovalGroup.FindFirst();
+                    Customer.Validate("BA Approval Group", ApprovalGroup.Code);
+                end;
+            else
+                if PaymentTerms."BA Is Prepaid" then begin //A
+                    ApprovalGroup.SetRange("Is Prepaid", true);
+                    ApprovalGroup.FindFirst();
+                    Customer.Validate("BA Approval Group", ApprovalGroup.Code);
+                end else begin //B
+                    ApprovalGroup.SetRange("Is Government", false);
+                    ApprovalGroup.SetRange("Is Military", false);
+                    ApprovalGroup.SetRange("Is Prepaid", false);
+                    ApprovalGroup.SetRange("Is Trusted Agent", false);
+                    ApprovalGroup.SetFilter("Overdue Date Formula", '<>%1', ApprovalGroup."Overdue Date Formula"); // not blank date formula
                     ApprovalGroup.FindFirst();
                     Customer.Validate("BA Approval Group", ApprovalGroup.Code);
                 end;
@@ -71,6 +81,11 @@ codeunit 75012 "BA Sales Approval Mgt."
     [EventSubscriber(ObjectType::Table, Database::Customer, 'OnAfterValidateEvent', 'ENC Military', false, false)]
     local procedure CustomerOnAfterValidateMilitary(var Rec: Record Customer)
     begin
+        if Rec."ENC Military" <> Rec."ENC Military" then begin
+            Rec.Validate("BA Government (CDN/US)", true);
+            Rec.Modify(true);
+            Rec.Get(Rec."No.");
+        end;
         UpdateCustomerApprovalGroup(Rec);
     end;
 
@@ -194,7 +209,10 @@ codeunit 75012 "BA Sales Approval Mgt."
             ApprovalGroup."Is Government" or ApprovalGroup."Is Military":
                 SendGovernmentMilitaryApproval(SalesHeader, Customer);
             else
-                SendApprovalOnOverDue(SalesHeader, Customer, ApprovalGroup);
+                if Format(ApprovalGroup."Overdue Date Formula") <> '' then
+                    SendApprovalOnOverDue(SalesHeader, Customer, ApprovalGroup)
+                else
+                    Error(InvalidAppGroupErr, Customer."No.", ApprovalGroup.Code);
         end;
         IsHandled := true;
     end;
@@ -440,7 +458,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         PopulateEmailAddresses(SalesInvHeader, Emails, EmailsCC);
 
         RecVar := SalesInvHeader2;
-        SendInvoiceShipmentEmail(FileNames, Emails, EmailsCC, GetBodyHTMLText(RecVar, Report::"BA Invoice/Shpt Email Body"), StrSubstNo(InvPackSlipSubject, SalesInvHeader."Order No.", SalesInvHeader."Sell-to Customer No.", SalesInvHeader."Sell-to Customer No."));
+        SendInvoiceShipmentEmail(FileNames, Emails, EmailsCC, GetBodyHTMLText(RecVar, Report::"BA Invoice/Shpt Email Body"), StrSubstNo(InvPackSlipSubject, SalesInvHeader."Order No.", SalesInvHeader."Sell-to Customer No.", SalesInvHeader."Sell-to Customer Name"));
         Window.Close();
         if SinglePackSlip then
             Message(SentSingleInvoiceMsg)
@@ -567,7 +585,6 @@ codeunit 75012 "BA Sales Approval Mgt."
         end;
         if not SMTPMail.TrySend() then
             Error(FailedToSendInvoicePackingSlipErr, SMTPMail.GetLastSendMailErrorText());
-
     end;
 
     local procedure GetEmailsAsText(var Emails: List of [Text]): Text
@@ -591,31 +608,6 @@ codeunit 75012 "BA Sales Approval Mgt."
         exit(SenderEmail);
     end;
 
-
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeGetHTMLBodyText', '', false, false)]
-    // local procedure NotificationEntryDispatcherOnBeforeCreateMailAndDispatch(var NotificationEntry: Record "Notification Entry"; var Result: Boolean; var IsHandled: Boolean; var BodyTextOut: Text)
-    // var
-    //     FileMgt: Codeunit "File Management";
-    //     RecRef: RecordRef;
-    //     HtmlBodyFilePath: Text;
-    // begin
-
-    //     // if not Confirm('%1, %2, %3', false, NotificationEntry.ID, NotificationEntry.Type, NotificationEntry."Triggered By Record") then
-    //     //     Error('');
-
-    //     if (NotificationEntry.Type <> NotificationEntry.Type::Approval) and (NotificationEntry."Triggered By Record".TableNo() <> Database::"Sales Header") then
-    //         exit;
-    //     IsHandled := true;
-    //     HtmlBodyFilePath := FileMgt.ServerTempFileName('html');
-    //     Result := Report.SaveAsHtml(Report::"BA Prod. Order Approval", HtmlBodyFilePath, NotificationEntry);
-    //     if not Result then begin
-    //         NotificationEntry.SetErrorMessage(GetLastErrorText());
-    //         ClearLastError();
-    //         NotificationEntry.Modify(true);
-    //         Result := false;
-    //     end else
-    //         BodyTextOut := FileMgt.GetFileContent(HtmlBodyFilePath);
-    // end;
 
 
 
@@ -657,6 +649,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         DoubleTok: Label '%1 and %2';
         MultiTok: Label '%1, %2';
         LastTok: Label '%1, and %2';
+        InvalidAppGroupErr: Label 'Cannot send an approval request for Customer %1 as it has not been assigned a valid approval group: %2.';
 
 }
 
