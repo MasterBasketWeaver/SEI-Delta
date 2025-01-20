@@ -43,6 +43,10 @@ pageextension 80083 "BA Customer List" extends "Customer List"
             {
                 ApplicationArea = all;
             }
+            field("ENC Military"; Rec."ENC Military")
+            {
+                ApplicationArea = all;
+            }
             field("BA Government (CDN/US)"; Rec."BA Government (CDN/US)")
             {
                 ApplicationArea = all;
