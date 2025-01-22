@@ -2487,6 +2487,8 @@ codeunit 75010 "BA SEI Subscibers"
         if ServiceItemLine."Service Item No." <> '' then
             Error(ServiceItemWarrantyError, ServiceItemLine.FieldCaption("Service Item No."));
 
+        WarrantyValue := ServiceItemLine.Warranty;
+        ServiceHeader.Get(ServiceItemLine."Document Type", ServiceItemLine."Document No.");
         if WarrantyValue then begin
             ServiceItemLine.Validate("Warranty Starting Date (Parts)", ServiceHeader."Order Date");
             ServiceItemLine.Validate("Warranty Starting Date (Labor)", ServiceHeader."Order Date");
@@ -2494,8 +2496,6 @@ codeunit 75010 "BA SEI Subscibers"
             ServiceItemLine.Validate("Warranty Starting Date (Parts)", 0D);
             ServiceItemLine.Validate("Warranty Starting Date (Labor)", 0D);
         end;
-        WarrantyValue := ServiceItemLine.Warranty;
-        ServiceHeader.Get(ServiceItemLine."Document Type", ServiceItemLine."Document No.");
         ServiceItemLine.CheckWarranty(ServiceHeader."Order Date");
         ServiceItemLine.Warranty := WarrantyValue;
         ServiceItemLine.Modify(true);
