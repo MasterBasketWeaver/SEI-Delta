@@ -2484,6 +2484,9 @@ codeunit 75010 "BA SEI Subscibers"
         ServiceLine: Record "Service Line";
         WarrantValue: Boolean;
     begin
+        if ServiceItemLine."Service Item No." <> '' then
+            Error(ServiceItemWarrantyError, ServiceItemLine.FieldCaption("Service Item No."));
+
         IsHandled := true;
         WarrantValue := ServiceItemLine.Warranty;
         ServiceHeader.Get(ServiceItemLine."Document Type", ServiceItemLine."Document No.");
@@ -2497,6 +2500,11 @@ codeunit 75010 "BA SEI Subscibers"
                 ServiceLine.Validate(Warranty, ServiceItemLine.Warranty);
                 ServiceLine.Modify(true);
             until ServiceLine.Next() = 0;
+
+        if not WarrantValue then
+            ServiceHeader."Order Date" := 0D;
+        ServiceItemLine.Validate("Warranty Starting Date (Parts)", ServiceHeader."Order Date");
+        ServiceItemLine.Validate("Warranty Starting Date (Labor)", ServiceHeader."Order Date");
     end;
 
 
@@ -3503,6 +3511,7 @@ codeunit 75010 "BA SEI Subscibers"
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation for %3';
         MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
+        ServiceItemWarrantyError: Label 'You cannot change the warranty information when a value has been specified in the %1 field.';
 
 }
 
