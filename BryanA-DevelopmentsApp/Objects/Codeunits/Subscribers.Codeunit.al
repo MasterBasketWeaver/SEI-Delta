@@ -2498,6 +2498,8 @@ codeunit 75010 "BA SEI Subscibers"
         ServiceHeader.Get(ServiceItemLine."Document Type", ServiceItemLine."Document No.");
         ServiceItemLine.CheckWarranty(ServiceHeader."Order Date");
         ServiceItemLine.Warranty := WarrantyValue;
+        ServiceItemLine.Modify(true);
+        ServiceItemLine.Get(ServiceItemLine.RecordId());
         ServiceLine.SetRange("Document Type", ServiceItemLine."Document Type");
         ServiceLine.SetRange("Document No.", ServiceItemLine."Document No.");
         ServiceLine.SetRange("Service Item Line No.", ServiceItemLine."Line No.");
