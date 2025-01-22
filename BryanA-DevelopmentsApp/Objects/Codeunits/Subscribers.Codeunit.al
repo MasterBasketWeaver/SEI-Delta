@@ -3097,6 +3097,38 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    [EventSubscriber(ObjectType::Table, Database::"Service Item Line", 'OnBeforeValidateWarranty', '', false, false)]
+    local procedure ServiceItemLineOnBeforeValidateWarranty(var ServiceItemLine: Record "Service Item Line"; var IsHandled: Boolean)
+    var
+        ServiceHeader: Record "Service Header";
+        ServiceLine: Record "Service Line";
+        WarrantValue: Boolean;
+    begin
+        if ServiceItemLine."Service Item No." <> '' then
+            Error(ServiceItemWarrantyError, ServiceItemLine.FieldCaption("Service Item No."));
+
+        IsHandled := true;
+        WarrantValue := ServiceItemLine.Warranty;
+        ServiceHeader.Get(ServiceItemLine."Document Type", ServiceItemLine."Document No.");
+        ServiceItemLine.CheckWarranty(ServiceHeader."Order Date");
+        ServiceItemLine.Warranty := WarrantValue;
+        ServiceLine.SetRange("Document Type", ServiceItemLine."Document Type");
+        ServiceLine.SetRange("Document No.", ServiceItemLine."Document No.");
+        ServiceLine.SetRange("Service Item Line No.", ServiceItemLine."Line No.");
+        if ServiceLine.FindSet(true) then
+            repeat
+                ServiceLine.Validate(Warranty, ServiceItemLine.Warranty);
+                ServiceLine.Modify(true);
+            until ServiceLine.Next() = 0;
+
+        if not WarrantValue then
+            ServiceHeader."Order Date" := 0D;
+        ServiceItemLine.Validate("Warranty Starting Date (Parts)", ServiceHeader."Order Date");
+        ServiceItemLine.Validate("Warranty Starting Date (Labor)", ServiceHeader."Order Date");
+    end;
+
+
+
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnValidateShipToCodeBeforeConfirmDialog', '', false, false)]
     local procedure ServiceHeaderOnValidateShipToCodeBeforeConfirmDialog(var Rec: Record "Service Header"; var xRec: Record "Service Header"; var IsHandled: Boolean)
     begin
@@ -4181,6 +4213,7 @@ codeunit 75010 "BA SEI Subscibers"
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation for %3';
         MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
         PaymentTermsPermErr: Label 'You do not have permission to change Payment Terms.';
+        ServiceItemWarrantyError: Label 'You cannot change the warranty information when a value has been specified in the %1 field.';
 
 }
 
