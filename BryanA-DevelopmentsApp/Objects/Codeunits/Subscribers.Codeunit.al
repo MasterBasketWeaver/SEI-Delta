@@ -2482,16 +2482,22 @@ codeunit 75010 "BA SEI Subscibers"
     var
         ServiceHeader: Record "Service Header";
         ServiceLine: Record "Service Line";
-        WarrantValue: Boolean;
+        WarrantyValue: Boolean;
     begin
         if ServiceItemLine."Service Item No." <> '' then
             Error(ServiceItemWarrantyError, ServiceItemLine.FieldCaption("Service Item No."));
 
-        IsHandled := true;
-        WarrantValue := ServiceItemLine.Warranty;
+        if WarrantyValue then begin
+            ServiceItemLine.Validate("Warranty Starting Date (Parts)", ServiceHeader."Order Date");
+            ServiceItemLine.Validate("Warranty Starting Date (Labor)", ServiceHeader."Order Date");
+        end else begin
+            ServiceItemLine.Validate("Warranty Starting Date (Parts)", 0D);
+            ServiceItemLine.Validate("Warranty Starting Date (Labor)", 0D);
+        end;
+        WarrantyValue := ServiceItemLine.Warranty;
         ServiceHeader.Get(ServiceItemLine."Document Type", ServiceItemLine."Document No.");
         ServiceItemLine.CheckWarranty(ServiceHeader."Order Date");
-        ServiceItemLine.Warranty := WarrantValue;
+        ServiceItemLine.Warranty := WarrantyValue;
         ServiceLine.SetRange("Document Type", ServiceItemLine."Document Type");
         ServiceLine.SetRange("Document No.", ServiceItemLine."Document No.");
         ServiceLine.SetRange("Service Item Line No.", ServiceItemLine."Line No.");
@@ -2500,11 +2506,7 @@ codeunit 75010 "BA SEI Subscibers"
                 ServiceLine.Validate(Warranty, ServiceItemLine.Warranty);
                 ServiceLine.Modify(true);
             until ServiceLine.Next() = 0;
-
-        if not WarrantValue then
-            ServiceHeader."Order Date" := 0D;
-        ServiceItemLine.Validate("Warranty Starting Date (Parts)", ServiceHeader."Order Date");
-        ServiceItemLine.Validate("Warranty Starting Date (Labor)", ServiceHeader."Order Date");
+        IsHandled := true;
     end;
 
 
