@@ -1,5 +1,16 @@
 pageextension 80186 "BA Payment Journal" extends "Payment Journal"
 {
+    layout
+    {
+        addafter("Check Printed")
+        {
+            field("BA Check Transmitted"; Rec."Check Transmitted")
+            {
+                ApplicationArea = all;
+            }
+        }
+    }
+
     actions
     {
         modify(TransmitPayments)
@@ -18,5 +29,6 @@ pageextension 80186 "BA Payment Journal" extends "Payment Journal"
             PromotedIsBig = true;
             PromotedOnly = true;
         }
+        moveafter(VoidPayments; GenerateEFT)
     }
 }

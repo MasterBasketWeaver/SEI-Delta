@@ -3507,6 +3507,16 @@ codeunit 75010 "BA SEI Subscibers"
         SupportedOutputMethod := 0;
     end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
+    local procedure GenerateEFTOnBeforeSelectFolder(var BankAccount: Record "Bank Account"; SaveFolderMsg: Text; var Path: Text; var IsHandled: Boolean)
+    var
+        FileMgt: Codeunit "File Management";
+    begin
+        if BankAccount."E-Pay Export File Path" <> '' then begin
+            IsHandled := true;
+            FileMgt.SelectDefaultFolderDialog(SaveFolderMsg, Path, BankAccount."E-Pay Export File Path");
+        end;
+    end;
 
 
 
