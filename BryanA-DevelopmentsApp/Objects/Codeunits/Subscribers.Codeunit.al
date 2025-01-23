@@ -3476,35 +3476,36 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    // [EventSubscriber(ObjectType::Page, Page::"Payment Journal", 'OnBeforeActionEvent', 'ExportPaymentsToFile', false, false)]
-    // local procedure PaymentJournalOnBeforeExportPaymentsToFile(var Rec: Record "Gen. Journal Line")
-    // var
-    //     UserSetup: Record "User Setup";
-    // begin
-    //     if not UserSetup.Get(UserId()) then begin
-    //         UserSetup.Init();
-    //         UserSetup.Validate("User ID", UserId());
-    //         UserSetup.Insert(true);
-    //     end;
-    //     UserSetup.Validate("BA Payment Bank Account No.", Rec."Bal. Account No.");
-    //     UserSetup.Validate("BA Payment Filter Record ID", Rec.RecordId());
-    //     UserSetup.Modify(true);
-    // end;
+    [EventSubscriber(ObjectType::Page, Page::"Payment Journal", 'OnBeforeActionEvent', 'ExportPaymentsToFile', false, false)]
+    local procedure PaymentJournalOnBeforeExportPaymentsToFile(var Rec: Record "Gen. Journal Line")
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if not UserSetup.Get(UserId()) then begin
+            UserSetup.Init();
+            UserSetup.Validate("User ID", UserId());
+            UserSetup.Insert(true);
+        end;
+        UserSetup.Validate("BA Payment Bank Account No.", Rec."Bal. Account No.");
+        UserSetup.Validate("BA Payment Filter Record ID", Rec.RecordId());
+        UserSetup.Modify(true);
+    end;
 
-    // [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payment File", 'OnBeforeOpenPage', '', false, false)]
-    // local procedure ExportElectronicPaymentsOnOpenPage(var BankAccount: Record "Bank Account"; var FilterRecordID: RecordId; var SettleDate: Date)
-    // var
-    //     UserSetup: Record "User Setup";
-    // begin
-    //     if UserSetup.Get(UserId()) then
-    //         if UserSetup."BA Payment Bank Account No." <> '' then begin
-    //             BankAccount."No." := UserSetup."BA Payment Bank Account No.";
-    //             FilterRecordID := UserSetup."BA Payment Filter Record ID";
-    //             UserSetup."BA Payment Bank Account No." := '';
-    //             UserSetup.Modify(false);
-    //         end;
-    //     SettleDate := Today();
-    // end;
+    [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeOpenPage', '', false, false)]
+    local procedure ExportElectronicPaymentsOnBeforeOpenPage(var BankAccount: Record "Bank Account"; var SupportedOutputMethod: Option; var FilterRecordID: RecordId)
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if UserSetup.Get(UserId()) then begin
+            FilterRecordID := UserSetup."BA Payment Filter Record ID";
+            if UserSetup."BA Payment Bank Account No." <> '' then begin
+                BankAccount."No." := UserSetup."BA Payment Bank Account No.";
+                UserSetup."BA Payment Bank Account No." := '';
+                UserSetup.Modify(false);
+            end;
+        end;
+        SupportedOutputMethod := 0;
+    end;
 
 
 
