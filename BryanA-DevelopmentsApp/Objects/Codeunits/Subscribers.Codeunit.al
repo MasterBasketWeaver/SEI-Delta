@@ -3519,6 +3519,20 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
+    local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset")
+    begin
+        ACHRBHeader."File Creation Date" := FormatACHDate(Today());
+        ACHRBHeader."Federal ID No." := StrSubstNo('%1', FormatACHDate(Today() - 30));
+        ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
+    end;
+
+    local procedure FormatACHDate(Input: Date): Integer
+    begin
+        exit((Date2DMY(Input, 3) - 2000) * 10000 + Date2DMY(Input, 2) * 100 + Date2DMY(Input, 1));
+    end;
+
+
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
