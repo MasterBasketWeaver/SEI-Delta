@@ -3527,9 +3527,65 @@ codeunit 75010 "BA SEI Subscibers"
         ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
     end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]
+    local procedure ExportETFRBOnBeforeACHRBDetailModify(var ACHRBDetail: Record "ACH RB Detail"; var TempEFTExportWorkset: Record "EFT Export Workset")
+    var
+        VendorBankAccount: Record "Vendor Bank Account";
+        Parts: List of [Text];
+        PaymentText: Text;
+        s1: Text;
+        s2: Text;
+    begin
+        // TempEFTExportWorkset.
+
+
+        VendorBankAccount.SetRange("Vendor No.", TempEFTExportWorkset."Account No.");
+        VendorBankAccount.SetRange("Use for Electronic Payments", true);
+        VendorBankAccount.FindFirst();
+        VendorBankAccount.TestField("Bank Code");
+        VendorBankAccount.TestField("Bank Branch No.");
+        VendorBankAccount.TestField("Bank Account No.");
+        VendorBankAccount.TestField("Transit No.");
+        VendorBankAccount.TestField(Name);
+        ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
+        PaymentText := Format(ACHRBDetail."Payment Amount");
+        if PaymentText.Contains('.') then begin
+            Parts := PaymentText.Split('.');
+            s1 := DelChr(Parts.Get(1), '=', ',.');
+            s2 := DelChr(Parts.Get(2), '=', ',.');
+            if StrLen(s2) = 1 then
+                s2 += '0';
+            ACHRBDetail."Language Code" := s1 + s2;
+        end else
+            ACHRBDetail."Language Code" := DelChr(PaymentText, '=', ',.') + '00';
+        ACHRBDetail."Vendor/Customer Name" := VendorBankAccount.Name;
+    end;
+
     local procedure FormatACHDate(Input: Date): Integer
     begin
         exit((Date2DMY(Input, 3) - 2000) * 10000 + Date2DMY(Input, 2) * 100 + Date2DMY(Input, 1));
+    end;
+
+
+    local procedure PrintRecord(RecVar: Variant): Text
+    var
+        FieldRec: Record Field;
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        Output: TextBuilder;
+    begin
+        RecRef.GetTable(RecVar);
+        FieldRec.SetRange(TableNo, RecRef.Number());
+        FieldRec.SetRange(Enabled, true);
+        FieldRec.SetFilter(ObsoleteState, '<>%1', FieldRec.ObsoleteState::Removed);
+        if FieldRec.FindSet() then
+            repeat
+                FldRef := RecRef.Field(FieldRec."No.");
+                if FldRef.Class = FldRef.Class::FlowField then
+                    FldRef.CalcField();
+                Output.AppendLine(StrSubstNo('%1 %2: %3', FldRef.Number, FldRef.Caption, FldRef.Value));
+            until FieldRec.Next() = 0;
+        exit(Output.ToText());
     end;
 
 
