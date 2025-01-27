@@ -3538,7 +3538,6 @@ codeunit 75010 "BA SEI Subscibers"
         VendorBankAccount.TestField("Bank Code");
         VendorBankAccount.TestField("Bank Branch No.");
         VendorBankAccount.TestField("Bank Account No.");
-        VendorBankAccount.TestField("Transit No.");
         VendorBankAccount.TestField(Name);
         ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
         ACHRBDetail."Language Code" := FormatPaymentAmount(ACHRBDetail."Payment Amount");
