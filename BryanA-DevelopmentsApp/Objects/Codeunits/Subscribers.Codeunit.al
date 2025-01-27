@@ -3520,7 +3520,7 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
-    local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset")
+    local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
     begin
         ACHRBHeader."File Creation Date" := FormatACHDate(Today());
         ACHRBHeader."Federal ID No." := StrSubstNo('%1', FormatACHDate(Today() - 30));
@@ -3531,14 +3531,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ExportETFRBOnBeforeACHRBDetailModify(var ACHRBDetail: Record "ACH RB Detail"; var TempEFTExportWorkset: Record "EFT Export Workset")
     var
         VendorBankAccount: Record "Vendor Bank Account";
-        Parts: List of [Text];
-        PaymentText: Text;
-        s1: Text;
-        s2: Text;
     begin
-        // TempEFTExportWorkset.
-
-
         VendorBankAccount.SetRange("Vendor No.", TempEFTExportWorkset."Account No.");
         VendorBankAccount.SetRange("Use for Electronic Payments", true);
         VendorBankAccount.FindFirst();
@@ -3548,22 +3541,42 @@ codeunit 75010 "BA SEI Subscibers"
         VendorBankAccount.TestField("Transit No.");
         VendorBankAccount.TestField(Name);
         ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
-        PaymentText := Format(ACHRBDetail."Payment Amount");
+        ACHRBDetail."Language Code" := FormatPaymentAmount(ACHRBDetail."Payment Amount");
+        ACHRBDetail."Vendor/Customer Name" := VendorBankAccount.Name;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBFooterModify', '', false, false)]
+    local procedure ExportETFRBOnBeforeACHRBFooterModify(var ACHRBFooter: Record "ACH RB Footer"; var TempEFTExportWorkset: Record "EFT Export Workset")
+    begin
+        ACHRBFooter."Record Count" := TempEFTExportWorkset.Count();
+        ACHRBFooter."BA Payment Amount Text" := FormatPaymentAmount(ACHRBFooter."Total File Credit");
+    end;
+
+
+
+
+    local procedure FormatACHDate(Input: Date): Integer
+    begin
+        exit((Date2DMY(Input, 3) - 2000) * 10000 + Date2DMY(Input, 2) * 100 + Date2DMY(Input, 1));
+    end;
+
+    local procedure FormatPaymentAmount(Input: Decimal): Text
+    var
+        Parts: List of [Text];
+        PaymentText: Text;
+        s1: Text;
+        s2: Text;
+    begin
+        PaymentText := Format(Input);
         if PaymentText.Contains('.') then begin
             Parts := PaymentText.Split('.');
             s1 := DelChr(Parts.Get(1), '=', ',.');
             s2 := DelChr(Parts.Get(2), '=', ',.');
             if StrLen(s2) = 1 then
                 s2 += '0';
-            ACHRBDetail."Language Code" := s1 + s2;
-        end else
-            ACHRBDetail."Language Code" := DelChr(PaymentText, '=', ',.') + '00';
-        ACHRBDetail."Vendor/Customer Name" := VendorBankAccount.Name;
-    end;
-
-    local procedure FormatACHDate(Input: Date): Integer
-    begin
-        exit((Date2DMY(Input, 3) - 2000) * 10000 + Date2DMY(Input, 2) * 100 + Date2DMY(Input, 1));
+            exit(s1 + s2);
+        end;
+        exit(DelChr(PaymentText, '=', ',.') + '00');
     end;
 
 
