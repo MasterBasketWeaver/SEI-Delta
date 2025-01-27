@@ -3512,7 +3512,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         GenJnlCheckLine: Codeunit "Gen. Jnl.-Check Line";
     begin
-        GenJnlCheckLine.RunCheck(GenJournalLine);
+        GenJnlCheckLine.CheckDimensions(GenJournalLine);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
