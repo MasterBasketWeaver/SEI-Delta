@@ -4110,11 +4110,36 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeGenJournalLineOnAfterGetRecord', '', false, false)]
     local procedure ExportElectronicPaymentsOnBeforeGenJournalLineOnAfterGetRecord(var GenJournalLine: Record "Gen. Journal Line")
-    var
-        GenJnlCheckLine: Codeunit "Gen. Jnl.-Check Line";
     begin
-        GenJnlCheckLine.CheckDimensions(GenJournalLine);
+        CheckDimensions(GenJournalLine);
     end;
+
+
+    local procedure CheckDimensions(GenJnlLine: Record "Gen. Journal Line")
+    var
+        DimMgt: Codeunit DimensionManagement;
+        TableIDs: array[10] of Integer;
+        DimNos: array[10] of Code[20];
+    begin
+        if not DimMgt.CheckDimIDComb(GenJnlLine."Dimension Set ID") then
+            Error('1: Line %1 has the following dimension error:\%2\\%3', GenJnlLine."Line No.", DimMgt.GetDimCombErr, DimMgt.GetDimValuePostingErr);
+        TableIDs[1] := DimMgt.TypeToTableID1(GenJnlLine."Account Type");
+        DimNos[1] := GenJnlLine."Account No.";
+        TableIDs[2] := DimMgt.TypeToTableID1(GenJnlLine."Bal. Account Type");
+        DimNos[2] := GenJnlLine."Bal. Account No.";
+        TableIDs[3] := DATABASE::Job;
+        DimNos[3] := GenJnlLine."Job No.";
+        TableIDs[4] := DATABASE::"Salesperson/Purchaser";
+        DimNos[4] := GenJnlLine."Salespers./Purch. Code";
+        TableIDs[5] := DATABASE::Campaign;
+        DimNos[5] := GenJnlLine."Campaign No.";
+        if not DimMgt.CheckDimValuePosting(TableIDs, DimNos, GenJnlLine."Dimension Set ID") then
+            Error('2: Line %1 has the following dimension error:\%2\\%3', GenJnlLine."Line No.", DimMgt.GetDimCombErr, DimMgt.GetDimValuePostingErr);
+    end;
+
+
+
+
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
     local procedure GenerateEFTOnBeforeSelectFolder(var BankAccount: Record "Bank Account"; SaveFolderMsg: Text; var Path: Text; var IsHandled: Boolean)
