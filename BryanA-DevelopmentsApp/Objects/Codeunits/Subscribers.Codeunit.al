@@ -4110,35 +4110,21 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeGenJournalLineOnAfterGetRecord', '', false, false)]
     local procedure ExportElectronicPaymentsOnBeforeGenJournalLineOnAfterGetRecord(var GenJournalLine: Record "Gen. Journal Line")
-    begin
-        CheckDimensions(GenJournalLine);
-    end;
-
-
-    local procedure CheckDimensions(GenJnlLine: Record "Gen. Journal Line")
     var
+        TempDimSetEntry: Record "Dimension Set Entry" temporary;
+        DimValue: Record "Dimension Value";
         DimMgt: Codeunit DimensionManagement;
-        TableIDs: array[10] of Integer;
-        DimNos: array[10] of Code[20];
     begin
-        if not DimMgt.CheckDimIDComb(GenJnlLine."Dimension Set ID") then
-            Error('1: Line %1 has the following dimension error:\%2\\%3', GenJnlLine."Line No.", DimMgt.GetDimCombErr, DimMgt.GetDimValuePostingErr);
-        TableIDs[1] := DimMgt.TypeToTableID1(GenJnlLine."Account Type");
-        DimNos[1] := GenJnlLine."Account No.";
-        TableIDs[2] := DimMgt.TypeToTableID1(GenJnlLine."Bal. Account Type");
-        DimNos[2] := GenJnlLine."Bal. Account No.";
-        TableIDs[3] := DATABASE::Job;
-        DimNos[3] := GenJnlLine."Job No.";
-        TableIDs[4] := DATABASE::"Salesperson/Purchaser";
-        DimNos[4] := GenJnlLine."Salespers./Purch. Code";
-        TableIDs[5] := DATABASE::Campaign;
-        DimNos[5] := GenJnlLine."Campaign No.";
-        if not DimMgt.CheckDimValuePosting(TableIDs, DimNos, GenJnlLine."Dimension Set ID") then
-            Error('2: Line %1 has the following dimension error:\%2\\%3', GenJnlLine."Line No.", DimMgt.GetDimCombErr, DimMgt.GetDimValuePostingErr);
+        DimMgt.GetDimensionSet(TempDimSetEntry, GenJournalLine."Dimension Set ID");
+        if TempDimSetEntry.FindSet() then
+            repeat
+                DimValue.Get(TempDimSetEntry."Dimension Code", TempDimSetEntry."Dimension Value Code");
+                if DimValue.Blocked then
+                    Error(BlockedDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
+                if DimValue."ENC Inactive" then
+                    Error(InactiveDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
+            until TempDimSetEntry.Next() = 0;
     end;
-
-
-
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
@@ -4375,6 +4361,8 @@ codeunit 75010 "BA SEI Subscibers"
         MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
         PaymentTermsPermErr: Label 'You do not have permission to change Payment Terms.';
         ServiceItemWarrantyError: Label 'You cannot change the warranty information when a value has been specified in the %1 field.';
+        BlockedDimErr: Label 'Dimension %1 %2 on line %3 is blocked.';
+        InactiveDimErr: Label 'Dimension %1 %2 on line %3 is inactive.';
 
 }
 
