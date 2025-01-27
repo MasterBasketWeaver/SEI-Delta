@@ -3507,6 +3507,14 @@ codeunit 75010 "BA SEI Subscibers"
         SupportedOutputMethod := 0;
     end;
 
+    [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeGenJournalLineOnAfterGetRecord', '', false, false)]
+    local procedure ExportElectronicPaymentsOnBeforeGenJournalLineOnAfterGetRecord(var GenJournalLine: Record "Gen. Journal Line")
+    var
+        GenJnlCheckLine: Codeunit "Gen. Jnl.-Check Line";
+    begin
+        GenJnlCheckLine.RunCheck(GenJournalLine);
+    end;
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
     local procedure GenerateEFTOnBeforeSelectFolder(var BankAccount: Record "Bank Account"; SaveFolderMsg: Text; var Path: Text; var IsHandled: Boolean)
     var
