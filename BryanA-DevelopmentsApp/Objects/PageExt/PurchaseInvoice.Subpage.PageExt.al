@@ -30,6 +30,11 @@ pageextension 80001 "BA Purch. Inv. Subpage" extends "Purch. Invoice Subform"
                 ApplicationArea = all;
                 Editable = "No." <> '';
             }
+            field("BA Capex Code"; Rec."BA Capex Code")
+            {
+                ApplicationArea = all;
+                Editable = "No." <> '';
+            }
         }
         modify("Location Code")
         {

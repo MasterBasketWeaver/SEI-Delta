@@ -42,5 +42,12 @@ tableextension 80010 "BA Purch. Rcpt. Line" extends "Purch. Rcpt. Line"
             TableRelation = "Dimension Value".Code where ("Dimension Code" = const ('SHAREHOLDER'), Blocked = const (false), "ENC Inactive" = const (false));
             Editable = false;
         }
+        field(80103; "BA Capex Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Capex Code';
+            TableRelation = "Dimension Value".Code where ("Dimension Code" = const ('CAPEX'), Blocked = const (false), "ENC Inactive" = const (false));
+            Editable = false;
+        }
     }
 }

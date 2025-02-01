@@ -377,6 +377,7 @@ codeunit 75010 "BA SEI Subscibers"
         PurchRcptLine."BA Product ID Code" := PurchLine."BA Product ID Code";
         PurchRcptLine."BA Project Code" := PurchLine."BA Project Code";
         PurchRcptLine."BA Shareholder Code" := PurchLine."BA Shareholder Code";
+        PurchRcptLine."BA Capex Code" := PurchLine."BA Capex Code";
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnBeforeReturnShptLineInsert', '', false, false)]
@@ -1288,6 +1289,7 @@ codeunit 75010 "BA SEI Subscibers"
         PurchInvLine."BA Product ID Code" := PurchaseLine."BA Product ID Code";
         PurchInvLine."BA Project Code" := PurchaseLine."BA Project Code";
         PurchInvLine."BA Shareholder Code" := PurchaseLine."BA Shareholder Code";
+        PurchInvLine."BA Capex Code" := PurchaseLine."BA Capex Code";
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnBeforePurchCrMemoLineInsert', '', false, false)]
@@ -1296,6 +1298,7 @@ codeunit 75010 "BA SEI Subscibers"
         PurchCrMemoLine."BA Product ID Code" := PurchLine."BA Product ID Code";
         PurchCrMemoLine."BA Project Code" := PurchLine."BA Project Code";
         PurchCrMemoLine."BA Shareholder Code" := PurchLine."BA Shareholder Code";
+        PurchCrMemoLine."BA Capex Code" := PurchLine."BA Capex Code";
     end;
 
 

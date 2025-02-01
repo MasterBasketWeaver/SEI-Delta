@@ -12,7 +12,11 @@ pageextension 80150 "BA General Journal" extends "General Journal"
             {
                 ApplicationArea = all;
             }
-            field("BA Shareholder Code"; "BA Shareholder Code")
+            field("BA Shareholder Code"; Rec."BA Shareholder Code")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Capex Code"; Rec."BA Capex Code")
             {
                 ApplicationArea = all;
             }
@@ -66,6 +70,7 @@ pageextension 80150 "BA General Journal" extends "General Journal"
         Rec."BA Product ID Code" := GetDimensionCode(TempDimSetEntry, GLSetup."ENC Product ID Dim. Code");
         Rec."BA Project Code" := GetDimensionCode(TempDimSetEntry, 'PROJECT');
         Rec."BA Shareholder Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Shareholder Code");
+        Rec."BA Capex Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Capex Code");
     end;
 
     local procedure ClearDimensions()
@@ -73,6 +78,7 @@ pageextension 80150 "BA General Journal" extends "General Journal"
         Rec."BA Product ID Code" := '';
         Rec."BA Project Code" := '';
         Rec."BA Shareholder Code" := '';
+        Rec."BA Capex Code" := '';
     end;
 
 

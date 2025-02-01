@@ -97,6 +97,11 @@ pageextension 80000 "BA Purch. Order Subpage" extends "Purchase Order Subform"
                 ApplicationArea = all;
                 Editable = "No." <> '';
             }
+            field("BA Capex Code"; Rec."BA Capex Code")
+            {
+                ApplicationArea = all;
+                Editable = "No." <> '';
+            }
         }
     }
 

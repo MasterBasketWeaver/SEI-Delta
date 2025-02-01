@@ -48,6 +48,17 @@ tableextension 80000 "BA Purchase Line" extends "Purchase Line"
                 SetNewDimValue('SHAREHOLDER', "BA Shareholder Code");
             end;
         }
+        field(80103; "BA Capex Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Capex Code';
+            TableRelation = "Dimension Value".Code where ("Dimension Code" = const ('CAPEX'), Blocked = const (false), "ENC Inactive" = const (false));
+
+            trigger OnValidate()
+            begin
+                SetNewDimValue('CAPEX', "BA Shareholder Code");
+            end;
+        }
     }
 
     local procedure SetNewDimValue(DimCode: Code[20]; DimValue: Code[20])
@@ -85,6 +96,7 @@ tableextension 80000 "BA Purchase Line" extends "Purchase Line"
         Rec."BA Project Code" := GetDimensionCode(TempDimSetEntry, 'PROJECT');
         Rec."BA Product ID Code" := GetDimensionCode(TempDimSetEntry, GLSetup."ENC Product ID Dim. Code");
         Rec."BA Shareholder Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Shareholder Code");
+        Rec."BA Capex Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Capex Code");
 
         Rec."BA Salesperson Filter Code" := GLSetup."ENC Salesperson Dim. Code";
         SalesPersonCode := GetDimensionCode(TempDimSetEntry, GLSetup."ENC Salesperson Dim. Code");
@@ -104,6 +116,7 @@ tableextension 80000 "BA Purchase Line" extends "Purchase Line"
         Rec."BA Product ID Code" := '';
         Rec."BA Project Code" := '';
         Rec."BA Shareholder Code" := '';
+        Rec."BA Capex Code" := '';
     end;
 
 
