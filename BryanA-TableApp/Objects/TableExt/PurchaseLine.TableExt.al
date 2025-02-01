@@ -56,7 +56,7 @@ tableextension 80000 "BA Purchase Line" extends "Purchase Line"
 
             trigger OnValidate()
             begin
-                SetNewDimValue('CAPEX', "BA Shareholder Code");
+                SetNewDimValue('CAPEX', "BA Capex Code");
             end;
         }
     }
@@ -67,13 +67,12 @@ tableextension 80000 "BA Purchase Line" extends "Purchase Line"
         TempDimSetEntry: Record "Dimension Set Entry" temporary;
     begin
         DimMgt.GetDimensionSet(TempDimSetEntry, Rec."Dimension Set ID");
-        TempDimSetEntry.SetRange("Dimension Code", DimCode);
         if DimValue = '' then begin
-            if TempDimSetEntry.FindFirst() then
+            if TempDimSetEntry.Get(Rec."Dimension Set ID", DimCode) then
                 TempDimSetEntry.Delete(false);
         end else begin
             DimValueRec.Get(DimCode, DimValue);
-            if TempDimSetEntry.FindFirst() then begin
+            if TempDimSetEntry.Get(Rec."Dimension Set ID", DimCode) then begin
                 TempDimSetEntry."Dimension Value Code" := DimValue;
                 TempDimSetEntry."Dimension Value ID" := DimValueRec."Dimension Value ID";
                 TempDimSetEntry.Modify(false);

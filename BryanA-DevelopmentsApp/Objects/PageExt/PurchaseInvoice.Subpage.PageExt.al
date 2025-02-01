@@ -2,6 +2,16 @@ pageextension 80001 "BA Purch. Inv. Subpage" extends "Purch. Invoice Subform"
 {
     layout
     {
+        modify("Location Code")
+        {
+            trigger OnLookup(var Text: Text): Boolean
+            var
+                Subscribers: Codeunit "BA SEI Subscibers";
+            begin
+                Text := Subscribers.LocationListLookup();
+                exit(Text <> '');
+            end;
+        }
         addafter(ShortcutDimCode4)
         {
             field("BA Sales Person Code"; SalesPersonCode)
@@ -35,16 +45,6 @@ pageextension 80001 "BA Purch. Inv. Subpage" extends "Purch. Invoice Subform"
                 ApplicationArea = all;
                 Editable = "No." <> '';
             }
-        }
-        modify("Location Code")
-        {
-            trigger OnLookup(var Text: Text): Boolean
-            var
-                Subscribers: Codeunit "BA SEI Subscibers";
-            begin
-                Text := Subscribers.LocationListLookup();
-                exit(Text <> '');
-            end;
         }
     }
 
