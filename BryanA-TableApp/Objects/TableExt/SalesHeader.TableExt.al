@@ -103,5 +103,11 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Caption = 'Ship-to Email';
             ExtendedDatatype = EMail;
         }
+        field(80120; "BA Delete From Posting"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Delete From Posting';
+            Editable = false;
+        }
     }
 }
