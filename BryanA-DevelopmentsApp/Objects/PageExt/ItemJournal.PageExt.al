@@ -12,11 +12,39 @@ pageextension 80151 "BA Item Journal" extends "Item Journal"
                 exit(Text <> '');
             end;
         }
+        modify("Item No.")
+        {
+            trigger OnAfterValidate()
+            begin
+                if Rec."Item No." = '' then
+                    ClearDimensions();
+            end;
+        }
         addfirst(Control1)
         {
             field("Line No."; Rec."Line No.")
             {
                 ApplicationArea = all;
+            }
+            field("BA Product ID Code"; Rec."BA Product ID Code")
+            {
+                ApplicationArea = all;
+                Visible = false;
+            }
+            field("BA Project Code"; Rec."BA Project Code")
+            {
+                ApplicationArea = all;
+                Visible = false;
+            }
+            field("BA Shareholder Code"; Rec."BA Shareholder Code")
+            {
+                ApplicationArea = all;
+                Visible = false;
+            }
+            field("BA Capex Code"; Rec."BA Capex Code")
+            {
+                ApplicationArea = all;
+                Visible = ShowCapexDim;
             }
         }
         addafter(Amount)
@@ -136,7 +164,88 @@ pageextension 80151 "BA Item Journal" extends "Item Journal"
                 end;
             }
         }
+
     }
+
+
+
+
+
+    var
+        GLSetup: Record "General Ledger Setup";
+        DimMgt: Codeunit DimensionManagement;
+        Subscribers: Codeunit "BA SEI Subscibers";
+        [InDataSet]
+        Cancel: Boolean;
+        [InDataSet]
+        Approve: Boolean;
+        [InDataSet]
+        IsDebugUser: Boolean;
+        ShowProductIDDim: Boolean;
+        ShowShareholderDim: Boolean;
+        ShowCapexDim: Boolean;
+
+        NewLineError1: Label 'Cannot add new lines after submitting journal for approval.';
+        NewLineError2: Label 'Cannot add new lines after journal has been approved.';
+        ModifiedLineError1: Label 'Line %1 cannot be modified after being sent for approval.';
+        ModifiedLineError2: Label 'Line %1 cannot be modified after being approved.';
+        DeletedLineError1: Label 'Line %1 cannot be deleted after being sent for approval.';
+        DeletedLineError2: Label 'Line %1 cannot be deleted after being approved.';
+
+
+    trigger OnOpenPage()
+    begin
+        IsDebugUser := UserId = 'ENCORE';
+        GLSetup.Get();
+        ShowProductIDDim := GLSetup."ENC Product ID Dim. Code" <> '';
+        ShowShareholderDim := GLSetup."BA Shareholder Code" <> '';
+        ShowCapexDim := GLSetup."BA Capex Code" <> '';
+    end;
+
+    trigger OnAfterGetRecord()
+    begin
+        GetDimensionCodes();
+    end;
+
+    trigger OnNewRecord(BelowxRec: Boolean)
+    begin
+        ClearDimensions();
+    end;
+
+    local procedure GetDimensionCodes()
+    var
+        TempDimSetEntry: Record "Dimension Set Entry" temporary;
+    begin
+        if Rec."Item No." = '' then begin
+            ClearDimensions();
+            exit;
+        end;
+        DimMgt.GetDimensionSet(TempDimSetEntry, Rec."Dimension Set ID");
+        Rec."BA Product ID Code" := GetDimensionCode(TempDimSetEntry, GLSetup."ENC Product ID Dim. Code");
+        Rec."BA Project Code" := GetDimensionCode(TempDimSetEntry, 'PROJECT');
+        Rec."BA Shareholder Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Shareholder Code");
+        Rec."BA Capex Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Capex Code");
+    end;
+
+    local procedure ClearDimensions()
+    begin
+        Rec."BA Product ID Code" := '';
+        Rec."BA Project Code" := '';
+        Rec."BA Shareholder Code" := '';
+        Rec."BA Capex Code" := '';
+    end;
+
+
+    local procedure GetDimensionCode(var TempDimSetEntry: Record "Dimension Set Entry"; DimCode: Code[20]): Code[20]
+    begin
+        if DimCode = '' then
+            exit('');
+        TempDimSetEntry.SetRange("Dimension Code", DimCode);
+        if TempDimSetEntry.FindFirst() then
+            exit(TempDimSetEntry."Dimension Value Code");
+        exit('');
+    end;
+
 
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
     var
@@ -168,26 +277,4 @@ pageextension 80151 "BA Item Journal" extends "Item Journal"
         if Rec."BA Status" = Rec."BA Status"::Released then
             Error(DeletedLineError2, Rec."Line No.");
     end;
-
-
-    trigger OnOpenPage()
-    begin
-        IsDebugUser := UserId = 'ENCORE';
-    end;
-
-    var
-        Subscribers: Codeunit "BA SEI Subscibers";
-        [InDataSet]
-        Cancel: Boolean;
-        [InDataSet]
-        Approve: Boolean;
-        [InDataSet]
-        IsDebugUser: Boolean;
-
-        NewLineError1: Label 'Cannot add new lines after submitting journal for approval.';
-        NewLineError2: Label 'Cannot add new lines after journal has been approved.';
-        ModifiedLineError1: Label 'Line %1 cannot be modified after being sent for approval.';
-        ModifiedLineError2: Label 'Line %1 cannot be modified after being approved.';
-        DeletedLineError1: Label 'Line %1 cannot be deleted after being sent for approval.';
-        DeletedLineError2: Label 'Line %1 cannot be deleted after being approved.';
 }

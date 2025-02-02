@@ -12,7 +12,11 @@ pageextension 80097 "BA P. Purch. Cr.Memo Subpage" extends "Posted Purch. Cr. Me
             {
                 ApplicationArea = all;
             }
-            field("BA Shareholder Code"; "BA Shareholder Code")
+            field("BA Shareholder Code"; Rec."BA Shareholder Code")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Capex Code"; Rec."BA Capex Code")
             {
                 ApplicationArea = all;
             }

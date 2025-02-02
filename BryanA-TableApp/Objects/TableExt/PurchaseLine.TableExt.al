@@ -81,6 +81,17 @@ tableextension 80000 "BA Purchase Line" extends "Purchase Line"
                 SetNewDimValue('SHAREHOLDER', "BA Shareholder Code");
             end;
         }
+        field(80103; "BA Capex Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Capex Code';
+            TableRelation = "Dimension Value".Code where ("Dimension Code" = const ('CAPEX'), Blocked = const (false), "ENC Inactive" = const (false));
+
+            trigger OnValidate()
+            begin
+                SetNewDimValue('CAPEX', "BA Capex Code");
+            end;
+        }
     }
 
 
@@ -90,13 +101,12 @@ tableextension 80000 "BA Purchase Line" extends "Purchase Line"
         TempDimSetEntry: Record "Dimension Set Entry" temporary;
     begin
         DimMgt.GetDimensionSet(TempDimSetEntry, Rec."Dimension Set ID");
-        TempDimSetEntry.SetRange("Dimension Code", DimCode);
         if DimValue = '' then begin
-            if TempDimSetEntry.FindFirst() then
+            if TempDimSetEntry.Get(Rec."Dimension Set ID", DimCode) then
                 TempDimSetEntry.Delete(false);
         end else begin
             DimValueRec.Get(DimCode, DimValue);
-            if TempDimSetEntry.FindFirst() then begin
+            if TempDimSetEntry.Get(Rec."Dimension Set ID", DimCode) then begin
                 TempDimSetEntry."Dimension Value Code" := DimValue;
                 TempDimSetEntry."Dimension Value ID" := DimValueRec."Dimension Value ID";
                 TempDimSetEntry.Modify(false);
@@ -119,6 +129,7 @@ tableextension 80000 "BA Purchase Line" extends "Purchase Line"
         Rec."BA Project Code" := GetDimensionCode(TempDimSetEntry, 'PROJECT');
         Rec."BA Product ID Code" := GetDimensionCode(TempDimSetEntry, GLSetup."ENC Product ID Dim. Code");
         Rec."BA Shareholder Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Shareholder Code");
+        Rec."BA Capex Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Capex Code");
 
         Rec."BA Salesperson Filter Code" := GLSetup."ENC Salesperson Dim. Code";
         SalesPersonCode := GetDimensionCode(TempDimSetEntry, GLSetup."ENC Salesperson Dim. Code");
@@ -138,6 +149,7 @@ tableextension 80000 "BA Purchase Line" extends "Purchase Line"
         Rec."BA Product ID Code" := '';
         Rec."BA Project Code" := '';
         Rec."BA Shareholder Code" := '';
+        Rec."BA Capex Code" := '';
     end;
 
 

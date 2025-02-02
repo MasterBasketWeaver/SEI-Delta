@@ -16,6 +16,10 @@ pageextension 80096 "BA Posted Purch. Inv. Subpage" extends "Posted Purch. Invoi
             {
                 ApplicationArea = all;
             }
+            field("BA Capex Code"; Rec."BA Capex Code")
+            {
+                ApplicationArea = all;
+            }
         }
         addbefore("Job No.")
         {

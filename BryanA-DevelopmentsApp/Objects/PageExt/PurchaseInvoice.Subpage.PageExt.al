@@ -12,6 +12,16 @@ pageextension 80001 "BA Purch. Inv. Subpage" extends "Purch. Invoice Subform"
                 Rec.Validate("BA Freight Charge Type", Rec."BA Freight Charge Type"::" ");
             end;
         }
+        modify("Location Code")
+        {
+            trigger OnLookup(var Text: Text): Boolean
+            var
+                Subscribers: Codeunit "BA SEI Subscibers";
+            begin
+                Text := Subscribers.LocationListLookup();
+                exit(Text <> '');
+            end;
+        }
         addafter("Qty. Assigned")
         {
             field("BA SEI Order Type."; Rec."BA SEI Order Type")
@@ -31,6 +41,7 @@ pageextension 80001 "BA Purch. Inv. Subpage" extends "Purch. Invoice Subform"
                 ApplicationArea = all;
             }
         }
+
         addafter(ShortcutDimCode4)
         {
             field("BA Sales Person Code"; SalesPersonCode)
@@ -59,16 +70,11 @@ pageextension 80001 "BA Purch. Inv. Subpage" extends "Purch. Invoice Subform"
                 ApplicationArea = all;
                 Editable = "No." <> '';
             }
-        }
-        modify("Location Code")
-        {
-            trigger OnLookup(var Text: Text): Boolean
-            var
-                Subscribers: Codeunit "BA SEI Subscibers";
-            begin
-                Text := Subscribers.LocationListLookup();
-                exit(Text <> '');
-            end;
+            field("BA Capex Code"; Rec."BA Capex Code")
+            {
+                ApplicationArea = all;
+                Editable = "No." <> '';
+            }
         }
     }
 
