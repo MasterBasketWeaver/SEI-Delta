@@ -3477,6 +3477,42 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeDeleteAfterPosting', '', false, false)]
+    local procedure SalesPostOnBeforeDeleteAfterPosting(var SalesHeader: Record "Sales Header")
+    begin
+        SalesHeader.Validate("BA Delete From Posting", true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Serv-Documents Mgt.", 'OnAfterFinalizePostedDocuments', '', false, false)]
+    local procedure ServiceDocumentsMgtOnAfterFinalizePostedDocuments(var PassedServHeader: Record "Service Header"; var ServHeader: Record "Service Header")
+    begin
+        ServHeader.Validate("BA Delete From Posting", true);
+        PassedServHeader.Validate("BA Delete From Posting", true);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeDeleteEvent', '', false, false)]
+    local procedure SalesHeaderOnBeforeDeleteEvent(var Rec: Record "Sales Header")
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if Rec."BA Delete From Posting" then
+            exit;
+        if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Deleting Orders" then
+            Error(DeleteOrderErr);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnBeforeDeleteEvent', '', false, false)]
+    local procedure ServiceHeaderOnBeforeDeleteEvent(var Rec: Record "Service Header")
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if Rec."BA Delete From Posting" then
+            exit;
+        if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Deleting Orders" then
+            Error(DeleteOrderErr);
+    end;
+
+
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
@@ -3516,6 +3552,7 @@ codeunit 75010 "BA SEI Subscibers"
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation for %3';
         MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
         ServiceItemWarrantyError: Label 'You cannot change the warranty information when a value has been specified in the %1 field.';
+        DeleteOrderErr: Label 'Order deletion is not authorized. Please contact your NAV / Business Central System Administrator to request permission and reason for the order deletion.';
 
 }
 
