@@ -61,6 +61,7 @@ tableextension 80024 "BA User Setup" extends "User Setup"
         {
             DataClassification = CustomerContent;
             Caption = 'Allow Changing Payment Terms';
+        }
         field(80070; "BA Allow Deleting Orders"; Boolean)
         {
             DataClassification = CustomerContent;
