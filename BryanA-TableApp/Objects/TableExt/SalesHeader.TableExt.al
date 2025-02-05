@@ -179,5 +179,11 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
         //     Caption = 'Invoice/Packing Slip Usernames';
         //     Editable = false;
         // }
+        field(80120; "BA Delete From Posting"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Delete From Posting';
+            Editable = false;
+        }
     }
 }

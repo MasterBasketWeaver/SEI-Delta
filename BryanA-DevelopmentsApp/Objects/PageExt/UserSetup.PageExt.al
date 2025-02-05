@@ -57,6 +57,10 @@ pageextension 80044 "BA User Setup" extends "User Setup"
             {
                 ApplicationArea = all;
             }
+            field("BA Allow Deleting Orders"; Rec."BA Allow Deleting Orders")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 

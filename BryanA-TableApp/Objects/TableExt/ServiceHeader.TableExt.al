@@ -90,5 +90,11 @@ tableextension 80026 "BA Service Header" extends "Service Header"
                 Rec.Modify(true);
             end;
         }
+        field(80080; "BA Delete From Posting"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Delete From Posting';
+            Editable = false;
+        }
     }
 }
