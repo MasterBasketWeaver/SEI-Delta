@@ -61,6 +61,14 @@ pageextension 80019 "BA Purch. Ret. Order Subpage" extends "Purchase Return Orde
                 end;
             }
         }
+        addlast(Control1)
+        {
+            field("BA Capex Code"; Rec."BA Capex Code")
+            {
+                ApplicationArea = all;
+                Editable = "No." <> '';
+            }
+        }
     }
 
     trigger OnAfterGetRecord()
