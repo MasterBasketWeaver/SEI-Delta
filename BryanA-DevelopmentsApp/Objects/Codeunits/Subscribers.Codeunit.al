@@ -3483,10 +3483,9 @@ codeunit 75010 "BA SEI Subscibers"
         SalesHeader.Validate("BA Delete From Posting", true);
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Serv-Documents Mgt.", 'OnAfterFinalizePostedDocuments', '', false, false)]
-    local procedure ServiceDocumentsMgtOnAfterFinalizePostedDocuments(var PassedServHeader: Record "Service Header"; var ServHeader: Record "Service Header")
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Serv-Documents Mgt.", 'OnFinalizeOnBeforeFinalizeHeaderAndLines', '', false, false)]
+    local procedure ServiceDocumentsMgtOnFinalizeOnBeforeFinalizeHeaderAndLines(var PassedServHeader: Record "Service Header")
     begin
-        ServHeader.Validate("BA Delete From Posting", true);
         PassedServHeader.Validate("BA Delete From Posting", true);
     end;
 
@@ -3495,7 +3494,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         UserSetup: Record "User Setup";
     begin
-        if Rec."BA Delete From Posting" then
+        if Rec."BA Delete From Posting" or Rec.IsTemporary then
             exit;
         if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Deleting Orders" then
             Error(DeleteOrderErr);
@@ -3506,7 +3505,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         UserSetup: Record "User Setup";
     begin
-        if Rec."BA Delete From Posting" then
+        if Rec."BA Delete From Posting" or Rec.IsTemporary then
             exit;
         if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Deleting Orders" then
             Error(DeleteOrderErr);
