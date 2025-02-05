@@ -63,11 +63,37 @@ pageextension 80019 "BA Purch. Ret. Order Subpage" extends "Purchase Return Orde
         }
         addlast(Control1)
         {
+            field("BA Product ID Code"; Rec."BA Product ID Code")
+            {
+                ApplicationArea = all;
+                Editable = "No." <> '';
+            }
+            field("BA Project Code"; Rec."BA Project Code")
+            {
+                ApplicationArea = all;
+                Editable = "No." <> '';
+            }
+            field("BA Shareholder Code"; Rec."BA Shareholder Code")
+            {
+                ApplicationArea = all;
+                Editable = "No." <> '';
+            }
             field("BA Capex Code"; Rec."BA Capex Code")
             {
                 ApplicationArea = all;
                 Editable = "No." <> '';
             }
+        }
+    }
+
+    actions
+    {
+        modify(Dimensions)
+        {
+            trigger OnAfterAction()
+            begin
+                Rec.GetDimensionCodes(GLSetup, SalesPersonCode);
+            end;
         }
     }
 
