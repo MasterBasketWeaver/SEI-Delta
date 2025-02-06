@@ -103,5 +103,10 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Caption = 'Ship-to Email';
             ExtendedDatatype = EMail;
         }
+        field(80125; "BA Salesperson Verified"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Salesperson Verified';
+        }
     }
 }
