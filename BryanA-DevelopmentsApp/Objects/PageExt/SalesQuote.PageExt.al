@@ -120,14 +120,6 @@ pageextension 80005 "BA Sales Quote" extends "Sales Quote"
                 exit(Text <> '');
             end;
         }
-        addbefore("Work Description")
-        {
-            field("BA SEI Int'l Ref. No."; Rec."BA SEI Int'l Ref. No.")
-            {
-                ApplicationArea = all;
-            }
-
-        }
         modify("Order Date")
         {
             ApplicationArea = all;
@@ -182,6 +174,20 @@ pageextension 80005 "BA Sales Quote" extends "Sales Quote"
             {
                 ApplicationArea = all;
             }
+        }
+        addafter("Salesperson Code")
+        {
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+                Importance = Additional;
+            }
+        }
+        modify("Campaign No.")
+        {
+            Visible = false;
+            ApplicationArea = all;
         }
     }
 

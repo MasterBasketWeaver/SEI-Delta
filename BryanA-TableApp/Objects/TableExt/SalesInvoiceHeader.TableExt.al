@@ -142,6 +142,11 @@ tableextension 80061 "BA Sales Invoice Header" extends "Sales Invoice Header"
         {
             DataClassification = CustomerContent;
             Caption = 'Invoice/Packing Slip Usernames';
+        }
+        field(80125; "BA Salesperson Verified"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Salesperson Verified';
             Editable = false;
         }
     }

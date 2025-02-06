@@ -37,6 +37,12 @@ tableextension 80110 "BA Service Shpt. Header" extends "Service Shipment Header"
             Caption = 'Shipment Date';
             Editable = false;
         }
+        field(80085; "BA Salesperson Verified"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Salesperson Verified';
+            Editable = false;
+        }
         field(80100; "BA Actual Posting DateTime"; DateTime)
         {
             DataClassification = CustomerContent;

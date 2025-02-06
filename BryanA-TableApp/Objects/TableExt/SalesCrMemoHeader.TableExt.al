@@ -75,6 +75,12 @@ tableextension 80062 "BA Sales Cr.Memo Header" extends "Sales Cr.Memo Header"
             Caption = 'Last Approval Amount';
             Editable = false;
         }
+        field(80125; "BA Salesperson Verified"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Salesperson Verified';
+            Editable = false;
+        }
     }
 
     keys

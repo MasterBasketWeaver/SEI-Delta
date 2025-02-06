@@ -20,6 +20,12 @@ pageextension 80120 "BA Sales Quotes" extends "Sales Quotes"
             {
                 ApplicationArea = all;
             }
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                Visible = false;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+            }
         }
     }
 

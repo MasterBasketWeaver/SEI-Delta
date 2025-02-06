@@ -94,5 +94,11 @@ tableextension 80060 "BA Sales Shpt. Header" extends "Sales Shipment Header"
             Caption = 'Last Approval Amount';
             Editable = false;
         }
+        field(80125; "BA Salesperson Verified"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Salesperson Verified';
+            Editable = false;
+        }
     }
 }

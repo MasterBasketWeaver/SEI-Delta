@@ -197,6 +197,19 @@ pageextension 80055 "BA Posted Service Invoice" extends "Posted Service Invoice"
                 Editable = true;
             }
         }
+        modify("Responsibility Center")
+        {
+            ApplicationArea = all;
+            Visible = false;
+        }
+        addafter("Salesperson Code")
+        {
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+            }
+        }
     }
     actions
     {

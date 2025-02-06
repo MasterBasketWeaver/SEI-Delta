@@ -96,5 +96,10 @@ tableextension 80026 "BA Service Header" extends "Service Header"
             Caption = 'Delete From Posting';
             Editable = false;
         }
+        field(80085; "BA Salesperson Verified"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Salesperson Verified';
+        }
     }
 }
