@@ -54,5 +54,13 @@ pageextension 80073 "BA Sales Invoice" extends "Sales Invoice"
                 Caption = 'Country';
             }
         }
+        addafter("Salesperson Code")
+        {
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+            }
+        }
     }
 }
