@@ -77,5 +77,10 @@ tableextension 80026 "BA Service Header" extends "Service Header"
                 Rec.Modify(true);
             end;
         }
+        field(80085; "BA Salesperson Verified"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Salesperson Verified';
+        }
     }
 }

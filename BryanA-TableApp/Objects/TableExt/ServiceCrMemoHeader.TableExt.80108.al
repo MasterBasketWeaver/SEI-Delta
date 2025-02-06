@@ -32,6 +32,12 @@ tableextension 80108 "BA Service Cr.Memo Header" extends "Service Cr.Memo Header
             Caption = 'Shipment Date';
             Editable = false;
         }
+        field(80085; "BA Salesperson Verified"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Salesperson Verified';
+            Editable = false;
+        }
         field(80100; "BA Actual Posting DateTime"; DateTime)
         {
             DataClassification = CustomerContent;

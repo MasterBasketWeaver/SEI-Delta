@@ -44,6 +44,12 @@ tableextension 80093 "BA Service Inv. Header" extends "Service Invoice Header"
             Caption = 'Shipment Date';
             Editable = false;
         }
+        field(80085; "BA Salesperson Verified"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Salesperson Verified';
+            Editable = false;
+        }
         field(80100; "BA Actual Posting DateTime"; DateTime)
         {
             DataClassification = CustomerContent;
