@@ -12,7 +12,11 @@ pageextension 80119 "BA General Ledger Setup" extends "General Ledger Setup"
             {
                 ApplicationArea = all;
             }
-            field("BA Shareholder Code"; "BA Shareholder Code")
+            field("BA Shareholder Code"; Rec."BA Shareholder Code")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Capex Code"; Rec."BA Capex Code")
             {
                 ApplicationArea = all;
             }

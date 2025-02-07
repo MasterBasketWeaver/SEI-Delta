@@ -35,6 +35,10 @@ pageextension 80020 "BA Posted Purch. Rcpt. Subpage" extends "Posted Purchase Rc
             {
                 ApplicationArea = all;
             }
+            field("BA Capex Code"; Rec."BA Capex Code")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 

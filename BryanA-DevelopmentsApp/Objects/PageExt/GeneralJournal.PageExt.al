@@ -7,14 +7,21 @@ pageextension 80150 "BA General Journal" extends "General Journal"
             field("BA Product ID Code"; Rec."BA Product ID Code")
             {
                 ApplicationArea = all;
+                Visible = ShowProductIDDim;
             }
             field("BA Project Code"; Rec."BA Project Code")
             {
                 ApplicationArea = all;
             }
-            field("BA Shareholder Code"; "BA Shareholder Code")
+            field("BA Shareholder Code"; Rec."BA Shareholder Code")
             {
                 ApplicationArea = all;
+                Visible = ShowShareholderDim;
+            }
+            field("BA Capex Code"; Rec."BA Capex Code")
+            {
+                ApplicationArea = all;
+                Visible = ShowCapexDim;
             }
         }
         modify("Account No.")
@@ -34,7 +41,6 @@ pageextension 80150 "BA General Journal" extends "General Journal"
             trigger OnAfterAction()
             begin
                 GetDimensionCodes();
-                // EditableDims := Rec."Account No." <> '';
             end;
         }
     }
@@ -42,6 +48,9 @@ pageextension 80150 "BA General Journal" extends "General Journal"
     trigger OnOpenPage()
     begin
         GLSetup.Get();
+        ShowProductIDDim := GLSetup."ENC Product ID Dim. Code" <> '';
+        ShowShareholderDim := GLSetup."BA Shareholder Code" <> '';
+        ShowCapexDim := GLSetup."BA Capex Code" <> '';
     end;
 
     trigger OnAfterGetRecord()
@@ -66,6 +75,7 @@ pageextension 80150 "BA General Journal" extends "General Journal"
         Rec."BA Product ID Code" := GetDimensionCode(TempDimSetEntry, GLSetup."ENC Product ID Dim. Code");
         Rec."BA Project Code" := GetDimensionCode(TempDimSetEntry, 'PROJECT');
         Rec."BA Shareholder Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Shareholder Code");
+        Rec."BA Capex Code" := GetDimensionCode(TempDimSetEntry, GLSetup."BA Capex Code");
     end;
 
     local procedure ClearDimensions()
@@ -73,6 +83,7 @@ pageextension 80150 "BA General Journal" extends "General Journal"
         Rec."BA Product ID Code" := '';
         Rec."BA Project Code" := '';
         Rec."BA Shareholder Code" := '';
+        Rec."BA Capex Code" := '';
     end;
 
 
@@ -89,7 +100,7 @@ pageextension 80150 "BA General Journal" extends "General Journal"
     var
         GLSetup: Record "General Ledger Setup";
         DimMgt: Codeunit DimensionManagement;
-
-        // [InDataSet]
-        // EditableDims: Boolean;
+        ShowProductIDDim: Boolean;
+        ShowShareholderDim: Boolean;
+        ShowCapexDim: Boolean;
 }
