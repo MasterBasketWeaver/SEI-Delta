@@ -4331,6 +4331,26 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    //OnBeforeSendEmailToCust
+    [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeSendEmailToCust', '', false, false)]
+    local procedure ReportSelectionsOnBeforeSendEmailToCust(var ReportUsage: Integer; RecordVariant: Variant)
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        RecRef: RecordRef;
+    begin
+        RecRef.GetTable(RecordVariant);
+        if RecRef.Number <> Database::"Sales Invoice Header" then
+            exit;
+        RecRef.SetTable(SalesInvHeader);
+        if SalesInvHeader."Prepayment Invoice" then
+            ReportUsage := GetPrepaymentInvoiceReportUsage();
+    end;
+
+    procedure GetPrepaymentInvoiceReportUsage(): Integer
+    begin
+        exit(80002);
+    end;
+
 
     [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeRenameEvent', '', false, false)]
     local procedure PaymentTermsOnBeforeRenameEvent()

@@ -32,6 +32,27 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateShipToContactDetails();
         PopulateCustomerApprovalGroups();
         PopulateProdOrderNotificationReportUsage();
+        PopulatePrepyamentInvReportUsage();
+    end;
+
+
+
+    local procedure PopulatePrepyamentInvReportUsage()
+    var
+        ReportSelections: Record "Report Selections";
+        Subscribers: Codeunit "BA SEI Subscibers";
+    begin
+        ReportSelections.SetRange(Usage, Subscribers.GetPrepaymentInvoiceReportUsage());
+        ReportSelections.SetRange("Report ID", 50015);
+        if not ReportSelections.IsEmpty() then
+            exit;
+        ReportSelections.Init();
+        ReportSelections.Validate(Usage, Subscribers.GetPrepaymentInvoiceReportUsage());
+        ReportSelections.Validate(Sequence, '1');
+        ReportSelections.Validate("Report ID", 50015);
+        ReportSelections.Validate("Use for Email Attachment", true);
+        ReportSelections.Validate("Use for Email Body", false);
+        ReportSelections.Insert(true);
     end;
 
 
