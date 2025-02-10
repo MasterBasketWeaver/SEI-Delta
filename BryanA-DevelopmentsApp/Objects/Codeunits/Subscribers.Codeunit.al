@@ -3515,6 +3515,18 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    //OnBeforeSendEmailToCust
+    [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeSendEmailToCust', '', false, false)]
+    local procedure ServiceHeaderOnBeforeDeleteEvent(ReportUsage: Integer; RecordVariant: Variant)
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if Rec."BA Delete From Posting" or Rec.IsTemporary or (Rec."Document Type" <> Rec."Document Type"::Order) then
+            exit;
+        if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Deleting Orders" then
+            Error(DeleteOrderErr);
+    end;
+
 
     var
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
