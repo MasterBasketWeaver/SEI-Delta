@@ -3526,8 +3526,13 @@ codeunit 75010 "BA SEI Subscibers"
         if RecRef.Number <> Database::"Sales Invoice Header" then
             exit;
         RecRef.SetTable(SalesInvHeader);
-        if SalesInvHeader."Prepayment Invoice" then;
+        if SalesInvHeader."Prepayment Invoice" then
+            ReportUsage := GetPrepaymentInvoiceReportUsage();
+    end;
 
+    procedure GetPrepaymentInvoiceReportUsage(): Integer
+    begin
+        exit(80002);
     end;
 
 
