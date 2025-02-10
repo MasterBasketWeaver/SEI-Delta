@@ -3517,14 +3517,17 @@ codeunit 75010 "BA SEI Subscibers"
 
     //OnBeforeSendEmailToCust
     [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeSendEmailToCust', '', false, false)]
-    local procedure ServiceHeaderOnBeforeDeleteEvent(ReportUsage: Integer; RecordVariant: Variant)
+    local procedure ReportSelectionsOnBeforeSendEmailToCust(var ReportUsage: Integer; RecordVariant: Variant)
     var
-        UserSetup: Record "User Setup";
+        SalesInvHeader: Record "Sales Invoice Header";
+        RecRef: RecordRef;
     begin
-        if Rec."BA Delete From Posting" or Rec.IsTemporary or (Rec."Document Type" <> Rec."Document Type"::Order) then
+        RecRef.GetTable(RecordVariant);
+        if RecRef.Number <> Database::"Sales Invoice Header" then
             exit;
-        if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Deleting Orders" then
-            Error(DeleteOrderErr);
+        RecRef.SetTable(SalesInvHeader);
+        if SalesInvHeader."Prepayment Invoice" then;
+
     end;
 
 
