@@ -4313,7 +4313,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         UserSetup: Record "User Setup";
     begin
-        if Rec."BA Delete From Posting" or Rec.IsTemporary then
+        if Rec."BA Delete From Posting" or Rec.IsTemporary or (Rec."Document Type" <> Rec."Document Type"::Order) then
             exit;
         if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Deleting Orders" then
             Error(DeleteOrderErr);
@@ -4324,7 +4324,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         UserSetup: Record "User Setup";
     begin
-        if Rec."BA Delete From Posting" or Rec.IsTemporary then
+        if Rec."BA Delete From Posting" or Rec.IsTemporary or (Rec."Document Type" <> Rec."Document Type"::Order) then
             exit;
         if not UserSetup.Get(UserId()) or not UserSetup."BA Allow Deleting Orders" then
             Error(DeleteOrderErr);
