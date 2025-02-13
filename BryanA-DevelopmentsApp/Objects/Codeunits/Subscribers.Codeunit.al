@@ -829,6 +829,7 @@ codeunit 75010 "BA SEI Subscibers"
         SalesInvHeader."BA Sell-to County Fullname" := SalesHeader."BA Sell-to County Fullname";
         SalesInvHeader."BA SEI Int'l Ref. No." := SalesHeader."BA SEI Int'l Ref. No.";
         SalesInvHeader."BA SEI Barbados Order" := SalesHeader."BA SEI Barbados Order";
+        UpdateOrderPostedFields(SalesHeader, SalesInvHeader);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeSalesCrMemoHeaderInsert', '', false, false)]
@@ -3533,6 +3534,140 @@ codeunit 75010 "BA SEI Subscibers"
     procedure GetPrepaymentInvoiceReportUsage(): Integer
     begin
         exit(80002);
+    end;
+
+
+
+
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterInsertEvent', '', false, false)]
+    local procedure SalesLineOnAfterInsert(var Rec: Record "Sales Line")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            SaveOrderLine(Rec, false, false);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterModifyEvent', '', false, false)]
+    local procedure SalesLineOnAfterModify(var Rec: Record "Sales Line")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            SaveOrderLine(Rec, False, false);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterDeleteEvent', '', false, false)]
+    local procedure SalesLineOnAfterDelete(var Rec: Record "Sales Line")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            SaveOrderLine(Rec, true, false);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterInsertEvent', '', false, false)]
+    local procedure SalesHeaderOnAfterInsert(var Rec: Record "Sales Header")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            SaveOrderHeader(Rec, Rec."Document Type", false);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterModifyEvent', '', false, false)]
+    local procedure SalesHeaderOnAfterModify(var Rec: Record "Sales Header")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            SaveOrderHeader(Rec, Rec."Document Type", false);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterDeleteEvent', '', false, false)]
+    local procedure SalesHeaderOnAfterDelete(var Rec: Record "Sales Header")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            SaveOrderHeader(Rec, Rec."Document Type", true);
+    end;
+
+
+
+    local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
+    var
+        OrderHeader: Record "BA Order Header";
+    begin
+        OrderHeader.SetRange("Document Type", DocType);
+        OrderHeader.SetRange("Document No.", SalesHeader."No.");
+        if not OrderHeader.FindFirst() then begin
+            OrderHeader.Init();
+            OrderHeader."Document No." := SalesHeader."No.";
+            OrderHeader."Document Type" := DocType;
+            OrderHeader.Insert(true);
+        end;
+        OrderHeader."Order Date" := SalesHeader."Order Date";
+        OrderHeader."Currency Code" := SalesHeader."Currency Code";
+        OrderHeader."Currency Factor" := SalesHeader."Currency Factor";
+        OrderHeader."Order Date" := SalesHeader."Order Date";
+        OrderHeader."Customer Posting Group" := SalesHeader."Customer Posting Group";
+        OrderHeader."No. Series" := SalesHeader."No. Series";
+        OrderHeader."Posting Date" := SalesHeader."Posting Date";
+        OrderHeader."Quote No." := SalesHeader."Quote No.";
+        OrderHeader."Salesperson Code" := SalesHeader."Salesperson Code";
+        OrderHeader."Sell-to Customer Name" := SalesHeader."Sell-to Customer Name";
+        OrderHeader."Sell-to Customer No." := SalesHeader."Sell-to Customer No.";
+        OrderHeader."Shipment Date" := SalesHeader."Shipment Date";
+        OrderHeader.Deleted := Deleted;
+        OrderHeader.Modify(true);
+    end;
+
+    local procedure UpdateOrderPostedFields(var SalesHeader: Record "Sales Header"; var SalesInvHeader: Record "Sales Invoice Header")
+    var
+        OrderHeader: Record "BA Order Header";
+    begin
+        OrderHeader.SetRange("Document Type", OrderHeader."Document Type"::"Sales Order");
+        OrderHeader.SetRange("Document No.", SalesHeader."No.");
+        OrderHeader.SetRange("Posted Document Type", OrderHeader."Posted Document Type"::" ");
+        OrderHeader.SetRange("Posted Document No.", '');
+        if not OrderHeader.FindFirst() then
+            SaveOrderHeader(SalesHeader, OrderHeader."Document Type"::"Sales Order", false);
+        OrderHeader."Posted Document Type" := OrderHeader."Posted Document Type"::"Posted Sales Invoice";
+        OrderHeader."Posted Document No." := SalesInvHeader."No.";
+        OrderHeader."Posted Date" := SalesInvHeader."Posting Date";
+        OrderHeader.Modify(true);
+    end;
+
+    local procedure SaveOrderLine(var SalesLine: Record "Sales Line"; Deleted: Boolean; Cancelled: Boolean)
+    var
+        OrderLine: Record "BA Order Line";
+        EntryNo: Integer;
+    begin
+        if OrderLine.FindLast() then
+            EntryNo := OrderLine."Entry No.";
+        EntryNo += 1;
+        OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Sales Order");
+        OrderLine.SetRange("Document No.", SalesLine."Document No.");
+        OrderLine.SetRange("Line No.", SalesLine."Line No.");
+        OrderLine.SetRange(Deleted, Deleted);
+        OrderLine.SetRange(Cancelled, Cancelled);
+        if not OrderLine.FindFirst() then begin
+            OrderLine.Init();
+            OrderLine."Entry No." := EntryNo;
+            OrderLine."Document Type" := OrderLine."Document Type"::"Sales Order";
+            OrderLine."Document No." := SalesLine."Document No.";
+            OrderLine."Line No." := SalesLine."Line No.";
+            OrderLine.Insert(true);
+        end;
+        OrderLine.Type := SalesLine.Type;
+        OrderLine."No." := SalesLine."No.";
+        OrderLine."Gen. Prod. Posting Group" := SalesLine."Gen. Prod. Posting Group";
+        OrderLine.Description := SalesLine.Description;
+        OrderLine."Description 2" := SalesLine."Description 2";
+        OrderLine.Quantity := SalesLine.Quantity;
+        OrderLine."Unit of Measure Code" := SalesLine."Unit of Measure Code";
+        OrderLine."Unit Cost (LCY)" := SalesLine."Unit Cost (LCY)";
+        OrderLine."Unit Price" := SalesLine."Unit Price";
+        OrderLine.Amount := SalesLine.Amount;
+        OrderLine."Line Amount" := SalesLine."Line Amount";
+        OrderLine."Line Discount Amount" := SalesLine."Line Discount Amount";
+        OrderLine."Shipment Date" := SalesLine."Shipment Date";
+        OrderLine."Booking Date" := SalesLine."BA Booking Date";
+        OrderLine."New Business - TDG" := SalesLine."BA New Business - TDG";
+        OrderLine.Deleted := Deleted;
+        OrderLine.Cancelled := Cancelled;
+        OrderLine.Modify(true);
     end;
 
 
