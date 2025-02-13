@@ -124,48 +124,39 @@ table 75024 "BA Order Line"
         field(25; "Net Price Avg. (CAD)"; Decimal)
         {
             DataClassification = CustomerContent;
-            Editable = false;
         }
         field(26; "Net Price Avg. (USD)"; Decimal)
         {
             DataClassification = CustomerContent;
-            Editable = false;
         }
         field(27; "Profit On Price (CAD)"; Decimal)
         {
             DataClassification = CustomerContent;
-            Editable = false;
         }
         field(28; "Profit On Price (USD)"; Decimal)
         {
             DataClassification = CustomerContent;
-            Editable = false;
         }
         field(29; "Total $ On Price (CAD)"; Decimal)
         {
             DataClassification = CustomerContent;
-            Editable = false;
         }
         field(30; "Total $ On Price (USD)"; Decimal)
         {
             DataClassification = CustomerContent;
-            Editable = false;
         }
         field(31; "Prior Year Sold"; Integer)
         {
             DataClassification = CustomerContent;
-            Editable = false;
             MinValue = 1900;
         }
         field(32; "Inflation Factor"; Decimal)
         {
             DataClassification = CustomerContent;
-            Editable = false;
         }
         field(33; "Delta %"; Decimal)
         {
             DataClassification = CustomerContent;
-            Editable = false;
         }
         field(50; "Deleted"; Boolean)
         {
