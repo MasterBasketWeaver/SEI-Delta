@@ -1412,7 +1412,7 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         PassedServHeader.TestField("Customer No.");
         if PassedServHeader."Document Type" = PassedServHeader."Document Type"::Order then
-            CheckRepairStatusIsValidated(PassedServHeader);
+            PassedServHeader.TestField("BA Salesperson Verified", true);
         Customer.Get(PassedServHeader."Customer No.");
         CheckCustomerCurrency(PassedServHeader, Customer);
         CheckPromisedDeliveryDate(PassedServHeader);
@@ -3496,31 +3496,44 @@ codeunit 75010 "BA SEI Subscibers"
             Rec.TestField("BA Salesperson Verified", true);
     end;
 
-
-    local procedure CheckRepairStatusIsValidated(var ServiceHeader: Record "Service Header")
+    [EventSubscriber(ObjectType::Table, Database::"Service Item Line", 'OnAfterValidateEvent', 'Repair Status Code', false, false)]
+    local procedure ServiceItemLineOnAfterValidateRepairStatusCode(var Rec: Record "Service Item Line")
     var
-        ServiceItemLine: Record "Service Item Line";
+        ServiceHeader: Record "Service Header";
         RepairStatus: Record "Repair Status";
-        FilterText: Text;
     begin
-        RepairStatus.SetRange("BA Salesperson Verification", true);
-        if not RepairStatus.FindSet() then
+        if (Rec."Repair Status Code" = '') or not RepairStatus.Get(Rec."Repair Status Code") or Rec.IsTemporary() then
             exit;
-        repeat
-            if FilterText = '' then
-                FilterText := RepairStatus.Code
-            else
-                FilterText += '|' + RepairStatus.Code;
-        until RepairStatus.Next() = 0;
-        ServiceItemLine.SetRange("Document Type", ServiceHeader."Document Type");
-        ServiceItemLine.SetRange("Document No.", ServiceHeader."No.");
-        ServiceItemLine.SetFilter("Repair Status Code", FilterText);
-        if ServiceItemLine.IsEmpty() then
-            if RepairStatus.Count = 1 then
-                Error(SingleRepairCodeErr, FilterText, ServiceHeader."No.")
-            else
-                Error(MultiRepairCodeErr, ServiceHeader."No.", FilterText.Replace('|', ', '));
+        if not RepairStatus."BA Salesperson Verification" then
+            if ServiceHeader.Get(Rec."Document Type", Rec."Document No.") then
+                if not ServiceHeader."BA Salesperson Verified" then
+                    Error(NotVerifiedSalespersonErr, Rec.FieldCaption("Repair Status Code"), Rec."Repair Status Code");
     end;
+
+    // local procedure CheckRepairStatusIsValidated(var ServiceHeader: Record "Service Header")
+    // var
+    //     ServiceItemLine: Record "Service Item Line";
+    //     RepairStatus: Record "Repair Status";
+    //     FilterText: Text;
+    // begin
+    //     RepairStatus.SetRange("BA Salesperson Verification", true);
+    //     if not RepairStatus.FindSet() then
+    //         exit;
+    //     repeat
+    //         if FilterText = '' then
+    //             FilterText := RepairStatus.Code
+    //         else
+    //             FilterText += '|' + RepairStatus.Code;
+    //     until RepairStatus.Next() = 0;
+    //     ServiceItemLine.SetRange("Document Type", ServiceHeader."Document Type");
+    //     ServiceItemLine.SetRange("Document No.", ServiceHeader."No.");
+    //     ServiceItemLine.SetFilter("Repair Status Code", FilterText);
+    //     if ServiceItemLine.IsEmpty() then
+    //         if RepairStatus.Count = 1 then
+    //             Error(SingleRepairCodeErr, FilterText, ServiceHeader."No.")
+    //         else
+    //             Error(MultiRepairCodeErr, ServiceHeader."No.", FilterText.Replace('|', ', '));
+    // end;
 
 
 
@@ -3564,5 +3577,6 @@ codeunit 75010 "BA SEI Subscibers"
         ServiceItemWarrantyError: Label 'You cannot change the warranty information when a value has been specified in the %1 field.';
         SingleRepairCodeErr: Label 'Repair Status must be set to %1 for all Service Item Lines before %2 can be posted';
         MultiRepairCodeErr: Label 'Repair Status must be set to one of the following for all Service Item Lines before %1 can be posted:\%2';
+        NotVerifiedSalespersonErr: Label 'Salesperson must be verified before %1 %2 can be specified.';
 }
 
