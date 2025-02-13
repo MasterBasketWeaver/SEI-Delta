@@ -39,9 +39,12 @@ codeunit 75011 "BA Install Codeunit"
 
     local procedure PopulatePrepyamentInvReportUsage()
     var
+        AllObjWithCaption: Record AllObjWithCaption;
         ReportSelections: Record "Report Selections";
         Subscribers: Codeunit "BA SEI Subscibers";
     begin
+        if not AllObjWithCaption.Get(AllObjWithCaption."Object Type"::Report, 50015) then
+            exit;
         ReportSelections.SetRange(Usage, Subscribers.GetPrepaymentInvoiceReportUsage());
         ReportSelections.SetRange("Report ID", 50015);
         if not ReportSelections.IsEmpty() then

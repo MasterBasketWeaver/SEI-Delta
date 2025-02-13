@@ -93,5 +93,10 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             Caption = 'Payment Filter Record ID';
             Editable = false;
         }
+        field(80120; "BA Can Edit Ledger Pages"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Can Edit Ledger Pages';
+        }
     }
 }
