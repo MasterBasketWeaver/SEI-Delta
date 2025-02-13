@@ -4760,7 +4760,7 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if (Rec."Repair Status Code" = '') or not RepairStatus.Get(Rec."Repair Status Code") or Rec.IsTemporary() then
             exit;
-        if not RepairStatus."BA Salesperson Verification" then
+        if RepairStatus."BA Salesperson Verification" then
             if ServiceHeader.Get(Rec."Document Type", Rec."Document No.") then
                 if not ServiceHeader."BA Salesperson Verified" then
                     Error(NotVerifiedSalespersonErr, Rec.FieldCaption("Repair Status Code"), Rec."Repair Status Code");
