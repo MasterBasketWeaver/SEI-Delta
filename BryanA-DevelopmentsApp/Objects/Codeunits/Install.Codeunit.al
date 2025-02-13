@@ -30,9 +30,9 @@ codeunit 75011 "BA Install Codeunit"
         // InitiateDeptCodesPurchaseLookup();
         // PopulateShipmentTrackingInfoReportUsage();
         // PopulateShipToContactDetails();
-        PopulateCustomerApprovalGroups();
-        PopulateProdOrderNotificationReportUsage();
-        PopulatePrepyamentInvReportUsage();
+        // PopulateCustomerApprovalGroups();
+        // PopulateProdOrderNotificationReportUsage();
+        // PopulatePrepyamentInvReportUsage();
     end;
 
 
