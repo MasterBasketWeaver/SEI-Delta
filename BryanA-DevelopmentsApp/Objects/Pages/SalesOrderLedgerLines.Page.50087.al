@@ -165,7 +165,22 @@ page 50087 "BA Sales Order Ledger Lines"
                 {
                     ApplicationArea = all;
                 }
+                field("Omit from POP Report"; Rec."Omit from POP Report")
+                {
+                    ApplicationArea = all;
+                }
             }
         }
     }
+
+    trigger OnModifyRecord(): Boolean
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if not UserSetup.Get(UserId()) or not UserSetup."BA Can Edit Ledger Pages" then
+            Error(EditPermErr);
+    end;
+
+    var
+        EditPermErr: Label 'You do not have permission to edit ledger lines.';
 }

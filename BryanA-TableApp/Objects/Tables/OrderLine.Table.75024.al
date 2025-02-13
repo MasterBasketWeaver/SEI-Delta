@@ -168,6 +168,11 @@ table 75024 "BA Order Line"
             DataClassification = CustomerContent;
             Editable = false;
         }
+        field(52; "Omit from POP Report"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
     }
 
     keys

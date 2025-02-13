@@ -70,5 +70,10 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             Editable = false;
             TableRelation = "Service Header"."No." where ("Document Type" = const (Order));
         }
+        field(80120; "BA Can Edit Ledger Pages"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Can Edit Ledger Pages';
+        }
     }
 }
