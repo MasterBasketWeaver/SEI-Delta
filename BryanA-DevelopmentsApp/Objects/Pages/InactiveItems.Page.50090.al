@@ -4,9 +4,13 @@ page 50090 "BA Inactive Items"
     ApplicationArea = all;
     UsageCategory = Lists;
     SourceTable = Item;
-    SourceTableView = sorting ("No.") where ("BA Hide Visibility" = const (false));
+    SourceTableView = sorting ("No.") where ("BA Hide Visibility" = const (true));
     PageType = List;
     CardPageId = "Item Card";
+    LinksAllowed = false;
+    Editable = false;
+    InsertAllowed = false;
+    DeleteAllowed = false;
 
     layout
     {
