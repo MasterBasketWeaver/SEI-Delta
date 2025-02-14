@@ -36,6 +36,10 @@ pageextension 80046 "BA Item List" extends "Item List"
             {
                 ApplicationArea = all;
             }
+            field("BA Hide Visibility"; Rec."BA Hide Visibility")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 
@@ -81,12 +85,34 @@ pageextension 80046 "BA Item List" extends "Item List"
                     Subscribers.ImportPricingListToUpdate();
                 end;
             }
+            action("BA Show All Items")
+            {
+                ApplicationArea = all;
+                Image = ViewDetails;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Show All Items';
+
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Rec.FilterGroup(2);
+                    Rec.SetRange("BA Hide Visibility");
+                    Rec.FilterGroup(0);
+                end;
+            }
         }
     }
 
     trigger OnOpenPage()
     begin
         IsBryanUser := UserId = 'SEI-IND\BRYANBCDEV';
+        Rec.FilterGroup(2);
+        Rec.SetRange("BA Hide Visibility", false);
+        Rec.FilterGroup(0);
     end;
 
     var
