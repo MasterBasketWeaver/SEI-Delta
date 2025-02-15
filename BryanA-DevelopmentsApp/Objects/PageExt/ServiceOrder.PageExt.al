@@ -143,6 +143,28 @@ pageextension 80050 "BA Service Order" extends "Service Order"
             ApplicationArea = all;
             Visible = false;
         }
+        modify("Salesperson Code")
+        {
+            ApplicationArea = all;
+            Visible = false;
+        }
+        addafter(Status)
+        {
+            field("BA Salesperson Code"; Rec."Salesperson Code")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+            }
+        }
+        modify("Responsibility Center")
+        {
+            ApplicationArea = all;
+            Visible = false;
+        }
     }
 
 

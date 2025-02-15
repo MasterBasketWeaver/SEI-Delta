@@ -248,6 +248,14 @@ pageextension 80052 "BA Posted Sales Invoice" extends "Posted Sales Invoice"
                 Editable = true;
             }
         }
+        addafter("Salesperson Code")
+        {
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+            }
+        }
     }
 
     actions

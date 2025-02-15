@@ -47,5 +47,13 @@ pageextension 80063 "BA Posted Service Shpt." extends "Posted Service Shipment"
                 Editable = false;
             }
         }
+        addafter("Salesperson Code")
+        {
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+            }
+        }
     }
 }

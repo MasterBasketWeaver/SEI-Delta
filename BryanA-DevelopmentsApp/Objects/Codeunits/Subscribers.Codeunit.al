@@ -23,12 +23,16 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Quote to Order", 'OnBeforeOnRun', '', false, false)]
     local procedure SalesQuoteToOrderOnBeforeRun(var SalesHeader: Record "Sales Header")
     begin
+        if SalesHeader."Document Type" = SalesHeader."Document Type"::Quote then
+            SalesHeader.TestField("BA Salesperson Verified", true);
         SalesHeader."BA Copied Doc." := true;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Quote to Invoice", 'OnBeforeOnRun', '', false, false)]
     local procedure SalesQuoteToInvoiceOnBeforeRun(var SalesHeader: Record "Sales Header")
     begin
+        if SalesHeader."Document Type" = SalesHeader."Document Type"::Quote then
+            SalesHeader.TestField("BA Salesperson Verified", true);
         SalesHeader."BA Copied Doc." := true;
     end;
 
@@ -490,18 +494,7 @@ codeunit 75010 "BA SEI Subscibers"
         FormatInternationalExtDocNo(SalesHeader."External Document No.", SalesHeader.FieldCaption("External Document No."));
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnBeforePostWithLines', '', false, false)]
-    local procedure ServicePostOnBeforePostWithLines(var PassedServHeader: Record "Service Header")
-    var
-        Customer: Record Customer;
-    begin
-        PassedServHeader.TestField("Customer No.");
-        Customer.Get(PassedServHeader."Customer No.");
-        if not Customer."BA Serv. Int. Customer" then
-            exit;
-        PassedServHeader.TestField("ENC External Document No.");
-        FormatInternationalExtDocNo(PassedServHeader."ENC External Document No.", PassedServHeader.FieldCaption("External Document No."));
-    end;
+
 
     local procedure FormatInternationalExtDocNo(var ExtDocNo: Code[35]; FieldCaption: Text)
     var
@@ -1411,13 +1404,25 @@ codeunit 75010 "BA SEI Subscibers"
         CheckIfLinesHaveValidLocationCode(SalesHeader);
         CheckCustomerCurrency(SalesHeader);
         CheckPromisedDeliveryDate(SalesHeader);
+        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then
+            SalesHeader.TestField("BA Salesperson Verified", true);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnBeforePostWithLines', '', false, false)]
-    local procedure SalesServiceOnBeforePostWithLines(var PassedServHeader: Record "Service Header")
+    local procedure ServicePostOnBeforePostWithLines(var PassedServHeader: Record "Service Header")
+    var
+        Customer: Record Customer;
     begin
-        CheckCustomerCurrency(PassedServHeader);
+        PassedServHeader.TestField("Customer No.");
+        if PassedServHeader."Document Type" = PassedServHeader."Document Type"::Order then
+            PassedServHeader.TestField("BA Salesperson Verified", true);
+        Customer.Get(PassedServHeader."Customer No.");
+        CheckCustomerCurrency(PassedServHeader, Customer);
         CheckPromisedDeliveryDate(PassedServHeader);
+        if not Customer."BA Serv. Int. Customer" then
+            exit;
+        PassedServHeader.TestField("ENC External Document No.");
+        FormatInternationalExtDocNo(PassedServHeader."ENC External Document No.", PassedServHeader.FieldCaption("External Document No."));
     end;
 
     local procedure CheckCustomerCurrency(var SalesHeader: Record "Sales Header")
@@ -1433,9 +1438,8 @@ codeunit 75010 "BA SEI Subscibers"
             CheckCustomerCurrency(CustPostingGroup);
     end;
 
-    local procedure CheckCustomerCurrency(var ServiceHeader: Record "Service Header")
+    local procedure CheckCustomerCurrency(var ServiceHeader: Record "Service Header"; var Customer: Record Customer)
     var
-        Customer: Record Customer;
         CustPostingGroup: Record "Customer Posting Group";
     begin
         if ServiceHeader."Document Type" <> ServiceHeader."Document Type"::Order then
@@ -2564,6 +2568,8 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Quote to Order", 'OnBeforeServLineDeleteAll', '', false, false)]
     local procedure ServiceQuoteToOrderOnBeforeServLineDeleteAll(var NewServiceHeader: Record "Service Header"; var ServiceHeader: Record "Service Header")
     begin
+        if ServiceHeader."Document Type" = ServiceHeader."Document Type"::Quote then
+            ServiceHeader.TestField("BA Salesperson Verified", true);
         NewServiceHeader.SetHideValidationDialog(true);
         NewServiceHeader.Validate("Document Date", Today());
         NewServiceHeader.Validate("Order Date", Today());
@@ -3479,6 +3485,59 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    [EventSubscriber(ObjectType::Page, Page::"Sales Order", 'OnBeforeActionEvent', 'SendApprovalRequest', false, false)]
+    local procedure SalesOrderOnBeforeSendApprovalRequest(var Rec: Record "Sales Header")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            Rec.TestField("BA Salesperson Verified", true);
+    end;
+
+    [EventSubscriber(ObjectType::Page, Page::"Sales Order List", 'OnBeforeActionEvent', 'SendApprovalRequest', false, false)]
+    local procedure SalesOrderListOnBeforeSendApprovalRequest(var Rec: Record "Sales Header")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            Rec.TestField("BA Salesperson Verified", true);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Service Item Line", 'OnAfterValidateEvent', 'Repair Status Code', false, false)]
+    local procedure ServiceItemLineOnAfterValidateRepairStatusCode(var Rec: Record "Service Item Line")
+    var
+        ServiceHeader: Record "Service Header";
+        RepairStatus: Record "Repair Status";
+    begin
+        if (Rec."Repair Status Code" = '') or not RepairStatus.Get(Rec."Repair Status Code") or Rec.IsTemporary() then
+            exit;
+        if RepairStatus."BA Salesperson Verification" then
+            if ServiceHeader.Get(Rec."Document Type", Rec."Document No.") then
+                if not ServiceHeader."BA Salesperson Verified" then
+                    Error(NotVerifiedSalespersonErr, Rec.FieldCaption("Repair Status Code"), Rec."Repair Status Code");
+    end;
+
+    // local procedure CheckRepairStatusIsValidated(var ServiceHeader: Record "Service Header")
+    // var
+    //     ServiceItemLine: Record "Service Item Line";
+    //     RepairStatus: Record "Repair Status";
+    //     FilterText: Text;
+    // begin
+    //     RepairStatus.SetRange("BA Salesperson Verification", true);
+    //     if not RepairStatus.FindSet() then
+    //         exit;
+    //     repeat
+    //         if FilterText = '' then
+    //             FilterText := RepairStatus.Code
+    //         else
+    //             FilterText += '|' + RepairStatus.Code;
+    //     until RepairStatus.Next() = 0;
+    //     ServiceItemLine.SetRange("Document Type", ServiceHeader."Document Type");
+    //     ServiceItemLine.SetRange("Document No.", ServiceHeader."No.");
+    //     ServiceItemLine.SetFilter("Repair Status Code", FilterText);
+    //     if ServiceItemLine.IsEmpty() then
+    //         if RepairStatus.Count = 1 then
+    //             Error(SingleRepairCodeErr, FilterText, ServiceHeader."No.")
+    //         else
+    //             Error(MultiRepairCodeErr, ServiceHeader."No.", FilterText.Replace('|', ', '));
+    // end;
+
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeDeleteAfterPosting', '', false, false)]
     local procedure SalesPostOnBeforeDeleteAfterPosting(var SalesHeader: Record "Sales Header")
@@ -3576,5 +3635,8 @@ codeunit 75010 "BA SEI Subscibers"
         ServiceItemWarrantyError: Label 'You cannot change the warranty information when a value has been specified in the %1 field.';
         DeleteOrderErr: Label 'Order deletion is not authorized. Please contact your NAV / Business Central System Administrator to request permission and reason for the order deletion.';
 
+        SingleRepairCodeErr: Label 'Repair Status must be set to %1 for all Service Item Lines before %2 can be posted';
+        MultiRepairCodeErr: Label 'Repair Status must be set to one of the following for all Service Item Lines before %1 can be posted:\%2';
+        NotVerifiedSalespersonErr: Label 'Salesperson must be verified before %1 %2 can be specified.';
 }
 

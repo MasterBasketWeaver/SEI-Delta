@@ -68,5 +68,13 @@ pageextension 80053 "BA Sales Credit Memo" extends "Sales Credit Memo"
                 Rec.CalcFields("BA Bill-to County Fullname");
             end;
         }
+        addafter("Salesperson Code")
+        {
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+            }
+        }
     }
 }
