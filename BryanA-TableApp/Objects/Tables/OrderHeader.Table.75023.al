@@ -92,10 +92,11 @@ table 75023 "BA Order Header"
             else
             if ("Document Type" = const ("Service Order")) "Service Header"."No." where ("Document Type" = const (Quote));
         }
-        field(21; "Posted Date"; Date)
+        field(21; "Dimension Set ID"; Integer)
         {
             DataClassification = CustomerContent;
             Editable = false;
+            TableRelation = "Dimension Set Entry";
         }
         field(50; "Deleted"; Boolean)
         {

@@ -116,6 +116,17 @@ pageextension 80147 "BA Posted Service Inv. Subpage" extends "Posted Service Inv
                 ApplicationArea = all;
                 Editable = false;
             }
+            field("BA Omit from POP Report"; OmitFromPOPReport)
+            {
+                ApplicationArea = all;
+                Caption = 'Omit from POP Report';
+                Editable = IsEditable;
+
+                trigger OnValidate()
+                begin
+                    Subscribers.UpdateOmitFromPOPReport(Rec, OmitFromPOPReport);
+                end;
+            }
         }
         addlast(Control1)
         {
@@ -123,6 +134,10 @@ pageextension 80147 "BA Posted Service Inv. Subpage" extends "Posted Service Inv
             {
                 ApplicationArea = all;
                 Editable = CanEditBookingDate;
+            }
+            field("BA Order Entry No."; Rec."BA Order Entry No.")
+            {
+                ApplicationArea = all;
             }
         }
     }
@@ -155,8 +170,19 @@ pageextension 80147 "BA Posted Service Inv. Subpage" extends "Posted Service Inv
         CanEditBookingDate := UserSetup.Get(UserId()) and UserSetup."BA Can Edit Booking Dates";
     end;
 
+    trigger OnAfterGetRecord()
+    begin
+        OmitFromPOPReport := Rec."BA Omit from POP Report";
+        IsEditable := CurrPage.Editable();
+        Rec.CalcFields("BA Order Entry No.");
+    end;
+
 
     var
+        Subscribers: Codeunit "BA SEI Subscibers";
+        [InDataSet]
+        IsEditable: Boolean;
         [InDataSet]
         CanEditBookingDate: Boolean;
+        OmitFromPOPReport: Boolean;
 }
