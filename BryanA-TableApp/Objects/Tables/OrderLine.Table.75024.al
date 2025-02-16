@@ -100,21 +100,25 @@ table 75024 "BA Order Line"
         {
             DataClassification = CustomerContent;
             Editable = false;
+            DecimalPlaces = 2 : 5;
         }
         field(21; "Amount"; Decimal)
         {
             DataClassification = CustomerContent;
             Editable = false;
+            DecimalPlaces = 2 : 5;
         }
         field(22; "Line Amount"; Decimal)
         {
             DataClassification = CustomerContent;
             Editable = false;
+            DecimalPlaces = 2 : 5;
         }
         field(23; "Line Discount Amount"; Decimal)
         {
             DataClassification = CustomerContent;
             Editable = false;
+            DecimalPlaces = 2 : 5;
         }
         field(24; "Shipment Date"; Date)
         {
@@ -124,26 +128,32 @@ table 75024 "BA Order Line"
         field(25; "Net Price Avg. (CAD)"; Decimal)
         {
             DataClassification = CustomerContent;
+            DecimalPlaces = 2 : 5;
         }
         field(26; "Net Price Avg. (USD)"; Decimal)
         {
             DataClassification = CustomerContent;
+            DecimalPlaces = 2 : 5;
         }
         field(27; "Profit On Price (CAD)"; Decimal)
         {
             DataClassification = CustomerContent;
+            DecimalPlaces = 2 : 5;
         }
         field(28; "Profit On Price (USD)"; Decimal)
         {
             DataClassification = CustomerContent;
+            DecimalPlaces = 2 : 5;
         }
         field(29; "Total $ On Price (CAD)"; Decimal)
         {
             DataClassification = CustomerContent;
+            DecimalPlaces = 2 : 5;
         }
         field(30; "Total $ On Price (USD)"; Decimal)
         {
             DataClassification = CustomerContent;
+            DecimalPlaces = 2 : 5;
         }
         field(31; "Prior Year Sold"; Integer)
         {
@@ -158,17 +168,24 @@ table 75024 "BA Order Line"
         {
             DataClassification = CustomerContent;
         }
+        field(34; "Line Discount %"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Editable = false;
+            DecimalPlaces = 0 : 5;
+        }
+        field(35; "Dimension Set ID"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Editable = false;
+            TableRelation = "Dimension Set Entry";
+        }
         field(50; "Deleted"; Boolean)
         {
             DataClassification = CustomerContent;
             Editable = false;
         }
         field(51; "Cancelled"; Boolean)
-        {
-            DataClassification = CustomerContent;
-            Editable = false;
-        }
-        field(52; "Omit from POP Report"; Boolean)
         {
             DataClassification = CustomerContent;
             Editable = false;

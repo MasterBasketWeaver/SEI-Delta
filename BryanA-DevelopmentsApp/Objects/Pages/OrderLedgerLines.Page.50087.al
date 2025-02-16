@@ -1,9 +1,9 @@
-page 50087 "BA Sales Order Ledger Lines"
+page 50087 "BA Order Ledger Lines"
 {
     SourceTable = "BA Order Line";
     PageType = ListPart;
     LinksAllowed = false;
-    Caption = 'Sales Order Ledger Lines';
+    Caption = 'Order Ledger Lines';
     InsertAllowed = false;
     DeleteAllowed = false;
 
@@ -14,6 +14,15 @@ page 50087 "BA Sales Order Ledger Lines"
             repeater(Lines)
             {
                 field("Entry No."; Rec."Entry No.")
+                {
+                    ApplicationArea = all;
+                }
+                field("Document No."; "Document No.")
+                {
+                    ApplicationArea = all;
+                    Caption = 'Order No.';
+                }
+                field("Document Type"; "Document Type")
                 {
                     ApplicationArea = all;
                 }
@@ -33,6 +42,7 @@ page 50087 "BA Sales Order Ledger Lines"
                 {
                     ApplicationArea = all;
                     BlankZero = true;
+                    Visible = false;
                 }
                 field("Type"; Rec."Type")
                 {
@@ -55,7 +65,6 @@ page 50087 "BA Sales Order Ledger Lines"
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Unit of Measure Code"; Rec."Unit of Measure Code")
                 {
@@ -78,31 +87,31 @@ page 50087 "BA Sales Order Ledger Lines"
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Unit Cost (LCY)"; Rec."Unit Cost (LCY)")
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Amount"; Rec."Amount")
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Line Amount"; Rec."Line Amount")
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Line Discount Amount"; Rec."Line Discount Amount")
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
+                }
+                field("Line Discount %"; Rec."Line Discount %")
+                {
+                    ApplicationArea = all;
+                    BlankZero = true;
                 }
                 field("Shipment Date"; Rec."Shipment Date")
                 {
@@ -118,31 +127,26 @@ page 50087 "BA Sales Order Ledger Lines"
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Profit On Price (CAD)"; Rec."Profit On Price (CAD)")
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Profit On Price (USD)"; Rec."Profit On Price (USD)")
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Total $ On Price (CAD)"; Rec."Total $ On Price (CAD)")
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Total $ On Price (USD)"; Rec."Total $ On Price (USD)")
                 {
                     ApplicationArea = all;
                     BlankZero = true;
-                    DecimalPlaces = 0 : 5;
                 }
                 field("Prior Year Sold"; Rec."Prior Year Sold")
                 {
@@ -165,10 +169,30 @@ page 50087 "BA Sales Order Ledger Lines"
                 {
                     ApplicationArea = all;
                 }
-                field("Omit from POP Report"; Rec."Omit from POP Report")
-                {
-                    ApplicationArea = all;
-                }
+            }
+        }
+    }
+
+
+    actions
+    {
+        area(Processing)
+        {
+            action("Dimensions")
+            {
+                ApplicationArea = all;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = Dimensions;
+
+                trigger OnAction()
+                var
+                    DimMgt: Codeunit DimensionManagement;
+                begin
+                    DimMgt.ShowDimensionSet(Rec."Dimension Set ID", STRSUBSTNO('%1 %2', Rec."Document Type", Rec."Document No."));
+                end;
             }
         }
     }

@@ -42,6 +42,21 @@ pageextension 80145 "BA Posted Sales Inv. Subpage" extends "Posted Sales Invoice
                     Subscribers.UpdateNewBusiness(Rec, NewBusiness);
                 end;
             }
+            field("BA Omit from POP Report"; OmitFromPOPReport)
+            {
+                ApplicationArea = all;
+                Caption = 'Omit from POP Report';
+                Editable = IsEditable;
+
+                trigger OnValidate()
+                begin
+                    Subscribers.UpdateOmitFromPOPReport(Rec, OmitFromPOPReport);
+                end;
+            }
+            field("BA Order Entry No."; Rec."BA Order Entry No.")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 
@@ -74,12 +89,13 @@ pageextension 80145 "BA Posted Sales Inv. Subpage" extends "Posted Sales Invoice
     end;
 
     trigger OnAfterGetRecord()
-
     begin
         BookingDate := Rec."BA Booking Date";
         NewBusiness := Rec."BA New Business - TDG";
+        OmitFromPOPReport := Rec."BA Omit from POP Report";
         IsEditable := CurrPage.Editable();
-        EditableBookingDate := CanEditBookingDate and IsEditable
+        EditableBookingDate := CanEditBookingDate and IsEditable;
+        Rec.CalcFields("BA Order Entry No.");
     end;
 
     var
@@ -91,5 +107,6 @@ pageextension 80145 "BA Posted Sales Inv. Subpage" extends "Posted Sales Invoice
         EditableBookingDate: Boolean;
         BookingDate: Date;
         NewBusiness: Boolean;
+        OmitFromPOPReport: Boolean;
 
 }

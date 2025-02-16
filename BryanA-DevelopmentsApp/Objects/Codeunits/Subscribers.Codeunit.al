@@ -3350,6 +3350,20 @@ codeunit 75010 "BA SEI Subscibers"
         SalesInvLine.Modify(true);
     end;
 
+    //do not pass as reference else page cannot save
+    procedure UpdateOmitFromPOPReport(SalesInvLine: Record "Sales Invoice Line"; OmitFromPOPReport: Boolean)
+    begin
+        SalesInvLine.Validate("BA Omit from POP Report", OmitFromPOPReport);
+        SalesInvLine.Modify(true);
+    end;
+
+    //do not pass as reference else page cannot save
+    procedure UpdateOmitFromPOPReport(ServiceInvLine: Record "Service Invoice Line"; OmitFromPOPReport: Boolean)
+    begin
+        ServiceInvLine.Validate("BA Omit from POP Report", OmitFromPOPReport);
+        ServiceInvLine.Modify(true);
+    end;
+
 
     procedure ImportFreightInvoicesToFixUpdate()
     var
@@ -3695,7 +3709,9 @@ codeunit 75010 "BA SEI Subscibers"
         OrderHeader."Sell-to Customer Name" := SalesHeader."Sell-to Customer Name";
         OrderHeader."Sell-to Customer No." := SalesHeader."Sell-to Customer No.";
         OrderHeader."Shipment Date" := SalesHeader."Shipment Date";
-        OrderHeader.Deleted := Deleted;
+        if OrderHeader."Posted Document No." = '' then
+            OrderHeader.Deleted := Deleted;
+        OrderHeader."Dimension Set ID" := SalesHeader."Dimension Set ID";
         OrderHeader.Modify(true);
         SalesLine.SetRange("Document Type", SalesHeader."Document Type");
         SalesLine.SetRange("Document No.", SalesHeader."No.");
@@ -3737,11 +3753,14 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine.Amount := SalesLine.Amount;
         OrderLine."Line Amount" := SalesLine."Line Amount";
         OrderLine."Line Discount Amount" := SalesLine."Line Discount Amount";
+        OrderLine."Line Discount %" := SalesLine."Line Discount %";
         OrderLine."Shipment Date" := SalesLine."Shipment Date";
         OrderLine."Booking Date" := SalesLine."BA Booking Date";
         OrderLine."New Business - TDG" := SalesLine."BA New Business - TDG";
-        OrderLine.Deleted := Deleted;
+        if OrderLine."Posted Document No." = '' then
+            OrderLine.Deleted := Deleted;
         OrderLine.Cancelled := Cancelled;
+        OrderLine."Dimension Set ID" := SalesLine."Dimension Set ID";
         OrderLine.Modify(true);
     end;
 
@@ -3759,7 +3778,7 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         OrderHeader.Rename(OrderHeader."Document Type", OrderHeader."Document No.",
             OrderHeader."Posted Document Type"::"Posted Sales Invoice", SalesInvHeader."No.");
-        OrderHeader."Posted Date" := Today();
+        OrderHeader.Deleted := false;
         OrderHeader.Modify(true);
     end;
 
@@ -3779,7 +3798,8 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Sales Invoice";
         OrderLine."Posted Document No." := SalesInvLine."Document No.";
-        OrderLine."Line No." := SalesInvLine."Line No.";
+        OrderLine."Posted Line No." := SalesInvLine."Line No.";
+        OrderLine.Deleted := false;
         OrderLine.Modify(true);
     end;
 
@@ -3816,7 +3836,9 @@ codeunit 75010 "BA SEI Subscibers"
         OrderHeader."Sell-to Customer Name" := Customer.Name;
         OrderHeader."Sell-to Customer No." := ServiceHeader."Customer No.";
         OrderHeader."Shipment Date" := ServiceHeader."BA Shipment Date";
-        OrderHeader.Deleted := Deleted;
+        if OrderHeader."Posted Document No." = '' then
+            OrderHeader.Deleted := Deleted;
+        OrderHeader."Dimension Set ID" := ServiceHeader."Dimension Set ID";
         OrderHeader.Modify(true);
         ServiceLine.SetRange("Document Type", ServiceHeader."Document Type");
         ServiceLine.SetRange("Document No.", ServiceHeader."No.");
@@ -3858,10 +3880,13 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine.Amount := ServiceLine.Amount;
         OrderLine."Line Amount" := ServiceLine."Line Amount";
         OrderLine."Line Discount Amount" := ServiceLine."Line Discount Amount";
+        OrderLine."Line Discount %" := ServiceLine."Line Discount %";
         OrderLine."Shipment Date" := ServiceLine.GetShipmentDate();
         OrderLine."Booking Date" := ServiceLine."BA Booking Date";
-        OrderLine.Deleted := Deleted;
+        if OrderLine."Posted Document No." = '' then
+            OrderLine.Deleted := Deleted;
         OrderLine.Cancelled := Cancelled;
+        OrderLine."Dimension Set ID" := ServiceLine."Dimension Set ID";
         OrderLine.Modify(true);
     end;
 
@@ -3879,7 +3904,7 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         OrderHeader.Rename(OrderHeader."Document Type", OrderHeader."Document No.",
             OrderHeader."Posted Document Type"::"Posted Service Invoice", ServiceInvHeader."No.");
-        OrderHeader."Posted Date" := Today();
+        OrderHeader.Deleted := false;
         OrderHeader.Modify(true);
     end;
 
@@ -3899,7 +3924,8 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Service Invoice";
         OrderLine."Posted Document No." := ServiceInvLine."Document No.";
-        OrderLine."Line No." := ServiceInvLine."Line No.";
+        OrderLine."Posted Line No." := ServiceInvLine."Line No.";
+        OrderLine.Deleted := false;
         OrderLine.Modify(true);
     end;
 
