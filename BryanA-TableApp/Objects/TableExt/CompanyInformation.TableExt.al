@@ -27,6 +27,12 @@ tableextension 80095 "BA Company Info" extends "Company Information"
             Caption = 'Accounting AR Email';
             ExtendedDatatype = EMail;
         }
+        field(80025; "BA Purchasing Email"; Text[80])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Purchasing Email';
+            ExtendedDatatype = EMail;
+        }
         modify("E-Mail")
         {
             Caption = 'Sales Email';

@@ -7,14 +7,6 @@ pageextension 80135 "BA Company Information" extends "Company Information"
             ApplicationArea = all;
             Editable = false;
         }
-        // addlast("System Indicator")
-        // {
-        //     field("BA Environment Name"; Rec."BA Environment Name")
-        //     {
-        //         ApplicationArea = all;
-        //         ShowMandatory = true;
-        //     }
-        // }
         addafter("Phone No.2")
         {
             field("BA Ship-To Phone No."; Rec."BA Ship-To Phone No.")
@@ -29,6 +21,10 @@ pageextension 80135 "BA Company Information" extends "Company Information"
                 ApplicationArea = all;
             }
             field("BA Accounting AR Email"; Rec."BA Accounting AR Email")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Purchasing Email"; Rec."BA Purchasing Email")
             {
                 ApplicationArea = all;
             }
