@@ -192,6 +192,7 @@ page 50087 "BA Order Ledger Lines"
                 field("Currency Factor"; Rec."Currency Factor")
                 {
                     ApplicationArea = all;
+                    BlankZero = true;
                 }
             }
         }
