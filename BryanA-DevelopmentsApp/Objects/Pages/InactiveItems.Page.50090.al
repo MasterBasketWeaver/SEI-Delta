@@ -38,6 +38,10 @@ page 50090 "BA Inactive Items"
                 {
                     ApplicationArea = all;
                 }
+                field(Inventory; Inventory)
+                {
+                    ApplicationArea = all;
+                }
                 field(Type; Rec.Type)
                 {
                     ApplicationArea = all;
@@ -89,4 +93,9 @@ page 50090 "BA Inactive Items"
             }
         }
     }
+
+    trigger OnOpenPage()
+    begin
+        Rec.SetAutoCalcFields(Inventory);
+    end;
 }
