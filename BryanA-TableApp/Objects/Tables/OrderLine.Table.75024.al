@@ -190,6 +190,56 @@ table 75024 "BA Order Line"
             DataClassification = CustomerContent;
             Editable = false;
         }
+        field(52; "Posting Date"; Date)
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup ("BA Order Header"."Posting Date"
+                where ("Document Type" = field ("Document Type"), "Document No." = field ("Document No."),
+                "Posted Document Type" = field ("Posted Document Type"), "Posted Document No." = field ("Posted Document No.")));
+            Editable = false;
+        }
+        field(53; "Order Date"; Date)
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup ("BA Order Header"."Order Date"
+                where ("Document Type" = field ("Document Type"), "Document No." = field ("Document No."),
+                "Posted Document Type" = field ("Posted Document Type"), "Posted Document No." = field ("Posted Document No.")));
+            Editable = false;
+        }
+        field(54; "Sell-to Customer No."; Code[20])
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup ("BA Order Header"."Sell-to Customer No."
+                where ("Document Type" = field ("Document Type"), "Document No." = field ("Document No."),
+                "Posted Document Type" = field ("Posted Document Type"), "Posted Document No." = field ("Posted Document No.")));
+            TableRelation = Customer."No.";
+        }
+        field(55; "Sell-to Customer Name"; Text[100])
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup ("BA Order Header"."Sell-to Customer Name"
+                where ("Document Type" = field ("Document Type"), "Document No." = field ("Document No."),
+                "Posted Document Type" = field ("Posted Document Type"), "Posted Document No." = field ("Posted Document No.")));
+            Editable = false;
+        }
+        field(56; "Currency Code"; Code[10])
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup ("BA Order Header"."Currency Code"
+                where ("Document Type" = field ("Document Type"), "Document No." = field ("Document No."),
+                "Posted Document Type" = field ("Posted Document Type"), "Posted Document No." = field ("Posted Document No.")));
+            Editable = false;
+            TableRelation = Currency.Code;
+        }
+        field(57; "Currency Factor"; Decimal)
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup ("BA Order Header"."Currency Factor"
+                where ("Document Type" = field ("Document Type"), "Document No." = field ("Document No."),
+                "Posted Document Type" = field ("Posted Document Type"), "Posted Document No." = field ("Posted Document No.")));
+            Editable = false;
+        }
+
     }
 
     keys

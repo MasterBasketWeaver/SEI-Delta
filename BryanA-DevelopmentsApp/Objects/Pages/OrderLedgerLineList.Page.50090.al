@@ -1,11 +1,13 @@
-page 50087 "BA Order Ledger Lines"
+page 50090 "BA Order Ledger Line List"
 {
     SourceTable = "BA Order Line";
-    PageType = ListPart;
+    PageType = List;
     LinksAllowed = false;
     Caption = 'Order Ledger Lines';
     InsertAllowed = false;
     DeleteAllowed = false;
+    ApplicationArea = all;
+    UsageCategory = Lists;
 
     layout
     {
