@@ -1,4 +1,4 @@
-page 50090 "BA Order Ledger Line List"
+page 50091 "BA Order Ledger Line List"
 {
     SourceTable = "BA Order Line";
     PageType = List;
