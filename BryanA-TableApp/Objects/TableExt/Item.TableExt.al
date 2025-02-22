@@ -71,6 +71,30 @@ tableextension 80012 "BA Item" extends Item
             DataClassification = CustomerContent;
             Caption = 'Service Item Only';
         }
+        field(80050; "BA Hide Visibility"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Hide Visibility';
+
+            trigger OnValidate()
+            begin
+                Rec."BA Visibility Changed By" := UserId();
+                Rec."BA Visibility Updated" := CurrentDateTime();
+            end;
+        }
+        field(80051; "BA Visibility Updated"; DateTime)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Visibility Updated';
+            Editable = false;
+        }
+        field(80052; "BA Visibility Changed By"; Code[50])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Visibility Changed By';
+            Editable = false;
+            TableRelation = User."User Name";
+        }
     }
 
     procedure SetLastCurrencyPurchCost(CurrCode: Code[10]; LastPurchCost: Decimal)

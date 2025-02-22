@@ -231,6 +231,21 @@ pageextension 80009 "BA Item Card" extends "Item Card"
             ApplicationArea = all;
             Editable = false;
         }
+        addlast(Control1907509201)
+        {
+            field("BA Hide Visibility"; Rec."BA Hide Visibility")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Visibility Updated"; Rec."BA Visibility Updated")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Visibility Changed By"; Rec."BA Visibility Changed By")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions
