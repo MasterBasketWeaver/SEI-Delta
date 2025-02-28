@@ -3599,6 +3599,8 @@ codeunit 75010 "BA SEI Subscibers"
     procedure GetPrepaymentInvoiceReportUsage(): Integer
     begin
         exit(80002);
+    end;
+
     [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeInsertEvent', '', false, false)]
     local procedure PaymentTermsOnBeforeInsertEvent()
     begin

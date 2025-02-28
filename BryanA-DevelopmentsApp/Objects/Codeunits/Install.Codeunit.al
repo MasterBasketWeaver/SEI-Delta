@@ -23,15 +23,12 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateShipmentTrackingInfoReportUsage();
         // PopulateShipToContactDetails();
         // PopulatePrepyamentInvReportUsage();
-        derp();
-    end;
-
-
-    local procedure derp()
-    begin
         PopulateCustomerApprovalGroups();
         PopulateProdOrderNotificationReportUsage();
     end;
+
+
+
 
     local procedure PopulatePrepyamentInvReportUsage()
     var
