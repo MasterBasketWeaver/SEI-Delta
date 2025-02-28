@@ -204,20 +204,68 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
             ApplicationArea = all;
             Visible = false;
         }
+        addlast(General)
+        {
+            field("BA Approval Count"; Rec."BA Approval Count")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Last Approval Amount"; Rec."BA Last Approval Amount")
+            {
+                ApplicationArea = all;
+            }
+        }
+        addafter(Status)
+        {
+            field("BA Appr. Reject. Reason Code"; "BA Appr. Reject. Reason Code")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Rejection Reason"; "BA Rejection Reason")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
 
+    actions
+    {
+        addlast(Processing)
+        {
+            action("BA Send for Invoicing")
+            {
+                ApplicationArea = all;
+                Image = SendEmailPDFNoAttach;
+                Promoted = true;
+                PromotedCategory = Category9;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Send for Invoicing';
+
+                trigger OnAction()
+                var
+                    SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+                begin
+                    SalesApprovalMgt.SendOrderForInvoicing(Rec);
+                end;
+            }
+        }
+    }
 
 
     var
         [InDataSet]
         MandatoryDeliveryDate: Boolean;
+        // [InDataSet]
+        // ShowApprovalRejection: Boolean;
 
     trigger OnAfterGetRecord()
     var
         Customer: Record Customer;
     begin
         MandatoryDeliveryDate := Customer.Get(Rec."Bill-to Customer No.") and not Customer."BA Non-Mandatory Delivery Date";
+        // ShowApprovalRejection := Rec."BA Appr. Reject. Reason Code" <> '';
     end;
 
 

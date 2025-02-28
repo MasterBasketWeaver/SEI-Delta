@@ -80,13 +80,31 @@ tableextension 80061 "BA Sales Invoice Header" extends "Sales Invoice Header"
             Caption = 'Actual Posting DateTime';
             Editable = false;
         }
+        field(80110; "BA Approval Count"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Count';
+            Editable = false;
+        }
+        field(80111; "BA Last Approval Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Last Approval Amount';
+            Editable = false;
+        }
+        field(80119; "BA Invoice/Packing Slip Users"; Text[2048])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Invoice/Packing Slip Usernames';
+            Editable = false;
+        }
         field(80125; "BA Salesperson Verified"; Boolean)
         {
             DataClassification = CustomerContent;
             Caption = 'Salesperson Verified';
-            Editable = false;
         }
     }
+
 
     keys
     {

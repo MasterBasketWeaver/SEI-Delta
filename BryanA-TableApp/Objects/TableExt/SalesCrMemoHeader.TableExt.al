@@ -63,11 +63,22 @@ tableextension 80062 "BA Sales Cr.Memo Header" extends "Sales Cr.Memo Header"
             Caption = 'Actual Posting DateTime';
             Editable = false;
         }
+        field(80110; "BA Approval Count"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Count';
+            Editable = false;
+        }
+        field(80111; "BA Last Approval Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Last Approval Amount';
+            Editable = false;
+        }
         field(80125; "BA Salesperson Verified"; Boolean)
         {
             DataClassification = CustomerContent;
             Caption = 'Salesperson Verified';
-            Editable = false;
         }
     }
 

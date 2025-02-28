@@ -22,10 +22,16 @@ codeunit 75011 "BA Install Codeunit"
         // InitiateDeptCodesPurchaseLookup();
         // PopulateShipmentTrackingInfoReportUsage();
         // PopulateShipToContactDetails();
-        // PopulatePrepyamentInvReportUsage();s
+        // PopulatePrepyamentInvReportUsage();
+        derp();
     end;
 
 
+    local procedure derp()
+    begin
+        PopulateCustomerApprovalGroups();
+        PopulateProdOrderNotificationReportUsage();
+    end;
 
     local procedure PopulatePrepyamentInvReportUsage()
     var
@@ -50,6 +56,88 @@ codeunit 75011 "BA Install Codeunit"
 
 
 
+
+
+    local procedure PopulateProdOrderNotificationReportUsage()
+    var
+        ReportSelections: Record "Report Selections";
+        SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+    begin
+        ReportSelections.SetRange(Usage, SalesApprovalMgt.GetProdApprovalReportUsage());
+        ReportSelections.SetRange("Report ID", Report::"BA Prod. Order Approval");
+        if not ReportSelections.IsEmpty() then
+            exit;
+        ReportSelections.Init();
+        ReportSelections.Validate(Usage, SalesApprovalMgt.GetProdApprovalReportUsage());
+        ReportSelections.Validate(Sequence, '1');
+        ReportSelections.Validate("Report ID", Report::"BA Prod. Order Approval");
+        ReportSelections.Validate("Use for Email Attachment", false);
+        ReportSelections.Validate("Use for Email Body", true);
+        ReportSelections.Insert(true);
+    end;
+
+
+    local procedure PopulateCustomerApprovalGroups()
+    var
+        Customer: Record Customer;
+        ApprovalGroup: Record "BA Approval Group";
+        SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+    begin
+        PopulateApprovalGroups();
+        Customer.SetRange("BA Approval Group", '');
+        if Customer.FindSet(true) then
+            repeat
+                SalesApprovalMgt.UpdateCustomerApprovalGroup(Customer, false);
+            until Customer.Next() = 0;
+    end;
+
+    local procedure PopulateApprovalGroups()
+    var
+        ApprovalGroup: Record "BA Approval Group";
+    begin
+        if not ApprovalGroup.Get('A') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'A';
+            ApprovalGroup.Description := 'Prepaid';
+            ApprovalGroup."Is Prepaid" := true;
+            ApprovalGroup.Insert();
+        end;
+
+        if not ApprovalGroup.Get('B') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'B';
+            ApprovalGroup.Description := 'Net XX';
+            Evaluate(ApprovalGroup."Overdue Date Formula", '<15D>');
+            ApprovalGroup.Insert();
+        end;
+
+        if not ApprovalGroup.Get('C') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'C';
+            ApprovalGroup.Description := 'Military/Government';
+            ApprovalGroup."Is Military" := true;
+            ApprovalGroup."Is Government" := true;
+            ApprovalGroup.Insert();
+        end;
+
+        if not ApprovalGroup.Get('D') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'D';
+            ApprovalGroup.Description := 'Trusted Agent';
+            ApprovalGroup."Is Trusted Agent" := true;
+            Evaluate(ApprovalGroup."Overdue Date Formula", '<30D>');
+            ApprovalGroup.Insert();
+        end;
+
+        if not ApprovalGroup.Get('TBD') then begin
+            ApprovalGroup.Init();
+            ApprovalGroup.Code := 'TBD';
+            ApprovalGroup.Description := 'To be determined';
+            ApprovalGroup.Insert();
+        end;
+    end;
+
+
     local procedure PopulateShipToContactDetails()
     var
         CompInfo: Record "Company Information";
@@ -63,6 +151,7 @@ codeunit 75011 "BA Install Codeunit"
                 CompInfo.Modify(true);
             end;
     end;
+
 
     local procedure PopulateShipmentTrackingInfoReportUsage()
     var
@@ -81,7 +170,6 @@ codeunit 75011 "BA Install Codeunit"
         ReportSelections.Validate("Use for Email Body", true);
         ReportSelections.Insert(true);
     end;
-
 
     local procedure InitiateDeptCodesPurchaseLookup()
     var

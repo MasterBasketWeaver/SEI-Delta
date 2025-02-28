@@ -65,16 +65,20 @@ pageextension 80089 "BA Cust. Details Factbox" extends "Customer Details FactBox
 
 
     var
+        Subscribers: Codeunit "BA SEI Subscibers";
+        NonLCYCustomerStatistics: Page "BA Non-LCY Cust. Stat. Factbox";
+        StyleTxt: Text;
         [InDataSet]
         ShowLCYBalances: Boolean;
-        StyleTxt: Text;
-        NonLCYCustomerStatistics: Page "BA Non-LCY Cust. Stat. Factbox";
+
+
+
 
     trigger OnAfterGetRecord()
     var
         CustPostingGroup: Record "Customer Posting Group";
     begin
-        ShowLCYBalances := CustPostingGroup.Get(Rec."Customer Posting Group") and not CustPostingGroup."BA Show Non-Local Currency";
+        ShowLCYBalances := Subscribers.UseLCYCreditLimit(Rec);
         StyleTxt := '';
         if ShowLCYBalances then
             StyleTxt := Rec.SetStyle()

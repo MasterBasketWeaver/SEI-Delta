@@ -103,6 +103,69 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             Caption = 'Ship-to Email';
             ExtendedDatatype = EMail;
         }
+        field(80110; "BA Approval Count"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Count';
+            Editable = false;
+        }
+        field(80111; "BA Last Approval Amount"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Last Approval Amount';
+            Editable = false;
+        }
+        field(80112; "BA Use Default Workflow"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Use Default Workflow';
+            Editable = false;
+        }
+        field(80113; "BA Use Custom Workflow Start"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Use Custom Workflow Start';
+            Editable = false;
+        }
+        field(80115; "BA Appr. Reject. Reason Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Reject Reason Code';
+            Editable = false;
+            TableRelation = "BA Approval Rejection".Code;
+
+            trigger OnValidate()
+            begin
+                Rec.CalcFields("BA Rejection Reason");
+            end;
+        }
+        field(80116; "BA Rejection Reason"; Text[100])
+        {
+            Caption = 'Rejection Reason';
+            FieldClass = FlowField;
+            CalcFormula = lookup ("BA Approval Rejection".Description where (Code = field ("BA Appr. Reject. Reason Code")));
+            Editable = false;
+        }
+        field(80117; "BA Approval Email User ID"; Code[50])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval Email User ID';
+            Editable = false;
+            TableRelation = User."User Name";
+        }
+        field(80118; "BA Sent for Invoice Request"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Sent for Invoice Request';
+            Editable = false;
+        }
+        //field ID reserved for the following field on Sales Invoice Header:
+        // field(80119; "BA Invoice/Packing Slip Users"; Text[2048])
+        // {
+        //     DataClassification = CustomerContent;
+        //     Caption = 'Invoice/Packing Slip Usernames';
+        //     Editable = false;
+        // }
         field(80120; "BA Delete From Posting"; Boolean)
         {
             DataClassification = CustomerContent;

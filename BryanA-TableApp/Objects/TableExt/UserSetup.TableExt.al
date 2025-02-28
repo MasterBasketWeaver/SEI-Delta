@@ -52,6 +52,16 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             DataClassification = CustomerContent;
             Caption = 'Email SP On Tracking Emails';
         }
+        field(80060; "BA Receive Prod. Approvals"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Receive Production Approvals';
+        }
+        field(80065; "BA Allow Changing Pay. Terms"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Allow Changing Payment Terms';
+        }
         field(80070; "BA Allow Deleting Orders"; Boolean)
         {
             DataClassification = CustomerContent;
