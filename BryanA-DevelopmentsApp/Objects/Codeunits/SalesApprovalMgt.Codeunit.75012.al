@@ -485,12 +485,10 @@ codeunit 75012 "BA Sales Approval Mgt."
 
     local procedure GetBodyHTMLText(var RecVar: Variant; ReportID: Integer): Text
     var
-        ReportLayoutSelection: Record "Report Layout Selection";
         BodyFilePath: Text;
         BodyText: Text;
     begin
         BodyFilePath := FileMgt.ServerTempFileName('html');
-        ReportLayoutSelection.SetTempLayoutSelected('');
         if not Report.SaveAsHtml(ReportID, BodyFilePath, RecVar) then
             Error(NoEmailBodyErr, GetLastErrorText());
         BodyText := FileMgt.GetFileContent(BodyFilePath);
