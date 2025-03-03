@@ -279,19 +279,35 @@ codeunit 75012 "BA Sales Approval Mgt."
         SalesHeader.Validate("BA Use Default Workflow", true);
         SalesHeader.Validate("BA Appr. Reject. Reason Code", '');
         SalesHeader.Modify(false);
-        ApprovalMgt.OnSendSalesDocForApproval(SalesHeader);
-        SendApprovalAdminEmail(SalesHeader);
+        ApprovalMgt.OnSendSalesDocForApproval(SalesHeader); //calls NotificationEntryDispatcherOnBeforeGetHTMLBodyText() during processing
     end;
 
-    procedure SendApprovalAdminEmail(var SalesHeader: Record "Sales Header")
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeGetHTMLBodyText', '', false, false)]
+    local procedure NotificationEntryDispatcherOnBeforeGetHTMLBodyText(var IsHandled: Boolean; var Result: Boolean; var NotificationEntry: Record "Notification Entry"; var BodyTextOut: Text)
     var
+        ApprovalEntry: Record "Approval Entry";
+        SalesHeader: Record "Sales Header";
         UserSetup: Record "User Setup";
+        RecVar: Variant;
     begin
-        UserSetup.SetRange("Approval Administrator", true);
-        UserSetup.FindFirst();
-        UserSetup.TestField("E-Mail");
-        TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo('Order Approval Request %1 - %2 - %3', SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), Report::"BA Sales Order Approval Note.");
+        if ApprovalEntry.Get(NotificationEntry."Triggered By Record") and (NotificationEntry."Recipient User ID" <> '') then
+            if SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
+                if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
+                    UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
+                    UserSetup.SetRange("Approval Administrator", true);
+                    UserSetup.SetFilter("E-Mail", '<>%1', '');
+                    if UserSetup.IsEmpty() then
+                        exit;
+                    SalesHeader.SetRange("Document Type", SalesHeader."Document Type");
+                    SalesHeader.SetRange("No.", SalesHeader."No.");
+                    RecVar := SalesHeader;
+                    BodyTextOut := GetBodyHTMLText(RecVar, Report::"BA Sales Order Approval Note.");
+                    Result := BodyTextOut <> '';
+                    IsHandled := true;
+                end;
     end;
+
+
 
 
     procedure HasZeroCreditLimit(var Customer: Record Customer; var CreditLimit: Decimal; var Balance: Decimal): Boolean
@@ -612,30 +628,6 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
 
-
-
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeGetHTMLBodyText', '', false, false)]
-    local procedure NotificationEntryDispatcherOnBeforeGetHTMLBodyText(var IsHandled: Boolean; var Result: Boolean; var NotificationEntry: Record "Notification Entry"; var BodyTextOut: Text)
-    var
-        ApprovalEntry: Record "Approval Entry";
-        SalesHeader: Record "Sales Header";
-        NotificationMgt: Codeunit "Notification Management";
-        RecVar: Variant;
-    begin
-        if ApprovalEntry.Get(NotificationEntry."Triggered By Record") then
-            if SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
-                if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
-                    IsHandled := true;
-                    Result := false;
-                    // BodyTextOut := GetBodyHTMLText(RecVar, Report::"BA Sales Order Approval Note.");
-                    if not TryToSendEmail(SalesHeader, 'bryan@bryanabcdev.com', 'Test', NotificationEntry."Recipient User ID", Report::"BA Sales Order Approval Note.") then begin
-                        NotificationEntry.SetErrorMessage(GetLastErrorText());
-                        ClearLastError();
-                        NotificationEntry.Modify(true);
-                    end else
-                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, BodyTextOut, true, 0);
-                end;
-    end;
 
 
 
