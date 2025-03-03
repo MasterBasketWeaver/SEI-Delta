@@ -469,10 +469,12 @@ codeunit 75012 "BA Sales Approval Mgt."
 
     local procedure GetBodyHTMLText(var RecVar: Variant; ReportID: Integer): Text
     var
+        ReportLayoutSelection: Record "Report Layout Selection";
         BodyFilePath: Text;
         BodyText: Text;
     begin
         BodyFilePath := FileMgt.ServerTempFileName('html');
+        ReportLayoutSelection.SetTempLayoutSelected('');
         if not Report.SaveAsHtml(ReportID, BodyFilePath, RecVar) then
             Error(NoEmailBodyErr, GetLastErrorText());
         BodyText := FileMgt.GetFileContent(BodyFilePath);
@@ -610,6 +612,30 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
 
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeGetHTMLBodyText', '', false, false)]
+    local procedure NotificationEntryDispatcherOnBeforeGetHTMLBodyText(var IsHandled: Boolean; var Result: Boolean; var NotificationEntry: Record "Notification Entry"; var BodyTextOut: Text)
+    var
+        ApprovalEntry: Record "Approval Entry";
+        SalesHeader: Record "Sales Header";
+        NotificationMgt: Codeunit "Notification Management";
+        RecVar: Variant;
+    begin
+        if ApprovalEntry.Get(NotificationEntry."Triggered By Record") then
+            if SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
+                if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
+                    IsHandled := true;
+                    Result := false;
+                    // BodyTextOut := GetBodyHTMLText(RecVar, Report::"BA Sales Order Approval Note.");
+                    if not TryToSendEmail(SalesHeader, 'bryan@bryanabcdev.com', 'Test', NotificationEntry."Recipient User ID", Report::"BA Sales Order Approval Note.") then begin
+                        NotificationEntry.SetErrorMessage(GetLastErrorText());
+                        ClearLastError();
+                        NotificationEntry.Modify(true);
+                    end else
+                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, BodyTextOut, true, 0);
+                end;
+    end;
 
 
 

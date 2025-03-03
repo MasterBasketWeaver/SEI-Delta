@@ -11,17 +11,17 @@
             "authentication": "UserPassword",
             // "schemaUpdateMode": "ForceSync"
         }
-        // ,
-        // {
-        //     "type": "al",
-        //     "request": "launch",
-        //     "name": "Test",
-        //     "server": "http://localhost",
-        //     "port": 7114,
-        //     "serverInstance": "Test",
-        //     "authentication": "UserPassword",
-        //     "schemaUpdateMode": "Synchronize"
-        // }
+        ,
+        {
+            "type": "al",
+            "request": "launch",
+            "name": "Test",
+            "server": "http://localhost",
+            "port": 7114,
+            "serverInstance": "Test",
+            "authentication": "UserPassword",
+            "schemaUpdateMode": "Synchronize"
+        }
         // ,
         // {
         //     "type": "al",
