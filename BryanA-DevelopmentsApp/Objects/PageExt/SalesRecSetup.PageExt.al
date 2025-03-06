@@ -12,6 +12,20 @@ pageextension 80075 "BA Sales & Rec. Setup" extends "Sales & Receivables Setup"
             {
                 ApplicationArea = all;
             }
+            field("BA Restrict Order Creation"; Rec."BA Restrict Order Creation")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Restrict Order Start Time"; Rec."BA Restrict Order Start Time")
+            {
+                ApplicationArea = all;
+                Enabled = "BA Restrict Order Creation";
+            }
+            field("BA Restrict Order End Time"; Rec."BA Restrict Order End Time")
+            {
+                ApplicationArea = all;
+                Enabled = "BA Restrict Order Creation";
+            }
             // group("Custom Pricing")
             // {
             //     field("BA Use Single Currency Pricing"; "BA Use Single Currency Pricing")

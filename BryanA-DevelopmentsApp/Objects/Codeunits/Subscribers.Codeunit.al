@@ -2016,7 +2016,8 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeInsertEvent', '', false, false)]
     local procedure OnBeforeSalesHeaderInsert(var Rec: Record "Sales Header")
     begin
-        if Rec."Document Type" = Rec."Document Type"::Order then begin
+        if (Rec."Document Type" = Rec."Document Type"::Order) and not Rec.IsTemporary() then begin
+            CheckIfCanCreateOrder();
             Rec."Compress Prepayment" := true;
             Rec."Prepmt. Include Tax" := true;
         end;
@@ -3634,6 +3635,56 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnBeforeInsertEvent', '', false, false)]
+    local procedure OnBeforeServiceHeaderInsert(var Rec: Record "Service Header")
+    begin
+        if (Rec."Document Type" = Rec."Document Type"::Order) and not Rec.IsTemporary() then
+            CheckIfCanCreateOrder();
+    end;
+
+    local procedure CheckIfCanCreateOrder()
+    var
+        UserSetup: Record "User Setup";
+        SalesRecSetup: Record "Sales & Receivables Setup";
+    begin
+        if UserSetup.Get(UserId()) and UserSetup."BA Can Create Orders Anytime" then
+            exit;
+        if not SalesRecSetup.Get() or not SalesRecSetup."BA Restrict Order Creation" then
+            exit;
+        if Date2DWY(Today(), 1) in [6, 7] then
+            Error(WeekendCreateErr);
+        if SalesRecSetup."BA Restrict Order Start Time" <> 0T then
+            if Time() < SalesRecSetup."BA Restrict Order Start Time" then
+                Error(EarlyCreateErr, SalesRecSetup."BA Restrict Order Start Time");
+        if SalesRecSetup."BA Restrict Order End Time" <> 0T then
+            if Time() > SalesRecSetup."BA Restrict Order End Time" then
+                Error(LateCreateErr, SalesRecSetup."BA Restrict Order End Time");
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales & Receivables Setup", 'OnAfterValidateEvent', 'BA Restrict Order Start Time', false, false)]
+    local procedure SalesRecSetupOnAfterValidateRestrictStartTime(var Rec: Record "Sales & Receivables Setup")
+    begin
+        if Rec."BA Restrict Order Start Time" = 0T then
+            exit;
+        if Rec."BA Restrict Order End Time" <> 0T then
+            if Rec."BA Restrict Order Start Time" > Rec."BA Restrict Order End Time" then
+                Error(LateStartTimeErr, Rec."BA Restrict Order End Time");
+
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales & Receivables Setup", 'OnAfterValidateEvent', 'BA Restrict Order End Time', false, false)]
+    local procedure SalesRecSetupOnAfterValidateRestrictEndTime(var Rec: Record "Sales & Receivables Setup")
+    begin
+        if Rec."BA Restrict Order End Time" = 0T then
+            exit;
+        if Rec."BA Restrict Order Start Time" <> 0T then
+            if Rec."BA Restrict Order Start Time" > Rec."BA Restrict Order End Time" then
+                Error(EarlyStartTimeErr, Rec."BA Restrict Order Start Time");
+    end;
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
 
@@ -3677,5 +3728,10 @@ codeunit 75010 "BA SEI Subscibers"
         DeleteOrderErr: Label 'Order deletion is not authorized. Please contact your NAV / Business Central System Administrator to request permission and reason for the order deletion.';
         PaymentTermsPermErr: Label 'You do not have permission to change Payment Terms.';
         NotVerifiedSalespersonErr: Label 'Salesperson must be verified before %1 %2 can be specified.';
+        WeekendCreateErr: Label 'Cannot created Sales Order on weekends';
+        EarlyCreateErr: Label 'Cannot create Sales Orders before %1.';
+        LateCreateErr: Label 'Cannot create Sales Orders after %1.';
+        LateStartTimeErr: Label 'Restrict Start Time must be earlier than Restrict End Time: %1';
+        EarlyStartTimeErr: Label 'Restrict End Time must be later than Restrict Start Time: %1';
 }
 
