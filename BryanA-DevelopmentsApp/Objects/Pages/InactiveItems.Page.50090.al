@@ -90,6 +90,18 @@ page 50090 "BA Inactive Items"
                 {
                     ApplicationArea = all;
                 }
+                field("ENC NSN No."; Rec."ENC NSN No.")
+                {
+                    ApplicationArea = all;
+                }
+                field("ENC Drawing No."; Rec."ENC Drawing No.")
+                {
+                    ApplicationArea = all;
+                }
+                field("ENC Drawing Rev. No."; Rec."ENC Drawing Rev. No.")
+                {
+                    ApplicationArea = all;
+                }
             }
         }
     }
