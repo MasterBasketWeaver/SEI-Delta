@@ -25,5 +25,20 @@ tableextension 80036 "BA Sales & Rec. Setup" extends "Sales & Receivables Setup"
             Caption = 'Prepaid Order Increase Limit';
             MinValue = 0;
         }
+        field(80010; "BA Restrict Order Creation"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Order Creation Time';
+        }
+        field(80011; "BA Restrict Order Start Time"; Time)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Order Start Time';
+        }
+        field(80012; "BA Restrict Order End Time"; Time)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Order End Time';
+        }
     }
 }

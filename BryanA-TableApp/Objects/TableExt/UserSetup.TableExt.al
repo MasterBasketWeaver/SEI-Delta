@@ -98,5 +98,10 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             DataClassification = CustomerContent;
             Caption = 'Can Edit Ledger Pages';
         }
+        field(80130; "BA Can Create Orders Anytime"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Can Create Orders Anytime';
+        }
     }
 }
