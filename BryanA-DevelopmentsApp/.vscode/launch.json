@@ -1,17 +1,17 @@
 {
     "version": "1.0.0",
     "configurations": [
-        // {
-        //     "type": "al",
-        //     "request": "launch",
-        //     "name": "Dev",
-        //     "server": "http://localhost",
-        //     "port": 7119,
-        //     "serverInstance": "Dev",
-        //     "authentication": "UserPassword",
-        //     // "schemaUpdateMode": "ForceSync"
-        // }
-        // ,
+        {
+            "type": "al",
+            "request": "launch",
+            "name": "Dev",
+            "server": "http://localhost",
+            "port": 7119,
+            "serverInstance": "Dev",
+            "authentication": "UserPassword",
+            // "schemaUpdateMode": "ForceSync"
+        }
+        ,
         {
             "type": "al",
             "request": "launch",
