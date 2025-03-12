@@ -308,6 +308,19 @@ codeunit 75012 "BA Sales Approval Mgt."
     end;
 
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeCreateMailAndDispatch', '', false, false)]
+    local procedure NotificationEntryDispatcherOnBeforeCreateMailAndDispatch(var MailSubject: Text; var NotificationEntry: Record "Notification Entry")
+    var
+        UserSetup: Record "User Setup";
+    begin
+        UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
+        UserSetup.SetRange("Approval Administrator", true);
+        UserSetup.SetFilter("E-Mail", '<>%1', '');
+        if not UserSetup.IsEmpty() then
+            MailSubject := 'Test Admin ' + NotificationEntry."Recipient User ID";
+    end;
+
+
 
 
     procedure HasZeroCreditLimit(var Customer: Record Customer; var CreditLimit: Decimal; var Balance: Decimal): Boolean
