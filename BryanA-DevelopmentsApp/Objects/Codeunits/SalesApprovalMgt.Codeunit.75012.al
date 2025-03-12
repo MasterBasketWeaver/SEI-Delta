@@ -297,14 +297,14 @@ codeunit 75012 "BA Sales Approval Mgt."
                     UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
                     UserSetup.SetRange("Approval Administrator", true);
                     UserSetup.SetFilter("E-Mail", '<>%1', '');
-                    if UserSetup.IsEmpty() then
+                    if not UserSetup.FindFirst() then
                         exit;
                     if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo('Order Approval Request %1 - %2 - %3', SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), Report::"BA Sales Order Approval Note.") then begin
                         NotificationEntry.SetErrorMessage(GetLastErrorText());
                         ClearLastError();
                         NotificationEntry.Modify(true);
                     end else
-                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, '', true, 1);
+                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, '', true, 2);
                     IsHandled := true;
                     Result := false;
                 end;
