@@ -288,6 +288,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         ApprovalEntry: Record "Approval Entry";
         SalesHeader: Record "Sales Header";
         UserSetup: Record "User Setup";
+        NotificationMgt: Codeunit "Notification Management";
         RecVar: Variant;
     begin
         if ApprovalEntry.Get(NotificationEntry."Triggered By Record") and (NotificationEntry."Recipient User ID" <> '') then
@@ -298,27 +299,71 @@ codeunit 75012 "BA Sales Approval Mgt."
                     UserSetup.SetFilter("E-Mail", '<>%1', '');
                     if UserSetup.IsEmpty() then
                         exit;
-                    SalesHeader.SetRange("Document Type", SalesHeader."Document Type");
-                    SalesHeader.SetRange("No.", SalesHeader."No.");
-                    RecVar := SalesHeader;
-                    BodyTextOut := GetBodyHTMLText(RecVar, Report::"BA Sales Order Approval Note.");
-                    Result := BodyTextOut <> '';
+                    if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo('Order Approval Request %1 - %2 - %3', SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), Report::"BA Sales Order Approval Note.") then begin
+                        NotificationEntry.SetErrorMessage(GetLastErrorText());
+                        ClearLastError();
+                        NotificationEntry.Modify(true);
+                    end else
+                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, '', true, 1);
                     IsHandled := true;
+                    Result := false;
                 end;
     end;
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeCreateMailAndDispatch', '', false, false)]
-    local procedure NotificationEntryDispatcherOnBeforeCreateMailAndDispatch(var MailSubject: Text; var NotificationEntry: Record "Notification Entry")
-    var
-        UserSetup: Record "User Setup";
-    begin
-        UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
-        UserSetup.SetRange("Approval Administrator", true);
-        UserSetup.SetFilter("E-Mail", '<>%1', '');
-        if not UserSetup.IsEmpty() then
-            MailSubject := 'Test Admin ' + NotificationEntry."Recipient User ID";
-    end;
+    // procedure SendApprovalAdminEmail(var SalesHeader: Record "Sales Header")
+    // var
+    //     UserSetup: Record "User Setup";
+    // begin
+    //     UserSetup.SetRange("Approval Administrator", true);
+    //     UserSetup.FindFirst();
+    //     UserSetup.TestField("E-Mail");
+    //     TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo('Order Approval Request %1 - %2 - %3', SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), Report::"BA Sales Order Approval Note.");
+    // end;
+
+
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeGetHTMLBodyText', '', false, false)]
+    // local procedure NotificationEntryDispatcherOnBeforeGetHTMLBodyText(var IsHandled: Boolean; var Result: Boolean; var NotificationEntry: Record "Notification Entry"; var BodyTextOut: Text)
+    // var
+    //     ApprovalEntry: Record "Approval Entry";
+    //     SalesHeader: Record "Sales Header";
+    //     UserSetup: Record "User Setup";
+    //     RecVar: Variant;
+    // begin
+    //     if ApprovalEntry.Get(NotificationEntry."Triggered By Record") and (NotificationEntry."Recipient User ID" <> '') then
+    //         if SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
+    //             if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
+    //                 UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
+    //                 UserSetup.SetRange("Approval Administrator", true);
+    //                 UserSetup.SetFilter("E-Mail", '<>%1', '');
+    //                 if UserSetup.IsEmpty() then
+    //                     exit;
+    //                 SalesHeader.SetRange("Document Type", SalesHeader."Document Type");
+    //                 SalesHeader.SetRange("No.", SalesHeader."No.");
+    //                 RecVar := SalesHeader;
+    //                 BodyTextOut := GetBodyHTMLText(RecVar, Report::"BA Sales Order Approval Note.");
+    //                 Result := BodyTextOut <> '';
+    //                 IsHandled := true;
+    //             end;
+    // end;
+
+
+
+
+
+
+
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeCreateMailAndDispatch', '', false, false)]
+    // local procedure NotificationEntryDispatcherOnBeforeCreateMailAndDispatch(var MailSubject: Text; var NotificationEntry: Record "Notification Entry")
+    // var
+    //     UserSetup: Record "User Setup";
+    // begin
+    //     UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
+    //     UserSetup.SetRange("Approval Administrator", true);
+    //     UserSetup.SetFilter("E-Mail", '<>%1', '');
+    //     if not UserSetup.IsEmpty() then
+    //         MailSubject := 'Test Admin ' + NotificationEntry."Recipient User ID";
+    // end;
 
 
 
