@@ -304,7 +304,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         if (SalesHeader."Assigned User ID" = NotificationEntry."Recipient User ID") and (ApprovalEntry.Status = ApprovalEntry.Status::Rejected) then begin
             if not UserSetup.Get(SalesHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
                 exit;
-            Subject := StrSubstNo('Test - ' + RejectionEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
+            Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
             ReportID := Report::"BA Prod. Order Approval";
         end else begin
             UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
@@ -385,8 +385,9 @@ codeunit 75012 "BA Sales Approval Mgt."
         Subject: Text;
         AssignedUserID: Code[50];
     begin
-        if SalesHeader."Assigned User ID" <> '' then
-            UserSetup.SetFilter("User ID", '<>%1', SalesHeader."Assigned User ID");
+        if not Approved then
+            if SalesHeader."Assigned User ID" <> '' then
+                UserSetup.SetFilter("User ID", '<>%1', SalesHeader."Assigned User ID");
         UserSetup.SetRange("BA Receive Prod. Approvals", true);
         UserSetup.SetFilter("E-Mail", '<>%1', '');
         if not UserSetup.FindSet() then
