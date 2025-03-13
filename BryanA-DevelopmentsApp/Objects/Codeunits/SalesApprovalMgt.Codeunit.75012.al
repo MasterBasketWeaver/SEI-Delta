@@ -304,7 +304,7 @@ codeunit 75012 "BA Sales Approval Mgt."
                         ClearLastError();
                         NotificationEntry.Modify(true);
                     end else
-                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, '', true, 2);
+                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, '', true, 0);
                     IsHandled := true;
                     Result := false;
                 end;
