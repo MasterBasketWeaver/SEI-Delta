@@ -174,7 +174,7 @@ tableextension 80030 "BA Customer" extends Customer
         field(80102; "BA Trusted Agent"; Boolean)
         {
             DataClassification = CustomerContent;
-            Caption = 'Trusted Agent';
+            Caption = 'Trusted Customer/Agent';
         }
     }
 }
