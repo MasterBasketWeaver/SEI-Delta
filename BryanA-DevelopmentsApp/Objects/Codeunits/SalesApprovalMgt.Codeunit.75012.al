@@ -273,6 +273,8 @@ codeunit 75012 "BA Sales Approval Mgt."
         SalesHeader.Modify(true);
     end;
 
+
+
     local procedure SendApprovalRequest(var SalesHeader: Record "Sales Header")
     begin
         ApprovalMgt.CheckSalesApprovalPossible(SalesHeader);
@@ -289,7 +291,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         SalesHeader: Record "Sales Header";
         UserSetup: Record "User Setup";
         NotificationMgt: Codeunit "Notification Management";
-        RecVar: Variant;
+        EmailBody: Text;
     begin
         if ApprovalEntry.Get(NotificationEntry."Triggered By Record") and (NotificationEntry."Recipient User ID" <> '') then
             if SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
@@ -299,12 +301,14 @@ codeunit 75012 "BA Sales Approval Mgt."
                     UserSetup.SetFilter("E-Mail", '<>%1', '');
                     if not UserSetup.FindFirst() then
                         exit;
-                    if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo('Order Approval Request %1 - %2 - %3', SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), Report::"BA Sales Order Approval Note.") then begin
+                    if not TryToSendEmail(SalesHeader, UserSetup."E-Mail",
+                            StrSubstNo(ApprovalRequestSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), '',
+                            Report::"BA Sales Order Approval Note.", EmailBody) then begin
                         NotificationEntry.SetErrorMessage(GetLastErrorText());
                         ClearLastError();
                         NotificationEntry.Modify(true);
                     end else
-                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, '', true, 0);
+                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
                     IsHandled := true;
                     Result := false;
                 end;
@@ -464,13 +468,23 @@ codeunit 75012 "BA Sales Approval Mgt."
 
     [TryFunction]
     local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; ReportID: Integer)
+    var
+        EmailBody: Text;
     begin
-        TryToSendEmail(SalesHeader, EmailAddr, Subject, '', ReportID);
+        TryToSendEmail(SalesHeader, EmailAddr, Subject, '', ReportID, EmailBody);
+    end;
+
+    [TryFunction]
+    local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; UserIDCode: Code[50]; ReportID: Integer)
+    var
+        EmailBody: Text;
+    begin
+        TryToSendEmail(SalesHeader, EmailAddr, Subject, UserIDCode, ReportID, EmailBody);
     end;
 
 
     [TryFunction]
-    local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; UserIDCode: Code[50]; ReportID: Integer)
+    local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; UserIDCode: Code[50]; ReportID: Integer; var EmailBody: Text)
     var
         SalesHeader2: Record "Sales Header";
         SMTPMail: Codeunit "SMTP Mail";
@@ -483,7 +497,8 @@ codeunit 75012 "BA Sales Approval Mgt."
         SalesHeader2.SetRange("Document Type", SalesHeader."Document Type");
         SalesHeader2.SetRange("No.", SalesHeader."No.");
         RecVar := SalesHeader2;
-        SMTPMail.CreateMessage('', GetSenderEmail(), EmailAddr, Subject, GetBodyHTMLText(RecVar, ReportID), true);
+        EmailBody := GetBodyHTMLText(RecVar, ReportID);
+        SMTPMail.CreateMessage('', GetSenderEmail(), EmailAddr, Subject, EmailBody, true);
         SMTPMail.Send;
     end;
 
@@ -724,6 +739,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         MultiTok: Label '%1, %2';
         LastTok: Label '%1, and %2';
         InvalidAppGroupErr: Label 'Cannot send an approval request for Customer %1 as it has not been assigned a valid approval group: %2.';
+        ApprovalRequestSubject: Label 'Order Approval Request %1 - %2 - %3';
 
 }
 
