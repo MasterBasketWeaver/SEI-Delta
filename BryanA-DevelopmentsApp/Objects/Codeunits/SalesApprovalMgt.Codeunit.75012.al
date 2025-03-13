@@ -292,82 +292,40 @@ codeunit 75012 "BA Sales Approval Mgt."
         UserSetup: Record "User Setup";
         NotificationMgt: Codeunit "Notification Management";
         EmailBody: Text;
+        Subject: Text;
+        ReportID: Integer;
     begin
-        if ApprovalEntry.Get(NotificationEntry."Triggered By Record") and (NotificationEntry."Recipient User ID" <> '') then
-            if SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
-                if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
-                    UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
-                    UserSetup.SetRange("Approval Administrator", true);
-                    UserSetup.SetFilter("E-Mail", '<>%1', '');
-                    if not UserSetup.FindFirst() then
-                        exit;
-                    if not TryToSendEmail(SalesHeader, UserSetup."E-Mail",
-                            StrSubstNo(ApprovalRequestSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), '',
-                            Report::"BA Sales Order Approval Note.", EmailBody) then begin
-                        NotificationEntry.SetErrorMessage(GetLastErrorText());
-                        ClearLastError();
-                        NotificationEntry.Modify(true);
-                    end else
-                        NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
-                    IsHandled := true;
-                    Result := false;
-                end;
+        if not ApprovalEntry.Get(NotificationEntry."Triggered By Record") or (NotificationEntry."Recipient User ID" = '') then
+            exit;
+        if not SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
+            exit;
+        if SalesHeader."Document Type" <> SalesHeader."Document Type"::Order then
+            exit;
+        if (SalesHeader."Assigned User ID" = NotificationEntry."Recipient User ID") and (ApprovalEntry.Status = ApprovalEntry.Status::Rejected) then begin
+            if not UserSetup.Get(SalesHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
+                exit;
+            Subject := StrSubstNo('Test - ' + RejectionEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
+            ReportID := Report::"BA Prod. Order Approval";
+        end else begin
+            UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
+            UserSetup.SetRange("Approval Administrator", true);
+            UserSetup.SetFilter("E-Mail", '<>%1', '');
+            if not UserSetup.FindFirst() then
+                exit;
+            Subject := StrSubstNo(ApprovalRequestSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
+            ReportID := Report::"BA Sales Order Approval Note.";
+        end;
+
+        if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, '', ReportID, EmailBody) then begin
+            NotificationEntry.SetErrorMessage(GetLastErrorText());
+            ClearLastError();
+            NotificationEntry.Modify(true);
+        end else
+            NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
+        IsHandled := true;
+        Result := false;
     end;
 
-
-    // procedure SendApprovalAdminEmail(var SalesHeader: Record "Sales Header")
-    // var
-    //     UserSetup: Record "User Setup";
-    // begin
-    //     UserSetup.SetRange("Approval Administrator", true);
-    //     UserSetup.FindFirst();
-    //     UserSetup.TestField("E-Mail");
-    //     TryToSendEmail(SalesHeader, UserSetup."E-Mail", StrSubstNo('Order Approval Request %1 - %2 - %3', SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name"), Report::"BA Sales Order Approval Note.");
-    // end;
-
-
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeGetHTMLBodyText', '', false, false)]
-    // local procedure NotificationEntryDispatcherOnBeforeGetHTMLBodyText(var IsHandled: Boolean; var Result: Boolean; var NotificationEntry: Record "Notification Entry"; var BodyTextOut: Text)
-    // var
-    //     ApprovalEntry: Record "Approval Entry";
-    //     SalesHeader: Record "Sales Header";
-    //     UserSetup: Record "User Setup";
-    //     RecVar: Variant;
-    // begin
-    //     if ApprovalEntry.Get(NotificationEntry."Triggered By Record") and (NotificationEntry."Recipient User ID" <> '') then
-    //         if SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
-    //             if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
-    //                 UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
-    //                 UserSetup.SetRange("Approval Administrator", true);
-    //                 UserSetup.SetFilter("E-Mail", '<>%1', '');
-    //                 if UserSetup.IsEmpty() then
-    //                     exit;
-    //                 SalesHeader.SetRange("Document Type", SalesHeader."Document Type");
-    //                 SalesHeader.SetRange("No.", SalesHeader."No.");
-    //                 RecVar := SalesHeader;
-    //                 BodyTextOut := GetBodyHTMLText(RecVar, Report::"BA Sales Order Approval Note.");
-    //                 Result := BodyTextOut <> '';
-    //                 IsHandled := true;
-    //             end;
-    // end;
-
-
-
-
-
-
-
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeCreateMailAndDispatch', '', false, false)]
-    // local procedure NotificationEntryDispatcherOnBeforeCreateMailAndDispatch(var MailSubject: Text; var NotificationEntry: Record "Notification Entry")
-    // var
-    //     UserSetup: Record "User Setup";
-    // begin
-    //     UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
-    //     UserSetup.SetRange("Approval Administrator", true);
-    //     UserSetup.SetFilter("E-Mail", '<>%1', '');
-    //     if not UserSetup.IsEmpty() then
-    //         MailSubject := 'Test Admin ' + NotificationEntry."Recipient User ID";
-    // end;
 
 
 
@@ -427,23 +385,16 @@ codeunit 75012 "BA Sales Approval Mgt."
         Subject: Text;
         AssignedUserID: Code[50];
     begin
+        if SalesHeader."Assigned User ID" <> '' then
+            UserSetup.SetFilter("User ID", '<>%1', SalesHeader."Assigned User ID");
         UserSetup.SetRange("BA Receive Prod. Approvals", true);
         UserSetup.SetFilter("E-Mail", '<>%1', '');
-        if not Approved then begin
-            Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
-            if (SalesHeader."Assigned User ID" <> '') and UserSetup.Get(SalesHeader."Assigned User ID") then begin
-                if UserSetup."E-Mail" <> '' then
-                    if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, UserSetup."User ID", Report::"BA Prod. Order Approval") then
-                        if not Addresses.Contains(UserSetup."E-Mail") then
-                            Addresses.Add(UserSetup."E-Mail");
-                UserSetup.SetFilter("User ID", '<>%1', SalesHeader."Assigned User ID");
-                SalesHeader."BA Approval Email User ID" := '';
-                SalesHeader.Modify(false);
-            end;
-        end else
-            Subject := StrSubstNo(ApprovalEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
         if not UserSetup.FindSet() then
             exit;
+        if not Approved then
+            Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name")
+        else
+            Subject := StrSubstNo(ApprovalEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
         repeat
             if not TryToSendEmail(SalesHeader, UserSetup."E-Mail", Subject, UserSetup."User ID", Report::"BA Prod. Order Approval") then
                 if not Addresses.Contains(UserSetup."E-Mail") then
