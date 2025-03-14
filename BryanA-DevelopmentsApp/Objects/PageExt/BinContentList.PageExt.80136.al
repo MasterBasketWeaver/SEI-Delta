@@ -28,6 +28,7 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
         WarehouseEntry.SetRange("Location Code", Rec."Location Code");
         WarehouseEntry.SetRange("Variant Code", Rec."Variant Code");
         WarehouseEntry.SetRange("Unit of Measure Code", Rec."Unit of Measure Code");
+        WarehouseEntry.SetFilter("Serial No.", '<>%1', '');
     end;
 
     trigger OnAfterGetRecord()
