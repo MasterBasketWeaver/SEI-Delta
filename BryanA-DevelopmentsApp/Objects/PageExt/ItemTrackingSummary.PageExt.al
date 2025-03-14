@@ -8,13 +8,13 @@ pageextension 80199 "BA Item Tracking Summary" extends "Item Tracking Summary"
             {
                 ApplicationArea = all;
                 Editable = false;
-                Visible = "Bin Active";
+                Caption = 'Source Bin Code';
+                TableRelation = Bin.Code;
             }
             field("BA Item Ledger Entry No."; Rec."BA Item Ledger Entry No.")
             {
                 ApplicationArea = all;
                 Editable = false;
-                Visible = "Bin Active";
             }
         }
     }
