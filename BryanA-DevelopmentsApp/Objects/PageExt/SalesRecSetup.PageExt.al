@@ -20,11 +20,13 @@ pageextension 80075 "BA Sales & Rec. Setup" extends "Sales & Receivables Setup"
             {
                 ApplicationArea = all;
                 Enabled = "BA Restrict Order Creation";
+                Caption = 'Restrict Order Start Time (PST)';
             }
             field("BA Restrict Order End Time"; Rec."BA Restrict Order End Time")
             {
                 ApplicationArea = all;
                 Enabled = "BA Restrict Order Creation";
+                Caption = 'Restrict Order End Time (PST)';
             }
             // group("Custom Pricing")
             // {
