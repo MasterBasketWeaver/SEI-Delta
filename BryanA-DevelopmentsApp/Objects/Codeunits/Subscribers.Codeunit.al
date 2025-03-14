@@ -3582,7 +3582,7 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    //OnBeforeSendEmailToCust
+
     [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeSendEmailToCust', '', false, false)]
     local procedure ReportSelectionsOnBeforeSendEmailToCust(var ReportUsage: Integer; RecordVariant: Variant)
     var
@@ -3684,6 +3684,16 @@ codeunit 75010 "BA SEI Subscibers"
                 Error(EarlyStartTimeErr, Rec."BA Restrict Order Start Time");
     end;
 
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Tracking Data Collection", 'OnBeforeUpdateBinContent', '', false, false)]
+    local procedure ItemTrackingDataCollectionOnBeforeUpdateBinContent(var TempEntrySummary: Record "Entry Summary"; var TempReservationEntry: Record "Reservation Entry")
+    begin
+        if TempReservationEntry."Entry No." > 0 then
+            TempEntrySummary."BA Item Ledger Entry No." := TempReservationEntry."Entry No."
+        else
+            TempEntrySummary."BA Item Ledger Entry No." := -TempReservationEntry."Entry No.";
+    end;
 
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
