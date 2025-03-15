@@ -4793,30 +4793,6 @@ codeunit 75010 "BA SEI Subscibers"
                     Error(NotVerifiedSalespersonErr, Rec.FieldCaption("Repair Status Code"), Rec."Repair Status Code");
     end;
 
-    // local procedure CheckRepairStatusIsValidated(var ServiceHeader: Record "Service Header")
-    // var
-    //     ServiceItemLine: Record "Service Item Line";
-    //     RepairStatus: Record "Repair Status";
-    //     FilterText: Text;
-    // begin
-    //     RepairStatus.SetRange("BA Salesperson Verification", true);
-    //     if not RepairStatus.FindSet() then
-    //         exit;
-    //     repeat
-    //         if FilterText = '' then
-    //             FilterText := RepairStatus.Code
-    //         else
-    //             FilterText += '|' + RepairStatus.Code;
-    //     until RepairStatus.Next() = 0;
-    //     ServiceItemLine.SetRange("Document Type", ServiceHeader."Document Type");
-    //     ServiceItemLine.SetRange("Document No.", ServiceHeader."No.");
-    //     ServiceItemLine.SetFilter("Repair Status Code", FilterText);
-    //     if ServiceItemLine.IsEmpty() then
-    //         if RepairStatus.Count = 1 then
-    //             Error(SingleRepairCodeErr, FilterText, ServiceHeader."No.")
-    //         else
-    //             Error(MultiRepairCodeErr, ServiceHeader."No.", FilterText.Replace('|', ', '));
-    // end;
 
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnBeforeInsertEvent', '', false, false)]
