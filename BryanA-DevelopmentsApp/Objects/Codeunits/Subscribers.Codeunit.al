@@ -3688,11 +3688,32 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Tracking Data Collection", 'OnBeforeUpdateBinContent', '', false, false)]
     local procedure ItemTrackingDataCollectionOnBeforeUpdateBinContent(var TempEntrySummary: Record "Entry Summary"; var TempReservationEntry: Record "Reservation Entry")
+    var
+        WarehouseEntry: Record "Warehouse Entry";
+        ItemLedgerEntry: Record "Item Ledger Entry";
     begin
+        if TempEntrySummary."Table ID" <> Database::"Item Ledger Entry" then
+            exit;
         if TempReservationEntry."Entry No." > 0 then
             TempEntrySummary."BA Item Ledger Entry No." := TempReservationEntry."Entry No."
         else
             TempEntrySummary."BA Item Ledger Entry No." := -TempReservationEntry."Entry No.";
+
+        if not ItemLedgerEntry.Get(TempEntrySummary."BA Item Ledger Entry No.") then
+            exit;
+        if ItemLedgerEntry."Serial No." = '' then
+            exit;
+        TempEntrySummary."BA Location Code" := ItemLedgerEntry."Location Code";
+        WarehouseEntry.SetCurrentKey("Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
+        WarehouseEntry.SetRange("Item No.", ItemLedgerEntry."Item No.");
+        WarehouseEntry.SetRange("Location Code", ItemLedgerEntry."Location Code");
+        WarehouseEntry.SetRange("Variant Code", ItemLedgerEntry."Variant Code");
+        WarehouseEntry.SetRange("Unit of Measure Code", ItemLedgerEntry."Unit of Measure Code");
+        WarehouseEntry.SetRange("Lot No.", ItemLedgerEntry."Lot No.");
+        WarehouseEntry.SetRange("Serial No.", ItemLedgerEntry."Serial No.");
+        WarehouseEntry.SetFilter("Registering Date", '>=%1', ItemLedgerEntry."Posting Date");
+        if WarehouseEntry.FindLast() then
+            TempEntrySummary."BA Source Bin Code" := WarehouseEntry."Bin Code";
     end;
 
     var
