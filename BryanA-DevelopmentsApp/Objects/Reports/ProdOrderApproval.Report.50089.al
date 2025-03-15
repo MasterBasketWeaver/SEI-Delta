@@ -59,11 +59,13 @@ report 50089 "BA Prod. Order Approval"
         User: Record User;
     begin
         User.SetRange("User Name", UserIDCode);
-        if not User.FindFirst() then
-            exit(UserIDCode);
-        if User."Full Name" <> '' then
-            exit(User."Full Name");
-        exit(User."User Name");
+        if User.FindFirst() then
+            if User."Full Name" <> '' then
+                exit(User."Full Name")
+            else
+                if User."User Name" <> '' then
+                    exit(User."User Name");
+        exit(UserIDCode);
     end;
 
 
