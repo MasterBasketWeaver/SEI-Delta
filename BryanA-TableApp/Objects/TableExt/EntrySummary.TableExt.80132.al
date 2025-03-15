@@ -9,5 +9,19 @@ tableextension 80132 "BA Entry Summary" extends "Entry Summary"
             Editable = false;
             TableRelation = "Item Ledger Entry"."Entry No.";
         }
+        field(80001; "BA Location Code"; Code[10])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Location Code';
+            Editable = false;
+            TableRelation = Location.Code;
+        }
+        field(80002; "BA Source Bin Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Source Bin Code';
+            Editable = false;
+            TableRelation = Bin.Code where ("Location Code" = field ("BA Location Code"));
+        }
     }
 }
