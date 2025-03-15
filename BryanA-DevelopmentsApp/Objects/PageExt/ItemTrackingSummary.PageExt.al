@@ -7,6 +7,8 @@ pageextension 80199 "BA Item Tracking Summary" extends "Item Tracking Summary"
             field("BA Item Ledger Entry No."; Rec."BA Item Ledger Entry No.")
             {
                 ApplicationArea = all;
+                Visible = false;
+                BlankZero = true;
             }
             field("BA Location Code"; Rec."BA Location Code")
             {

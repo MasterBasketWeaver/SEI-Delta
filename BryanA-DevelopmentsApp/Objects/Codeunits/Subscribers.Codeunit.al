@@ -3698,12 +3698,11 @@ codeunit 75010 "BA SEI Subscibers"
             TempEntrySummary."BA Item Ledger Entry No." := TempReservationEntry."Entry No."
         else
             TempEntrySummary."BA Item Ledger Entry No." := -TempReservationEntry."Entry No.";
-
         if not ItemLedgerEntry.Get(TempEntrySummary."BA Item Ledger Entry No.") then
             exit;
+        TempEntrySummary."BA Location Code" := ItemLedgerEntry."Location Code";
         if ItemLedgerEntry."Serial No." = '' then
             exit;
-        TempEntrySummary."BA Location Code" := ItemLedgerEntry."Location Code";
         WarehouseEntry.SetCurrentKey("Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
         WarehouseEntry.SetRange("Item No.", ItemLedgerEntry."Item No.");
         WarehouseEntry.SetRange("Location Code", ItemLedgerEntry."Location Code");
