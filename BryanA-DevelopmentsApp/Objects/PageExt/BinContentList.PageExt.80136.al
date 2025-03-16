@@ -16,9 +16,9 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
                     EntryNos: List of [Integer];
                     EntryNo: Integer;
                 begin
-                    if not Calculated.ContainsKey(Rec."Bin Code") or not Calculated.Get(Rec."Bin Code") then
+                    if not Calculated.ContainsKey(Rec.CurrentKey()) or not Calculated.Get(Rec.CurrentKey()) then
                         exit;
-                    if not EntryNoLists.Get(Rec."Bin Code", EntryNos) then
+                    if not EntryNoLists.Get(Rec.CurrentKey(), EntryNos) then
                         exit;
                     foreach EntryNo in EntryNos do begin
                         WarehouseEntry.Get(EntryNo);
@@ -39,7 +39,7 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
         EntryNos: List of [Integer];
         HasSerialEntries: Boolean;
     begin
-        if not Calculated.ContainsKey(Rec."Bin Code") then begin
+        if not Calculated.ContainsKey(Rec.CurrentKey()) then begin
             SetWarehouseEntryFilters(WarehouseEntry);
             if WarehouseEntry.FindSet() then begin
                 SetWarehouseEntryFilters(WarehouseEntry2);
@@ -52,11 +52,11 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
                     end;
                 until WarehouseEntry.Next() = 0;
                 if HasSerialEntries then
-                    EntryNoLists.Add(Rec."Bin Code", EntryNos);
+                    EntryNoLists.Add(Rec.CurrentKey(), EntryNos);
             end;
-            Calculated.Add(Rec."Bin Code", HasSerialEntries);
+            Calculated.Add(Rec.CurrentKey(), HasSerialEntries);
         end else
-            HasSerialEntries := Calculated.Get(Rec."Bin Code");
+            HasSerialEntries := Calculated.Get(Rec.CurrentKey());
 
         if HasSerialEntries then
             SerialNoDisplay := 'Yes'
@@ -79,7 +79,7 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
 
 
     var
-        EntryNoLists: Dictionary of [Code[20], List of [Integer]];
-        Calculated: Dictionary of [Code[20], Boolean];
+        EntryNoLists: Dictionary of [Text, List of [Integer]];
+        Calculated: Dictionary of [Text, Boolean];
         SerialNoDisplay: Text;
 }
