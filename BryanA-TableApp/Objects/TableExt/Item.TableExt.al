@@ -95,6 +95,25 @@ tableextension 80012 "BA Item" extends Item
             Editable = false;
             TableRelation = User."User Name";
         }
+        field(80060; "BA Block Last Updated"; DateTime)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Block Last Updated';
+            Editable = false;
+        }
+        field(80061; "BA Block Updated By"; Code[50])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Block Updated By';
+            Editable = false;
+            TableRelation = User."User Name";
+        }
+        field(80062; "BA Skip Blocked Reason"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Skip Blocked Reason';
+            Editable = false;
+        }
     }
 
     procedure SetLastCurrencyPurchCost(CurrCode: Code[10]; LastPurchCost: Decimal)

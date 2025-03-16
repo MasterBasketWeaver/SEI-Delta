@@ -27,6 +27,21 @@ pageextension 80009 "BA Item Card" extends "Item Card"
             ApplicationArea = all;
             Visible = false;
         }
+        modify("Base Unit of Measure")
+        {
+            ApplicationArea = all;
+            ShowMandatory = true;
+        }
+        modify("Tax Group Code")
+        {
+            ApplicationArea = all;
+            ShowMandatory = true;
+        }
+        modify("Gen. Prod. Posting Group")
+        {
+            ApplicationArea = all;
+            ShowMandatory = true;
+        }
 
         addafter("Qty. on Sales Order")
         {
@@ -246,6 +261,17 @@ pageextension 80009 "BA Item Card" extends "Item Card"
                 ApplicationArea = all;
             }
         }
+        addafter(Blocked)
+        {
+            field("BA Block Updated By"; Rec."BA Block Updated By")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Block Last Updated"; Rec."BA Block Last Updated")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions
@@ -393,7 +419,11 @@ pageextension 80009 "BA Item Card" extends "Item Card"
     var
         ItemNo: Code[20];
     begin
-        if (Rec."No." = '') or (Rec.Description <> '') or Deleted or Cancelled or (Rec."ENC Created Date" <> Today()) then
+        if (Rec.Description <> '') then begin
+            CheckRequiredFields();
+            exit;
+        end;
+        if (Rec."No." = '') or Deleted or Cancelled or (Rec."ENC Created Date" <> Today()) then
             exit;
         if not Confirm(StrSubstNo(CancelItemMsg, Rec."No.")) then
             Error('');
@@ -407,13 +437,46 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         Deleted := true;
     end;
 
+
+    local procedure CheckRequiredFields()
+    var
+        FieldNos: List of [Integer];
+        ErrorMessages: TextBuilder;
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        FldNo: Integer;
+    begin
+        FieldNos.Add(Rec.FieldNo("Base Unit of Measure"));
+        FieldNos.Add(Rec.FieldNo("Gen. Prod. Posting Group"));
+        FieldNos.Add(Rec.FieldNo("Tax Group Code"));
+        if Rec.Type = Rec.Type::Inventory then begin
+            FieldNos.Add(Rec.FieldNo("Inventory Posting Group"));
+            Rec.TestField("Costing Method", Rec."Costing Method"::Standard);
+        end;
+        if Rec."Replenishment System" = Rec."Replenishment System"::Assembly then
+            FieldNos.Add(Rec.FieldNo("ENC Manufacturing Dept."));
+
+        RecRef.GetTable(Rec);
+        foreach FldNo in FieldNos do begin
+            FldRef := RecRef.Field(FldNo);
+            if Format(FldRef.Value()) = '' then
+                ErrorMessages.AppendLine(FldRef.Caption());
+        end;
+
+        if ErrorMessages.Length() > 0 then
+            Error(RequiredFieldsErr, ErrorMessages.ToText());
+    end;
+
+
     var
         Subscribers: Codeunit "BA SEI Subscibers";
         Deleted: Boolean;
         Cancelled: Boolean;
 
+
         CancelItemMsg: Label 'Do you want to cancel creating Item No. %1?';
         CancelMsg: Label 'Cancel item?';
+        RequiredFieldsErr: Label 'The following fields must be assigned:\%1';
 
     var
         GLSetup: Record "General Ledger Setup";

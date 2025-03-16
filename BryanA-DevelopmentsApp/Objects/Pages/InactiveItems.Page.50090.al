@@ -11,11 +11,21 @@ page 50090 "BA Inactive Items"
     Editable = false;
     InsertAllowed = false;
     DeleteAllowed = false;
+    PromotedActionCategories = 'New,Process,Reports,Navigate';
 
     layout
     {
         area(Content)
         {
+            group("Item Count")
+            {
+                Caption = 'Item Count';
+                field("Count"; CountText)
+                {
+                    ApplicationArea = all;
+                    ShowCaption = false;
+                }
+            }
             repeater(Items)
             {
                 field("No."; Rec."No.")
@@ -106,8 +116,35 @@ page 50090 "BA Inactive Items"
         }
     }
 
+    actions
+    {
+        area(Navigation)
+        {
+            action("Item Ledger Entries")
+            {
+                ApplicationArea = all;
+                Promoted = true;
+                PromotedCategory = Category4;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = ItemLedger;
+                RunObject = page "Item Ledger Entries";
+                RunPageLink = "Item No." = field ("No.");
+            }
+        }
+    }
+
     trigger OnOpenPage()
     begin
         Rec.SetAutoCalcFields(Inventory);
     end;
+
+    trigger OnAfterGetRecord()
+    begin
+        CountText := Format(Rec.Count);
+    end;
+
+
+    var
+        CountText: Text;
 }

@@ -85,5 +85,10 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             DataClassification = CustomerContent;
             Caption = 'Can Create Orders Anytime';
         }
+        field(80135; "BA Can Deactivate Items"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Can Deactivate Items';
+        }
     }
 }
