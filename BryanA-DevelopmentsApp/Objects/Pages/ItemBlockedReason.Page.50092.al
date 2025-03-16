@@ -1,4 +1,4 @@
-page 50091 "BA Item Block Reason"
+page 50092 "BA Item Block Reason"
 {
     PageType = StandardDialog;
     Caption = 'Enter Blocked Reason';
