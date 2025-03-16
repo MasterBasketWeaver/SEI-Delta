@@ -1640,12 +1640,16 @@ codeunit 75010 "BA SEI Subscibers"
             exit;
         if (Rec."ENC Product ID Code" <> InventorySetup."ENC Def. Product ID Code") and (Rec.Blocked) then begin
             if confirm(UnblockItemMsg, false) then begin
+                Rec."BA Skip Blocked Reason" := true;
                 Rec.Validate("Blocked", false);
+                Rec."BA Skip Blocked Reason" := false;
                 Rec.Modify(true);
             end;
         end else
             if Rec."ENC Product ID Code" = InventorySetup."ENC Def. Product ID Code" then begin
+                Rec."BA Skip Blocked Reason" := true;
                 Rec.Validate(Blocked, true);
+                Rec."BA Skip Blocked Reason" := false;
                 Rec.Validate("Block Reason", DefaultBlockReason);
                 Rec.Modify(true);
             end;
@@ -4873,6 +4877,36 @@ codeunit 75010 "BA SEI Subscibers"
             TempEntrySummary."BA Source Bin Code" := WarehouseEntry."Bin Code";
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'BA Hide Visibility', false, false)]
+    local procedure ItemOnAfterValidateHideVisibility(var Rec: Record Item)
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if not UserSetup.Get(UserId()) or not UserSetup."BA Can Deactivate Items" then
+            Error(DeactivateItemErr);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'Blocked', false, false)]
+    local procedure ItemOnAfterValidateBlocked(var Rec: Record Item)
+    var
+        UserSetup: Record "User Setup";
+        ItemBlockedReason: Page "BA Item Block Reason";
+    begin
+        if Rec."BA Skip Blocked Reason" then
+            exit;
+        if Rec.Blocked then begin
+            if ItemBlockedReason.RunModal() <> Action::OK then
+                Error('');
+            Rec."Block Reason" := ItemBlockedReason.GetBlockedReason();
+            if Rec."Block Reason" = '' then
+                Error('Block reason must be specified when blocking an item.');
+        end;
+        Rec."BA Block Last Updated" := CurrentDateTime();
+        Rec."BA Block Updated By" := UserId();
+        Rec.Modify(true);
+    end;
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
 
@@ -4945,5 +4979,6 @@ codeunit 75010 "BA SEI Subscibers"
         LateCreateErr: Label 'Cannot create Sales Orders after %1.';
         LateStartTimeErr: Label 'Restrict Start Time must be earlier than Restrict End Time: %1';
         EarlyStartTimeErr: Label 'Restrict End Time must be later than Restrict Start Time: %1';
+        DeactivateItemErr: Label 'You do not have permission to change item visibility.';
 }
 
