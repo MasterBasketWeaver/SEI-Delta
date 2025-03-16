@@ -16,9 +16,9 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
                     EntryNos: List of [Integer];
                     EntryNo: Integer;
                 begin
-                    if not Calculated.ContainsKey(Rec.CurrentKey()) or not Calculated.Get(Rec.CurrentKey()) then
+                    if not Calculated.ContainsKey(Rec.RecordId()) or not Calculated.Get(Rec.RecordId()) then
                         exit;
-                    if not EntryNoLists.Get(Rec.CurrentKey(), EntryNos) then
+                    if not EntryNoLists.Get(Rec.RecordId(), EntryNos) then
                         exit;
                     foreach EntryNo in EntryNos do begin
                         WarehouseEntry.Get(EntryNo);
@@ -39,24 +39,27 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
         EntryNos: List of [Integer];
         HasSerialEntries: Boolean;
     begin
-        if not Calculated.ContainsKey(Rec.CurrentKey()) then begin
-            SetWarehouseEntryFilters(WarehouseEntry);
-            if WarehouseEntry.FindSet() then begin
-                SetWarehouseEntryFilters(WarehouseEntry2);
-                repeat
-                    WarehouseEntry2.SetRange("Serial No.", WarehouseEntry."Serial No.");
-                    WarehouseEntry2.SetRange(Quantity, -WarehouseEntry.Quantity);
-                    if WarehouseEntry2.IsEmpty() then begin
-                        EntryNos.Add(WarehouseEntry."Entry No.");
-                        HasSerialEntries := true;
-                    end;
-                until WarehouseEntry.Next() = 0;
-                if HasSerialEntries then
-                    EntryNoLists.Add(Rec.CurrentKey(), EntryNos);
+        if not Calculated.ContainsKey(Rec.RecordId()) then begin
+            Rec.CalcFields(Quantity);
+            if Rec.Quantity <> 0 then begin
+                SetWarehouseEntryFilters(WarehouseEntry);
+                if WarehouseEntry.FindSet() then begin
+                    SetWarehouseEntryFilters(WarehouseEntry2);
+                    repeat
+                        WarehouseEntry2.SetRange("Serial No.", WarehouseEntry."Serial No.");
+                        WarehouseEntry2.SetRange(Quantity, -WarehouseEntry.Quantity);
+                        if WarehouseEntry2.IsEmpty() then begin
+                            EntryNos.Add(WarehouseEntry."Entry No.");
+                            HasSerialEntries := true;
+                        end;
+                    until WarehouseEntry.Next() = 0;
+                    if HasSerialEntries then
+                        EntryNoLists.Add(Rec.RecordId(), EntryNos);
+                end;
             end;
-            Calculated.Add(Rec.CurrentKey(), HasSerialEntries);
+            Calculated.Add(Rec.RecordId(), HasSerialEntries);
         end else
-            HasSerialEntries := Calculated.Get(Rec.CurrentKey());
+            HasSerialEntries := Calculated.Get(Rec.RecordId());
 
         if HasSerialEntries then
             SerialNoDisplay := 'Yes'
@@ -67,19 +70,18 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
 
     local procedure SetWarehouseEntryFilters(var WarehouseEntry: Record "Warehouse Entry")
     begin
-        WarehouseEntry.SetCurrentKey("Entry No.", "Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
+        WarehouseEntry.SetCurrentKey("Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
         WarehouseEntry.SetRange("Item No.", Rec."Item No.");
         WarehouseEntry.SetRange("Bin Code", Rec."Bin Code");
         WarehouseEntry.SetRange("Location Code", Rec."Location Code");
         WarehouseEntry.SetRange("Variant Code", Rec."Variant Code");
         WarehouseEntry.SetRange("Unit of Measure Code", Rec."Unit of Measure Code");
         WarehouseEntry.SetFilter("Serial No.", '<>%1', '');
-        WarehouseEntry.SetAscending("Entry No.", false);
     end;
 
 
     var
-        EntryNoLists: Dictionary of [Text, List of [Integer]];
-        Calculated: Dictionary of [Text, Boolean];
+        EntryNoLists: Dictionary of [RecordId, List of [Integer]];
+        Calculated: Dictionary of [RecordId, Boolean];
         SerialNoDisplay: Text;
 }
