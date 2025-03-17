@@ -1,4 +1,4 @@
-page 50092 "BA Enter Rate Details"
+page 50093 "BA Enter Rate Details"
 {
     Caption = 'Enter Rate Details';
     PageType = StandardDialog;
