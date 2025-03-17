@@ -1063,8 +1063,11 @@ codeunit 75010 "BA SEI Subscibers"
         RecCount: Integer;
         i: Integer;
     begin
-        if (Rec."Currency Code" <> 'USD') or (Rec."Relational Exch. Rate Amount" = xRec."Relational Exch. Rate Amount") then
+        if SingleInstance.GetSkipUSDCreditLimit() then
             exit;
+        if not SingleInstance.GetForceUSDCreditLimit() then
+            if (Rec."Currency Code" <> 'USD') or (Rec."Relational Exch. Rate Amount" = xRec."Relational Exch. Rate Amount") then
+                exit;
         UpdateSystemIndicator(Rec);
         Customer.SetFilter("BA Credit Limit", '<>%1', 0);
         if not Customer.FindSet(true) then
@@ -4909,6 +4912,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
+        SingleInstance: Codeunit "BA Single Instance";
 
         UnblockItemMsg: Label 'You have assigned a valid Product ID, do you want to unblock the Item?';
         DefaultBlockReason: Label 'Product Dimension ID must be updated, the default Product ID cannot be used!';
