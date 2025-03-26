@@ -141,7 +141,7 @@ page 50090 "BA Inactive Items"
 
     trigger OnAfterGetRecord()
     begin
-        CountText := Format(Rec.Count);
+        CountText := Format(Rec.Count, 0, '<Sign><Integer Thousand>');
     end;
 
 
