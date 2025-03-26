@@ -3811,6 +3811,48 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+
+
+
+
+
+    procedure GetMatchingWhseEntriesBySerialNo(var EntryNos: List of [Integer]; ItemNo: Code[20]; BinCode: Code[20]; LocationCode: Code[10]; VariantCode: Code[20]; UoMCode: Code[10]): Boolean
+    var
+        WarehouseEntry: Record "Warehouse Entry";
+        WarehouseEntry2: Record "Warehouse Entry";
+        HasMatchingEntries: Boolean;
+    begin
+        SetWarehouseEntryFilters(WarehouseEntry, ItemNo, BinCode, LocationCode, VariantCode, UoMCode);
+        if not WarehouseEntry.FindSet() then
+            exit(false);
+        SetWarehouseEntryFilters(WarehouseEntry2, ItemNo, BinCode, LocationCode, VariantCode, UoMCode);
+        repeat
+            WarehouseEntry2.SetRange("Serial No.", WarehouseEntry."Serial No.");
+            WarehouseEntry2.SetRange(Quantity, -WarehouseEntry.Quantity);
+            if WarehouseEntry2.IsEmpty() then begin
+                EntryNos.Add(WarehouseEntry."Entry No.");
+                HasMatchingEntries := true;
+            end;
+        until WarehouseEntry.Next() = 0;
+        exit(HasMatchingEntries);
+    end;
+
+
+    local procedure SetWarehouseEntryFilters(var WarehouseEntry: Record "Warehouse Entry"; ItemNo: Code[20]; BinCode: Code[20]; LocationCode: Code[10]; VariantCode: Code[20]; UoMCode: Code[10])
+    begin
+        WarehouseEntry.Reset();
+        WarehouseEntry.SetCurrentKey("Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
+        WarehouseEntry.SetRange("Item No.", ItemNo);
+        WarehouseEntry.SetRange("Bin Code", BinCode);
+        WarehouseEntry.SetRange("Location Code", LocationCode);
+        WarehouseEntry.SetRange("Variant Code", VariantCode);
+        WarehouseEntry.SetRange("Unit of Measure Code", UoMCode);
+        WarehouseEntry.SetFilter("Serial No.", '<>%1', '');
+    end;
+
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
 

@@ -41,22 +41,9 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
     begin
         if not Calculated.ContainsKey(Rec.RecordId()) then begin
             Rec.CalcFields(Quantity);
-            if Rec.Quantity <> 0 then begin
-                SetWarehouseEntryFilters(WarehouseEntry);
-                if WarehouseEntry.FindSet() then begin
-                    SetWarehouseEntryFilters(WarehouseEntry2);
-                    repeat
-                        WarehouseEntry2.SetRange("Serial No.", WarehouseEntry."Serial No.");
-                        WarehouseEntry2.SetRange(Quantity, -WarehouseEntry.Quantity);
-                        if WarehouseEntry2.IsEmpty() then begin
-                            EntryNos.Add(WarehouseEntry."Entry No.");
-                            HasSerialEntries := true;
-                        end;
-                    until WarehouseEntry.Next() = 0;
-                    if HasSerialEntries then
-                        EntryNoLists.Add(Rec.RecordId(), EntryNos);
-                end;
-            end;
+            if Rec.Quantity <> 0 then
+                HasSerialEntries := Subscribers.GetMatchingWhseEntriesBySerialNo(EntryNos, Rec."Item No.", Rec."Bin Code", Rec."Location Code",
+                    Rec."Variant Code", Rec."Unit of Measure Code");
             Calculated.Add(Rec.RecordId(), HasSerialEntries);
         end else
             HasSerialEntries := Calculated.Get(Rec.RecordId());
@@ -68,19 +55,9 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
     end;
 
 
-    local procedure SetWarehouseEntryFilters(var WarehouseEntry: Record "Warehouse Entry")
-    begin
-        WarehouseEntry.SetCurrentKey("Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
-        WarehouseEntry.SetRange("Item No.", Rec."Item No.");
-        WarehouseEntry.SetRange("Bin Code", Rec."Bin Code");
-        WarehouseEntry.SetRange("Location Code", Rec."Location Code");
-        WarehouseEntry.SetRange("Variant Code", Rec."Variant Code");
-        WarehouseEntry.SetRange("Unit of Measure Code", Rec."Unit of Measure Code");
-        WarehouseEntry.SetFilter("Serial No.", '<>%1', '');
-    end;
-
 
     var
+        Subscribers: Codeunit "BA SEI Subscibers";
         EntryNoLists: Dictionary of [RecordId, List of [Integer]];
         Calculated: Dictionary of [RecordId, Boolean];
         SerialNoDisplay: Text;
