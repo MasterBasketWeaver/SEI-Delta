@@ -30,4 +30,20 @@ pageextension 80135 "BA Company Information" extends "Company Information"
             }
         }
     }
+
+    actions
+    {
+        addlast(Processing)
+        {
+            action("BA Derp")
+            {
+                trigger OnAction()
+                var
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                begin
+                    Subscribers.ImportWhseEntrySerialNos();
+                end;
+            }
+        }
+    }
 }
