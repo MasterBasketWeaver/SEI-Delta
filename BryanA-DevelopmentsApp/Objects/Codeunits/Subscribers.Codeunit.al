@@ -3728,16 +3728,14 @@ codeunit 75010 "BA SEI Subscibers"
         IStream: InStream;
         Window: Dialog;
         FileName: Text;
+        TempDate: Date;
         RecCount: Integer;
         i: Integer;
         i2: Integer;
-        // i3: Integer;
-        // EntryNoCol: Integer;
         SerialCol: Integer;
         PostingDateCol: Integer;
         DocNoCol: Integer;
         ItemNoCol: Integer;
-        TempDate: Date;
     begin
         if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Warehouse Entries', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
             exit;
@@ -3755,6 +3753,61 @@ codeunit 75010 "BA SEI Subscibers"
 
         ExcelBuffer.SetRange("Cell Value as Text", 'Posting Date');
         ExcelBuffer.FindFirst();
+        PostingDateCol := ExcelBuffer."Column No.";
+
+        ExcelBuffer.SetRange("Cell Value as Text", 'Document No.');
+        ExcelBuffer.FindFirst();
+        DocNoCol := ExcelBuffer."Column No.";
+
+        ExcelBuffer.SetRange("Cell Value as Text", 'Item No.');
+        ExcelBuffer.FindFirst();
+        ItemNoCol := ExcelBuffer."Column No.";
+
+
+        ExcelBuffer.SetFilter("Row No.", '>%1', 1);
+        ExcelBuffer.SetFilter("Column No.", '%1|%2|%3|%4', SerialCol, PostingDateCol, DocNoCol, ItemNoCol);
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        if not ExcelBuffer.FindSet() then
+            exit;
+        Window.Open('#1####/#2####');
+        Window.Update(1, 'Reading Lines');
+        repeat
+            ExcelBuffer2 := ExcelBuffer;
+            ExcelBuffer2.Insert(true);
+        until ExcelBuffer.Next() = 0;
+        ExcelBuffer.SetRange("Column No.", ItemNoCol);
+        ExcelBuffer.FindSet();
+        RecCount := ExcelBuffer.Count();
+
+        // WhseEntry.SetRange("Item No.", '001595');
+        // WhseEntry.SetFilter("Serial No.", '<>%1', '');
+        // WhseEntry.ModifyAll("Serial No.", '');
+
+        WhseEntry.SetCurrentKey("Reference No.", "Registering Date");
+        WhseEntry.SetRange("Serial No.", '');
+        repeat
+            i += 1;
+            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+
+            ExcelBuffer2.Get(ExcelBuffer."Row No.", PostingDateCol);
+            if Evaluate(TempDate, ExcelBuffer2."Cell Value as Text") then begin
+                WhseEntry.SetRange("Registering Date", TempDate);
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", ItemNoCol);
+                WhseEntry.SetRange("Item No.", ExcelBuffer2."Cell Value as Text");
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", DocNoCol);
+                WhseEntry.SetRange("Whse. Document No.", ExcelBuffer2."Cell Value as Text");
+
+                if WhseEntry.FindFirst() then begin
+                    ExcelBuffer2.Get(ExcelBuffer."Row No.", SerialCol);
+                    WhseEntry."Serial No." := ExcelBuffer2."Cell Value as Text";
+                    WhseEntry.Modify(false);
+                    i2 += 1;
+                end;
+            end;
+        until ExcelBuffer.Next() = 0;
+        Window.Close();
+        Message('Added %1 of %2 serial numbers to whse entries.', i2, i);
+    end;uffer.FindFirst();
         PostingDateCol := ExcelBuffer."Column No.";
 
         ExcelBuffer.SetRange("Cell Value as Text", 'Document No.');
