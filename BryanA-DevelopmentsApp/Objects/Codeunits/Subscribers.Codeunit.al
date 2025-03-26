@@ -3868,7 +3868,18 @@ codeunit 75010 "BA SEI Subscibers"
             OrderLine."Line No." := ServiceLine."Line No.";
             OrderLine.Insert(true);
         end;
-        OrderLine.Type := ServiceLine.Type;
+        case ServiceLine.Type of
+            ServiceLine.Type::" ":
+                OrderLine.Type := OrderLine.Type::" ";
+            ServiceLine.Type::Cost:
+                OrderLine.Type := OrderLine.Type::Cost;
+            ServiceLine.Type::"G/L Account":
+                OrderLine.Type := OrderLine.Type::"G/L Account";
+            ServiceLine.Type::Item:
+                OrderLine.Type := OrderLine.Type::Item;
+            ServiceLine.Type::Resource:
+                OrderLine.Type := OrderLine.Type::Resource;
+        end;
         OrderLine."No." := ServiceLine."No.";
         OrderLine."Gen. Prod. Posting Group" := ServiceLine."Gen. Prod. Posting Group";
         OrderLine.Description := ServiceLine.Description;
