@@ -3807,54 +3807,6 @@ codeunit 75010 "BA SEI Subscibers"
         until ExcelBuffer.Next() = 0;
         Window.Close();
         Message('Added %1 of %2 serial numbers to whse entries.', i2, i);
-    end;uffer.FindFirst();
-        PostingDateCol := ExcelBuffer."Column No.";
-
-        ExcelBuffer.SetRange("Cell Value as Text", 'Document No.');
-        ExcelBuffer.FindFirst();
-        DocNoCol := ExcelBuffer."Column No.";
-
-        ExcelBuffer.SetRange("Cell Value as Text", 'Item No.');
-        ExcelBuffer.FindFirst();
-        ItemNoCol := ExcelBuffer."Column No.";
-
-
-        ExcelBuffer.SetFilter("Row No.", '>%1', 1);
-        ExcelBuffer.SetFilter("Column No.", '%1|%2|%3|%4', SerialCol, PostingDateCol, DocNoCol, ItemNoCol);
-        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
-        if not ExcelBuffer.FindSet() then
-            exit;
-        Window.Open('#1####/#2####');
-        Window.Update(1, 'Reading Lines');
-        repeat
-            ExcelBuffer2 := ExcelBuffer;
-            ExcelBuffer2.Insert(true);
-        until ExcelBuffer.Next() = 0;
-        ExcelBuffer.SetRange("Column No.", ItemNoCol);
-        ExcelBuffer.FindSet();
-        RecCount := ExcelBuffer.Count();
-
-        WhseEntry.SetCurrentKey("Reference No.", "Registering Date");
-        repeat
-            i += 1;
-            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
-
-            ExcelBuffer2.Get(ExcelBuffer."Row No.", PostingDateCol);
-            if Evaluate(TempDate, ExcelBuffer2."Cell Value as Text") then begin
-                WhseEntry.SetRange("Registering Date", TempDate);
-                ExcelBuffer2.Get(ExcelBuffer."Row No.", ItemNoCol);
-                WhseEntry.SetRange("Item No.", ExcelBuffer2."Cell Value as Text");
-                ExcelBuffer2.Get(ExcelBuffer."Row No.", DocNoCol);
-                WhseEntry.SetRange("Whse. Document No.", ExcelBuffer2."Cell Value as Text");
-                if WhseEntry.FindFirst() then begin
-                    ExcelBuffer2.Get(ExcelBuffer."Row No.", SerialCol);
-                    WhseEntry."Serial No." := ExcelBuffer2."Cell Value as Text";
-                    i2 += 1;
-                end;
-            end;
-        until ExcelBuffer.Next() = 0;
-        Window.Close();
-        Message('Added %1 of %2 serial numbers to whse entries.', i2, i);
     end;
 
 
