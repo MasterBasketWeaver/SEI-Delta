@@ -1,4 +1,4 @@
-pageextension 80197 "BA Item Bin Contents" extends "Item Bin Contents"
+pageextension 80198 "BA Item Bin Contents" extends "Item Bin Contents"
 {
     layout
     {
