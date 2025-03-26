@@ -533,7 +533,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
             FieldNos.Add(Rec.FieldNo("Inventory Posting Group"));
             Rec.TestField("Costing Method", Rec."Costing Method"::Standard);
         end;
-        if Rec."Replenishment System" = Rec."Replenishment System"::Assembly then
+        if Rec."Replenishment System" = Rec."Replenishment System"::"Prod. Order" then
             FieldNos.Add(Rec.FieldNo("ENC Manufacturing Dept."));
 
         RecRef.GetTable(Rec);

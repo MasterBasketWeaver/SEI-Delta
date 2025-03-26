@@ -69,6 +69,10 @@ pageextension 80044 "BA User Setup" extends "User Setup"
             {
                 ApplicationArea = all;
             }
+            field("BA Can Deactivate Items"; Rec."BA Can Deactivate Items")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 
