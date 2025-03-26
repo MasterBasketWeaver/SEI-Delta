@@ -226,6 +226,9 @@ page 50091 "BA Order Ledger Line List"
 
     trigger OnOpenPage()
     begin
+        Rec.FilterGroup(2);
+        Rec.SetFilter(Type, '<>%1', Rec.Type::" ");
+        Rec.FilterGroup(0);
         Rec.SetAutoCalcFields("Posting Date", "Order Date", "Sell-to Customer No.", "Sell-to Customer Name", "Currency Code", "Currency Factor");
     end;
 
