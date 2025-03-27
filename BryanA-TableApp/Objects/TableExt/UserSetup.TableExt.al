@@ -80,6 +80,11 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             Editable = false;
             TableRelation = "Service Header"."No." where ("Document Type" = const (Order));
         }
+        field(80120; "BA Can Edit Ledger Pages"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Can Edit Ledger Pages';
+        }
         field(80130; "BA Can Create Orders Anytime"; Boolean)
         {
             DataClassification = CustomerContent;
@@ -89,6 +94,6 @@ tableextension 80024 "BA User Setup" extends "User Setup"
         {
             DataClassification = CustomerContent;
             Caption = 'Can Deactivate Items';
-        }
+        }  
     }
 }
