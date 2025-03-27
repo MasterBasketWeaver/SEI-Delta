@@ -2,6 +2,18 @@ pageextension 80046 "BA Item List" extends "Item List"
 {
     layout
     {
+        addfirst(Content)
+        {
+            group("BA Item Count")
+            {
+                Caption = 'Item Count';
+                field("BA Count"; CountText)
+                {
+                    ApplicationArea = all;
+                    ShowCaption = false;
+                }
+            }
+        }
         addlast(Control1)
         {
             field("ENC International HS Code"; Rec."ENC International HS Code")
@@ -37,6 +49,14 @@ pageextension 80046 "BA Item List" extends "Item List"
                 ApplicationArea = all;
             }
             field("BA Hide Visibility"; Rec."BA Hide Visibility")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Visibility Updated"; Rec."BA Visibility Updated")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Visibility Changed By"; Rec."BA Visibility Changed By")
             {
                 ApplicationArea = all;
             }
@@ -115,7 +135,14 @@ pageextension 80046 "BA Item List" extends "Item List"
         Rec.FilterGroup(0);
     end;
 
+    trigger OnAfterGetRecord()
+    begin
+        CountText := Format(Rec.Count, 0, '<Sign><Integer Thousand>');
+    end;
+
+
     var
         [InDataSet]
         IsBryanUser: Boolean;
+        CountText: Text;
 }
