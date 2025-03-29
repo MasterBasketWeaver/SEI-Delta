@@ -35,8 +35,16 @@ pageextension 80135 "BA Company Information" extends "Company Information"
     {
         addlast(Processing)
         {
-            action("BA Derp")
+            action("BA Import Serial Nos.")
             {
+                ApplicationArea = all;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = SerialNoProperties;
+                Caption = 'Import Serial Nos.';
+
                 trigger OnAction()
                 var
                     Subscribers: Codeunit "BA SEI Subscibers";
