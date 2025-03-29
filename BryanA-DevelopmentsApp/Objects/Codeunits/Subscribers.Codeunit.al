@@ -3790,10 +3790,18 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
         OrderHeader: Record "BA Order Header";
+    begin
+        SaveOrderHeader(SalesHeader, OrderHeader, DocType, Deleted);
+    end;
+
+    local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; var OrderHeader: Record "BA Order Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
+    var
         SalesLine: Record "Sales Line";
     begin
-        OrderHeader.SetRange("Document Type", DocType);
-        OrderHeader.SetRange("Document No.", SalesHeader."No.");
+        if OrderHeader.GetFilters() = '' then begin
+            OrderHeader.SetRange("Document Type", DocType);
+            OrderHeader.SetRange("Document No.", SalesHeader."No.");
+        end;
         if not OrderHeader.FindFirst() then begin
             OrderHeader.Init();
             OrderHeader."Document No." := SalesHeader."No.";
@@ -3824,18 +3832,29 @@ codeunit 75010 "BA SEI Subscibers"
             until SalesLine.Next() = 0;
     end;
 
+
     local procedure SaveOrderLine(var SalesLine: Record "Sales Line"; Deleted: Boolean; Cancelled: Boolean)
     var
         OrderLine: Record "BA Order Line";
+    begin
+        SaveOrderLine(SalesLine, OrderLine, Deleted, Cancelled);
+    end;
+
+
+    local procedure SaveOrderLine(var SalesLine: Record "Sales Line"; var OrderLine: Record "BA Order Line"; Deleted: Boolean; Cancelled: Boolean)
+    var
+        OrderLine2: Record "BA Order Line";
         EntryNo: Integer;
     begin
-        if OrderLine.FindLast() then
-            EntryNo := OrderLine."Entry No.";
+        if OrderLine2.FindLast() then
+            EntryNo := OrderLine2."Entry No.";
         EntryNo += 1;
-        OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Sales Order");
-        OrderLine.SetRange("Document No.", SalesLine."Document No.");
-        OrderLine.SetRange("Line No.", SalesLine."Line No.");
-        OrderLine.SetRange(Cancelled, Cancelled);
+        if OrderLine.GetFilters() = '' then begin
+            OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Sales Order");
+            OrderLine.SetRange("Document No.", SalesLine."Document No.");
+            OrderLine.SetRange("Line No.", SalesLine."Line No.");
+            OrderLine.SetRange(Cancelled, Cancelled);
+        end;
         if not OrderLine.FindFirst() then begin
             OrderLine.Init();
             OrderLine."Entry No." := EntryNo;
@@ -3875,10 +3894,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderHeader.SetRange("Document No.", SalesHeader."No.");
         OrderHeader.SetRange("Posted Document Type", OrderHeader."Posted Document Type"::" ");
         OrderHeader.SetRange("Posted Document No.", '');
-        if not OrderHeader.FindFirst() then begin
-            SaveOrderHeader(SalesHeader, OrderHeader."Document Type"::"Sales Order", false);
-            OrderHeader.FindFirst();
-        end;
+        if not OrderHeader.FindFirst() then
+            SaveOrderHeader(SalesHeader, OrderHeader, OrderHeader."Document Type"::"Sales Order", false);
         OrderHeader.Rename(OrderHeader."Document Type", OrderHeader."Document No.",
             OrderHeader."Posted Document Type"::"Posted Sales Invoice", SalesInvHeader."No.");
         OrderHeader.Deleted := false;
@@ -3895,10 +3912,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine.SetRange("Posted Document Type", OrderLine."Posted Document Type"::" ");
         OrderLine.SetRange("Posted Document No.", '');
         OrderLine.SetRange("Posted Line No.", 0);
-        if not OrderLine.FindFirst() then begin
-            SaveOrderLine(SalesLine, false, false);
-            OrderLine.FindFirst();
-        end;
+        if not OrderLine.FindFirst() then
+            SaveOrderLine(SalesLine, OrderLine, false, false);
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Sales Invoice";
         OrderLine."Posted Document No." := SalesInvLine."Document No.";
         OrderLine."Posted Line No." := SalesInvLine."Line No.";
@@ -3915,11 +3930,19 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SaveOrderHeader(var ServiceHeader: Record "Service Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
         OrderHeader: Record "BA Order Header";
+    begin
+        SaveOrderHeader(ServiceHeader, OrderHeader, DocType, Deleted);
+    end;
+
+    local procedure SaveOrderHeader(var ServiceHeader: Record "Service Header"; var OrderHeader: Record "BA Order Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
+    var
         ServiceLine: Record "Service Line";
         Customer: Record Customer;
     begin
-        OrderHeader.SetRange("Document Type", DocType);
-        OrderHeader.SetRange("Document No.", ServiceHeader."No.");
+        if OrderHeader.GetFilters() = '' then begin
+            OrderHeader.SetRange("Document Type", DocType);
+            OrderHeader.SetRange("Document No.", ServiceHeader."No.");
+        end;
         if not OrderHeader.FindFirst() then begin
             OrderHeader.Init();
             OrderHeader."Document No." := ServiceHeader."No.";
@@ -3954,15 +3977,24 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SaveOrderLine(var ServiceLine: Record "Service Line"; Deleted: Boolean; Cancelled: Boolean)
     var
         OrderLine: Record "BA Order Line";
+    begin
+        SaveOrderLine(ServiceLine, OrderLine, Deleted, Cancelled);
+    end;
+
+    local procedure SaveOrderLine(var ServiceLine: Record "Service Line"; var OrderLine: Record "BA Order Line"; Deleted: Boolean; Cancelled: Boolean)
+    var
+        OrderLine2: Record "BA Order Line";
         EntryNo: Integer;
     begin
-        if OrderLine.FindLast() then
-            EntryNo := OrderLine."Entry No.";
+        if OrderLine2.FindLast() then
+            EntryNo := OrderLine2."Entry No.";
         EntryNo += 1;
-        OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Service Order");
-        OrderLine.SetRange("Document No.", ServiceLine."Document No.");
-        OrderLine.SetRange("Line No.", ServiceLine."Line No.");
-        OrderLine.SetRange(Cancelled, Cancelled);
+        if OrderLine.GetFilters = '' then begin
+            OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Service Order");
+            OrderLine.SetRange("Document No.", ServiceLine."Document No.");
+            OrderLine.SetRange("Line No.", ServiceLine."Line No.");
+            OrderLine.SetRange(Cancelled, Cancelled);
+        end;
         if not OrderLine.FindFirst() then begin
             OrderLine.Init();
             OrderLine."Entry No." := EntryNo;
@@ -4032,10 +4064,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine.SetRange("Posted Document Type", OrderLine."Posted Document Type"::" ");
         OrderLine.SetRange("Posted Document No.", '');
         OrderLine.SetRange("Posted Line No.", 0);
-        if not OrderLine.FindFirst() then begin
-            SaveOrderLine(ServiceLine, false, false);
-            OrderLine.FindFirst();
-        end;
+        if not OrderLine.FindFirst() then
+            SaveOrderLine(ServiceLine, OrderLine, false, false);
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Service Invoice";
         OrderLine."Posted Document No." := ServiceInvLine."Document No.";
         OrderLine."Posted Line No." := ServiceInvLine."Line No.";
