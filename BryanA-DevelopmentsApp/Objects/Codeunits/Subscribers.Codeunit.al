@@ -3736,7 +3736,9 @@ codeunit 75010 "BA SEI Subscibers"
         PostingDateCol: Integer;
         DocNoCol: Integer;
         ItemNoCol: Integer;
-        LocationCol: Integer;
+
+        DebugText: TextBuilder;
+        DebugText2: TextBuilder;
     begin
         if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Warehouse Entries', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
             exit;
@@ -3764,13 +3766,9 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.FindFirst();
         ItemNoCol := ExcelBuffer."Column No.";
 
-        ExcelBuffer.SetRange("Cell Value as Text", 'Location Code');
-        ExcelBuffer.FindFirst();
-        LocationCol := ExcelBuffer."Column No.";
-
 
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
-        ExcelBuffer.SetFilter("Column No.", '%1|%2|%3|%4|%5', SerialCol, PostingDateCol, DocNoCol, ItemNoCol, LocationCol);
+        ExcelBuffer.SetFilter("Column No.", '%1|%2|%3|%4', SerialCol, PostingDateCol, DocNoCol, ItemNoCol);
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
         if not ExcelBuffer.FindSet() then
             exit;
@@ -3783,6 +3781,10 @@ codeunit 75010 "BA SEI Subscibers"
         ExcelBuffer.SetRange("Column No.", ItemNoCol);
         ExcelBuffer.FindSet();
         RecCount := ExcelBuffer.Count();
+
+        // WhseEntry.SetRange("Item No.", '001595');
+        // WhseEntry.SetFilter("Serial No.", '<>%1', '');
+        // WhseEntry.ModifyAll("Serial No.", '');
 
         WhseEntry.SetCurrentKey("Reference No.", "Registering Date");
         WhseEntry.SetRange("Serial No.", '');
@@ -3797,19 +3799,30 @@ codeunit 75010 "BA SEI Subscibers"
                 WhseEntry.SetRange("Item No.", ExcelBuffer2."Cell Value as Text");
                 ExcelBuffer2.Get(ExcelBuffer."Row No.", DocNoCol);
                 WhseEntry.SetRange("Whse. Document No.", ExcelBuffer2."Cell Value as Text");
-                ExcelBuffer2.Get(ExcelBuffer."Row No.", LocationCol);
-                WhseEntry.SetRange("Location Code", ExcelBuffer2."Cell Value as Text");
+
+                if WhseEntry.IsEmpty then begin
+                    WhseEntry.SetRange("Whse. Document No.");
+                    WhseEntry.SetRange("Source No.", ExcelBuffer2."Cell Value as Text");
+                end;
 
                 if WhseEntry.FindFirst() then begin
                     ExcelBuffer2.Get(ExcelBuffer."Row No.", SerialCol);
                     WhseEntry."Serial No." := ExcelBuffer2."Cell Value as Text";
                     WhseEntry.Modify(false);
                     i2 += 1;
+                    DebugText2.AppendLine(StrSubstNo('%1 <- %2, %3', WhseEntry."Entry No.", ExcelBuffer."Row No.", WhseEntry.GetFilters));
+                end else begin
+                    DebugText.AppendLine(StrSubstNo('%1: %2', ExcelBuffer."Row No.", WhseEntry.GetFilters));
                 end;
             end;
         until ExcelBuffer.Next() = 0;
         Window.Close();
         Message('Added %1 of %2 serial numbers to whse entries.', i2, i);
+
+        if DebugText.Length() > 0 then
+            Message(DebugText.ToText());
+
+        Message(DebugText2.ToText());
     end;
 
 
