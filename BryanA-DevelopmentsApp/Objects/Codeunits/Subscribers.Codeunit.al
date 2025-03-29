@@ -3613,7 +3613,7 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    //OnBeforeSendEmailToCust
+
     [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnBeforeSendEmailToCust', '', false, false)]
     local procedure ReportSelectionsOnBeforeSendEmailToCust(var ReportUsage: Integer; RecordVariant: Variant)
     var
@@ -4155,6 +4155,190 @@ codeunit 75010 "BA SEI Subscibers"
         Rec."BA Block Updated By" := UserId();
         Rec.Modify(true);
     end;
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Tracking Data Collection", 'OnBeforeUpdateBinContent', '', false, false)]
+    local procedure ItemTrackingDataCollectionOnBeforeUpdateBinContent(var TempEntrySummary: Record "Entry Summary"; var TempReservationEntry: Record "Reservation Entry")
+    var
+        WarehouseEntry: Record "Warehouse Entry";
+        ItemLedgerEntry: Record "Item Ledger Entry";
+    begin
+        if TempEntrySummary."Table ID" <> Database::"Item Ledger Entry" then
+            exit;
+        if TempReservationEntry."Entry No." > 0 then
+            TempEntrySummary."BA Item Ledger Entry No." := TempReservationEntry."Entry No."
+        else
+            TempEntrySummary."BA Item Ledger Entry No." := -TempReservationEntry."Entry No.";
+        if not ItemLedgerEntry.Get(TempEntrySummary."BA Item Ledger Entry No.") then
+            exit;
+        TempEntrySummary."BA Location Code" := ItemLedgerEntry."Location Code";
+        if ItemLedgerEntry."Serial No." = '' then
+            exit;
+        WarehouseEntry.SetCurrentKey("Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
+        WarehouseEntry.SetRange("Item No.", ItemLedgerEntry."Item No.");
+        WarehouseEntry.SetRange("Location Code", ItemLedgerEntry."Location Code");
+        WarehouseEntry.SetRange("Variant Code", ItemLedgerEntry."Variant Code");
+        WarehouseEntry.SetRange("Unit of Measure Code", ItemLedgerEntry."Unit of Measure Code");
+        WarehouseEntry.SetRange("Lot No.", ItemLedgerEntry."Lot No.");
+        WarehouseEntry.SetRange("Serial No.", ItemLedgerEntry."Serial No.");
+        WarehouseEntry.SetFilter("Registering Date", '>=%1', ItemLedgerEntry."Posting Date");
+        if WarehouseEntry.FindLast() then
+            TempEntrySummary."BA Source Bin Code" := WarehouseEntry."Bin Code";
+    end;
+
+
+
+    procedure ImportWhseEntrySerialNos()
+    var
+        ExcelBuffer: Record "Excel Buffer" temporary;
+        ExcelBuffer2: Record "Excel Buffer" temporary;
+        ErrorBuffer: Record "Name/Value Buffer" temporary;
+        TempBlob: Record TempBlob;
+        WhseEntry: Record "Warehouse Entry";
+        FileMgt: Codeunit "File Management";
+        IStream: InStream;
+        Window: Dialog;
+        FileName: Text;
+        TempDate: Date;
+        RecCount: Integer;
+        i: Integer;
+        i2: Integer;
+        SerialCol: Integer;
+        PostingDateCol: Integer;
+        DocNoCol: Integer;
+        ItemNoCol: Integer;
+
+        DebugText: TextBuilder;
+        DebugText2: TextBuilder;
+    begin
+        if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Warehouse Entries', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
+            exit;
+        TempBlob.Blob.CreateInStream(IStream);
+        if not ExcelBuffer.GetSheetsNameListFromStream(IStream, ErrorBuffer) then
+            Error('No Sheets in file.');
+        ErrorBuffer.FindFirst();
+        ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
+        ExcelBuffer.ReadSheet();
+
+
+        ExcelBuffer.SetRange("Cell Value as Text", 'Serial No.');
+        ExcelBuffer.FindFirst();
+        SerialCol := ExcelBuffer."Column No.";
+
+        ExcelBuffer.SetRange("Cell Value as Text", 'Posting Date');
+        ExcelBuffer.FindFirst();
+        PostingDateCol := ExcelBuffer."Column No.";
+
+        ExcelBuffer.SetRange("Cell Value as Text", 'Document No.');
+        ExcelBuffer.FindFirst();
+        DocNoCol := ExcelBuffer."Column No.";
+
+        ExcelBuffer.SetRange("Cell Value as Text", 'Item No.');
+        ExcelBuffer.FindFirst();
+        ItemNoCol := ExcelBuffer."Column No.";
+
+
+        ExcelBuffer.SetFilter("Row No.", '>%1', 1);
+        ExcelBuffer.SetFilter("Column No.", '%1|%2|%3|%4', SerialCol, PostingDateCol, DocNoCol, ItemNoCol);
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        if not ExcelBuffer.FindSet() then
+            exit;
+        Window.Open('#1####/#2####');
+        Window.Update(1, 'Reading Lines');
+        repeat
+            ExcelBuffer2 := ExcelBuffer;
+            ExcelBuffer2.Insert(true);
+        until ExcelBuffer.Next() = 0;
+        ExcelBuffer.SetRange("Column No.", ItemNoCol);
+        ExcelBuffer.FindSet();
+        RecCount := ExcelBuffer.Count();
+
+        // WhseEntry.SetRange("Item No.", '001595');
+        // WhseEntry.SetFilter("Serial No.", '<>%1', '');
+        // WhseEntry.ModifyAll("Serial No.", '');
+
+        WhseEntry.SetCurrentKey("Reference No.", "Registering Date");
+        WhseEntry.SetRange("Serial No.", '');
+        repeat
+            i += 1;
+            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+
+            ExcelBuffer2.Get(ExcelBuffer."Row No.", PostingDateCol);
+            if Evaluate(TempDate, ExcelBuffer2."Cell Value as Text") then begin
+                WhseEntry.SetRange("Registering Date", TempDate);
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", ItemNoCol);
+                WhseEntry.SetRange("Item No.", ExcelBuffer2."Cell Value as Text");
+                ExcelBuffer2.Get(ExcelBuffer."Row No.", DocNoCol);
+                WhseEntry.SetRange("Whse. Document No.", ExcelBuffer2."Cell Value as Text");
+
+                if WhseEntry.IsEmpty then begin
+                    WhseEntry.SetRange("Whse. Document No.");
+                    WhseEntry.SetRange("Source No.", ExcelBuffer2."Cell Value as Text");
+                end;
+
+                if WhseEntry.FindFirst() then begin
+                    ExcelBuffer2.Get(ExcelBuffer."Row No.", SerialCol);
+                    WhseEntry."Serial No." := ExcelBuffer2."Cell Value as Text";
+                    WhseEntry.Modify(false);
+                    i2 += 1;
+                    DebugText2.AppendLine(StrSubstNo('%1 <- %2, %3', WhseEntry."Entry No.", ExcelBuffer."Row No.", WhseEntry.GetFilters));
+                end else begin
+                    DebugText.AppendLine(StrSubstNo('%1: %2', ExcelBuffer."Row No.", WhseEntry.GetFilters));
+                end;
+            end;
+        until ExcelBuffer.Next() = 0;
+        Window.Close();
+        Message('Added %1 of %2 serial numbers to whse entries.', i2, i);
+
+        if DebugText.Length() > 0 then
+            Message(DebugText.ToText());
+
+        Message(DebugText2.ToText());
+    end;
+
+
+
+
+
+
+
+
+
+    procedure GetMatchingWhseEntriesBySerialNo(var EntryNos: List of [Integer]; ItemNo: Code[20]; BinCode: Code[20]; LocationCode: Code[10]; VariantCode: Code[20]; UoMCode: Code[10]): Boolean
+    var
+        WarehouseEntry: Record "Warehouse Entry";
+        WarehouseEntry2: Record "Warehouse Entry";
+        HasMatchingEntries: Boolean;
+    begin
+        SetWarehouseEntryFilters(WarehouseEntry, ItemNo, BinCode, LocationCode, VariantCode, UoMCode);
+        if not WarehouseEntry.FindSet() then
+            exit(false);
+        SetWarehouseEntryFilters(WarehouseEntry2, ItemNo, BinCode, LocationCode, VariantCode, UoMCode);
+        repeat
+            WarehouseEntry2.SetRange("Serial No.", WarehouseEntry."Serial No.");
+            WarehouseEntry2.SetRange(Quantity, -WarehouseEntry.Quantity);
+            if WarehouseEntry2.IsEmpty() then begin
+                EntryNos.Add(WarehouseEntry."Entry No.");
+                HasMatchingEntries := true;
+            end;
+        until WarehouseEntry.Next() = 0;
+        exit(HasMatchingEntries);
+    end;
+
+
+    local procedure SetWarehouseEntryFilters(var WarehouseEntry: Record "Warehouse Entry"; ItemNo: Code[20]; BinCode: Code[20]; LocationCode: Code[10]; VariantCode: Code[20]; UoMCode: Code[10])
+    begin
+        WarehouseEntry.Reset();
+        WarehouseEntry.SetCurrentKey("Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
+        WarehouseEntry.SetRange("Item No.", ItemNo);
+        WarehouseEntry.SetRange("Bin Code", BinCode);
+        WarehouseEntry.SetRange("Location Code", LocationCode);
+        WarehouseEntry.SetRange("Variant Code", VariantCode);
+        WarehouseEntry.SetRange("Unit of Measure Code", UoMCode);
+        WarehouseEntry.SetFilter("Serial No.", '<>%1', '');
+    end;
+
 
 
     var
