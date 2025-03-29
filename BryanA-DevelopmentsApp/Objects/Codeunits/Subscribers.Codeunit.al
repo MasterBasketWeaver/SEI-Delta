@@ -4283,6 +4283,7 @@ codeunit 75010 "BA SEI Subscibers"
                     WhseEntry.Modify(false);
                     i2 += 1;
                     DebugText2.AppendLine(StrSubstNo('%1 <- %2, %3', WhseEntry."Entry No.", ExcelBuffer."Row No.", WhseEntry.GetFilters));
+                    WhseEntry.SetRange("Source No.");
                 end else begin
                     DebugText.AppendLine(StrSubstNo('%1: %2', ExcelBuffer."Row No.", WhseEntry.GetFilters));
                 end;
