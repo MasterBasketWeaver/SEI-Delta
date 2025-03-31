@@ -4552,6 +4552,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; var OrderHeader: Record "BA Order Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
         SalesLine: Record "Sales Line";
+        SalesRecSetup: Record "Sales & Receivables Setup";
     begin
         if OrderHeader.GetFilters() = '' then begin
             OrderHeader.SetRange("Document Type", DocType);
@@ -4563,6 +4564,7 @@ codeunit 75010 "BA SEI Subscibers"
             OrderHeader."Document Type" := DocType;
             OrderHeader.Insert(true);
         end;
+        SalesRecSetup.Get();
         OrderHeader."Order Date" := SalesHeader."Order Date";
         OrderHeader."Currency Code" := SalesHeader."Currency Code";
         OrderHeader."Currency Factor" := SalesHeader."Currency Factor";
@@ -4581,6 +4583,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderHeader.Modify(true);
         SalesLine.SetRange("Document Type", SalesHeader."Document Type");
         SalesLine.SetRange("Document No.", SalesHeader."No.");
+        if SalesRecSetup."BA Ledger Start Date" <> 0D then
+            SalesLine.SetFilter("BA Booking Date", '>=%1', SalesRecSetup."BA Ledger Start Date");
         if SalesLine.FindSet() then
             repeat
                 SaveOrderLine(SalesLine, Deleted, false);
@@ -4693,6 +4697,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         ServiceLine: Record "Service Line";
         Customer: Record Customer;
+        SalesRecSetup: Record "Sales & Receivables Setup";
     begin
         if OrderHeader.GetFilters() = '' then begin
             OrderHeader.SetRange("Document Type", DocType);
@@ -4704,6 +4709,7 @@ codeunit 75010 "BA SEI Subscibers"
             OrderHeader."Document Type" := DocType;
             OrderHeader.Insert(true);
         end;
+        SalesRecSetup.Get();
         OrderHeader."Order Date" := ServiceHeader."Order Date";
         OrderHeader."Currency Code" := ServiceHeader."Currency Code";
         OrderHeader."Currency Factor" := ServiceHeader."Currency Factor";
@@ -4723,6 +4729,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderHeader.Modify(true);
         ServiceLine.SetRange("Document Type", ServiceHeader."Document Type");
         ServiceLine.SetRange("Document No.", ServiceHeader."No.");
+        if SalesRecSetup."BA Ledger Start Date" <> 0D then
+            ServiceLine.SetFilter("BA Booking Date", '>=%1', SalesRecSetup."BA Ledger Start Date");
         if ServiceLine.FindSet() then
             repeat
                 SaveOrderLine(ServiceLine, Deleted, false);
