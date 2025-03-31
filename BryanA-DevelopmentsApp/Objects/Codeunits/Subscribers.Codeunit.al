@@ -4404,42 +4404,48 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SalesLineOnAfterInsert(var Rec: Record "Sales Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, false, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, false, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterModifyEvent', '', false, false)]
     local procedure SalesLineOnAfterModify(var Rec: Record "Sales Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, False, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, False, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterDeleteEvent', '', false, false)]
     local procedure SalesLineOnAfterDelete(var Rec: Record "Sales Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, true, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, true, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterInsertEvent', '', false, false)]
     local procedure SalesHeaderOnAfterInsert(var Rec: Record "Sales Header")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, Rec."Document Type", false);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, Rec."Document Type", false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterModifyEvent', '', false, false)]
     local procedure SalesHeaderOnAfterModify(var Rec: Record "Sales Header")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, Rec."Document Type", false);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, Rec."Document Type", false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterDeleteEvent', '', false, false)]
     local procedure SalesHeaderOnAfterDelete(var Rec: Record "Sales Header")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, Rec."Document Type", true);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, Rec."Document Type", true);
     end;
 
 
@@ -4452,21 +4458,24 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ServiceLineOnAfterInsert(var Rec: Record "Service Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, false, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, false, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Line", 'OnAfterModifyEvent', '', false, false)]
     local procedure ServiceLineOnAfterModify(var Rec: Record "Service Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, false, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, false, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Line", 'OnAfterDeleteEvent', '', false, false)]
     local procedure ServiceLineOnAfterDelete(var Rec: Record "Service Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, true, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, true, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterInsertEvent', '', false, false)]
@@ -4475,7 +4484,8 @@ codeunit 75010 "BA SEI Subscibers"
         DocType: Enum "BA Order Document Type";
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, DocType::"Service Order", false);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, DocType::"Service Order", false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterModifyEvent', '', false, false)]
@@ -4484,7 +4494,8 @@ codeunit 75010 "BA SEI Subscibers"
         DocType: Enum "BA Order Document Type";
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, DocType::"Service Order", false);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, DocType::"Service Order", false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterDeleteEvent', '', false, false)]
@@ -4493,7 +4504,8 @@ codeunit 75010 "BA SEI Subscibers"
         DocType: Enum "BA Order Document Type";
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, DocType::"Service Order", true);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, DocType::"Service Order", true);
     end;
 
 
@@ -4504,6 +4516,16 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    local procedure IsValidLedgerDate(CheckDate: Date): Boolean
+    var
+        SalesRecSetup: Record "Sales & Receivables Setup";
+    begin
+        if CheckDate = 0D then
+            exit(false);
+        if not SalesRecSetup.Get() or (SalesRecSetup."BA Ledger Start Date" = 0D) then
+            exit(false);
+        exit(CheckDate >= SalesRecSetup."BA Ledger Start Date");
+    end;
 
 
 
@@ -4953,6 +4975,8 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+
     procedure ImportWhseEntrySerialNos()
     var
         ExcelBuffer: Record "Excel Buffer" temporary;
@@ -4972,6 +4996,9 @@ codeunit 75010 "BA SEI Subscibers"
         PostingDateCol: Integer;
         DocNoCol: Integer;
         ItemNoCol: Integer;
+
+        DebugText: TextBuilder;
+        DebugText2: TextBuilder;
     begin
         if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Warehouse Entries', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
             exit;
@@ -5033,16 +5060,30 @@ codeunit 75010 "BA SEI Subscibers"
                 ExcelBuffer2.Get(ExcelBuffer."Row No.", DocNoCol);
                 WhseEntry.SetRange("Whse. Document No.", ExcelBuffer2."Cell Value as Text");
 
+                if WhseEntry.IsEmpty then begin
+                    WhseEntry.SetRange("Whse. Document No.");
+                    WhseEntry.SetRange("Source No.", ExcelBuffer2."Cell Value as Text");
+                end;
+
                 if WhseEntry.FindFirst() then begin
                     ExcelBuffer2.Get(ExcelBuffer."Row No.", SerialCol);
                     WhseEntry."Serial No." := ExcelBuffer2."Cell Value as Text";
                     WhseEntry.Modify(false);
                     i2 += 1;
+                    DebugText2.AppendLine(StrSubstNo('%1 <- %2, %3', WhseEntry."Entry No.", ExcelBuffer."Row No.", WhseEntry.GetFilters));
+                    WhseEntry.SetRange("Source No.");
+                end else begin
+                    DebugText.AppendLine(StrSubstNo('%1: %2', ExcelBuffer."Row No.", WhseEntry.GetFilters));
                 end;
             end;
         until ExcelBuffer.Next() = 0;
         Window.Close();
         Message('Added %1 of %2 serial numbers to whse entries.', i2, i);
+
+        if DebugText.Length() > 0 then
+            Message(DebugText.ToText());
+
+        Message(DebugText2.ToText());
     end;
 
 
