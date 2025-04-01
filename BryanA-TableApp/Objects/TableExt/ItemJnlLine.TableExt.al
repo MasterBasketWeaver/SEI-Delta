@@ -21,6 +21,13 @@ tableextension 80049 "BA Item Jnl. Line" extends "Item Journal Line"
             Caption = 'Warning Message';
             Editable = false;
         }
+        field(80010; "BA Item Tracking Code"; Code[20])
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup (Item."Item Tracking Code" where ("No." = field ("Item No.")));
+            Caption = 'Item Tracking Code';
+            Editable = false;
+        }
 
         field(80011; "BA Adjust. Reason Code"; Code[20])
         {
