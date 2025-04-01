@@ -2,8 +2,6 @@ report 50010 "BA Update Item Bins"
 {
     ProcessingOnly = true;
     Caption = 'Update Item Bins';
-    ApplicationArea = all;
-    UsageCategory = Tasks;
 
 
     requestpage
