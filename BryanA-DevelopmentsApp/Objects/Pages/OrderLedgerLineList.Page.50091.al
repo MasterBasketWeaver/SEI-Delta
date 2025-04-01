@@ -230,7 +230,7 @@ page 50091 "BA Order Ledger Line List"
     begin
         Rec.FilterGroup(2);
         Rec.SetFilter(Type, '<>%1', Rec.Type::" ");
-        if SalesRecSetup.Get() and SalesRecSetup."BA Ledger Start Date" <> 0D then
+        if SalesRecSetup.Get() and (SalesRecSetup."BA Ledger Start Date" <> 0D) then
             Rec.SetFilter("Booking Date", '>=%1', SalesRecSetup."BA Ledger Start Date");
         Rec.FilterGroup(0);
         Rec.SetAutoCalcFields("Posting Date", "Order Date", "Sell-to Customer No.", "Sell-to Customer Name", "Currency Code", "Currency Factor");
