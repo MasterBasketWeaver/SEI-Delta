@@ -91,6 +91,19 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             DataClassification = CustomerContent;
             Caption = 'SEI Int''l Ref. No.';
         }
+        field(80040; "BA Modified Posting Date"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Modified Posting Date';
+            Editable = false;
+        }
+        field(80041; "BA Skip Sales Line Recreate"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Skip Sales Line Recreate';
+            Editable = false;
+            Description = 'System field. Used for the OnBeforeRecreateSalesLinesHandler subscriber.';
+        }
         field(80070; "BA Quote Date"; Date)
         {
             DataClassification = CustomerContent;

@@ -44,7 +44,7 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
         }
         addafter("Total Amount Incl. VAT")
         {
-            field("BA Exchange Rate"; ExchageRate)
+            field("BA Exchange Rate"; "BA Exchange Rate")
             {
                 ApplicationArea = all;
                 Editable = false;
@@ -104,22 +104,9 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
         end;
     end;
 
-    trigger OnAfterGetRecord()
     var
-        SalesHeader: Record "Sales Header";
-    begin
-        if SalesHeader.Get(Rec."Document Type", rec."Document No.") then
-            ExchageRate := SalesHeader."BA Quote Exch. Rate";
-    end;
-
-    procedure SetExchangeRate(NewExchangeRate: Decimal)
-    begin
-        ExchageRate := NewExchangeRate;
-    end;
-
-    var
-        ExchageRate: Decimal;
         [InDataSet]
+
         CanEditDimensions: Boolean;
         [InDataSet]
         CanEditBookingDate: Boolean;

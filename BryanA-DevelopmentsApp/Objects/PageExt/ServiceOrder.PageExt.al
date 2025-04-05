@@ -61,7 +61,6 @@ pageextension 80050 "BA Service Order" extends "Service Order"
                 exit(Text <> '');
             end;
         }
-
         modify("Order Date")
         {
             ApplicationArea = all;
@@ -82,6 +81,12 @@ pageextension 80050 "BA Service Order" extends "Service Order"
             field("BA Posting Date"; Rec."Posting Date")
             {
                 ApplicationArea = all;
+
+                trigger OnValidate()
+                begin
+                    Rec."BA Modified Posting Date" := true;
+                    Rec.Modify(true);
+                end;
             }
             field("BA Quote Date"; Rec."BA Quote Date")
             {
@@ -191,6 +196,9 @@ pageextension 80050 "BA Service Order" extends "Service Order"
 
     trigger OnAfterGetRecord()
     var
+        SalesLine: Record "Sales Line";
+        CurrExchRate: Record "Currency Exchange Rate";
+        OldCurrFactor: Decimal;
         Customer: Record Customer;
     begin
         MandatoryDeliveryDate := Customer.Get(Rec."Bill-to Customer No.") and not Customer."BA Non-Mandatory Delivery Date";
@@ -200,6 +208,23 @@ pageextension 80050 "BA Service Order" extends "Service Order"
             UserSetup."BA Open Service Order No." := Rec."No.";
             UserSetup.Modify(false);
         end;
+
+        if Rec."BA Modified Posting Date" or (Rec."Posting Date" = WorkDate()) or not CurrPage.Editable() or (Rec.Status <> Rec.Status::"In Process") then
+            exit;
+        OldCurrFactor := Rec."Currency Factor";
+        Rec.SetHideValidationDialog(true);
+        Rec."BA Skip Sales Line Recreate" := true;
+        if (Rec."Currency Code" <> '') and (Rec."Currency Factor" = 0) then
+            if Rec."BA Quote Exch. Rate" <> 0 then
+                Rec."Currency Factor" := 1 / Rec."BA Quote Exch. Rate"
+            else
+                Rec."Currency Factor" := CurrExchRate.GetCurrentCurrencyFactor(Rec."Currency Code");
+        Rec.Validate("Posting Date", WorkDate());
+        if (Rec."Currency Code" <> '') and (Rec."Currency Factor" = 0) then
+            Rec.Validate("Currency Factor", CurrExchRate.GetCurrentCurrencyFactor(Rec."Currency Code"));
+        Rec.SetHideValidationDialog(false);
+        Rec."BA Skip Sales Line Recreate" := false;
+        Rec.Modify(true);
     end;
 
     trigger OnQueryClosePage(CloseAction: Action): Boolean

@@ -28,12 +28,6 @@ pageextension 80121 "BA Sales Order List" extends "Sales Order List"
             {
                 ApplicationArea = all;
             }
-            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
-            {
-                ApplicationArea = all;
-                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
-                Visible = false;
-            }
             field("BA Approval Count"; Rec."BA Approval Count")
             {
                 ApplicationArea = all;
@@ -45,6 +39,12 @@ pageextension 80121 "BA Sales Order List" extends "Sales Order List"
             field("BA Appr. Reject. Reason Code"; Rec."BA Appr. Reject. Reason Code")
             {
                 ApplicationArea = all;
+            }
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+                Visible = false;
             }
         }
     }

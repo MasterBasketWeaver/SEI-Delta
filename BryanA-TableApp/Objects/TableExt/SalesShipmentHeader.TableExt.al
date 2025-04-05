@@ -98,6 +98,7 @@ tableextension 80060 "BA Sales Shpt. Header" extends "Sales Shipment Header"
         {
             DataClassification = CustomerContent;
             Caption = 'Salesperson Verified';
+            Editable = false;
         }
     }
 }

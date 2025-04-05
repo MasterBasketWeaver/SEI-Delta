@@ -1,25 +1,25 @@
-// pageextension 80906 "BAZD Posted Sales Credit Memo" extends "Posted Sales Credit Memo"
-// {
-//     PromotedActionCategories = 'New,Process,Report,Credit Memo,Cancel,Navigate,Print/Send,Credit Card,Electronic Document,Zetadocs';
-//     actions
-//     {
-//         modify(ZddSend)
-//         {
-//             Promoted = true;
-//             PromotedCategory = Category10;
-//             PromotedIsBig = true;
-//         }
-//         modify(ZddOutbox)
-//         {
-//             Promoted = true;
-//             PromotedCategory = Category10;
-//             PromotedIsBig = true;
-//         }
-//         modify(ZddRules)
-//         {
-//             Promoted = true;
-//             PromotedCategory = Category10;
-//             PromotedIsBig = true;
-//         }
-//     }
-// }
+pageextension 80915 "BAZD Posted Serv. Credit Memo" extends "Posted Service Credit Memo"
+{
+    PromotedActionCategories = 'New,Process,Report,Zetadocs';
+    actions
+    {
+        modify(ZddSend)
+        {
+            Promoted = true;
+            PromotedCategory = Category4;
+            PromotedIsBig = true;
+        }
+        modify(ZddOutbox)
+        {
+            Promoted = true;
+            PromotedCategory = Category4;
+            PromotedIsBig = true;
+        }
+        modify(ZddRules)
+        {
+            Promoted = true;
+            PromotedCategory = Category4;
+            PromotedIsBig = true;
+        }
+    }
+}

@@ -47,14 +47,6 @@ pageextension 80055 "BA Posted Service Invoice" extends "Posted Service Invoice"
                 Editable = false;
             }
         }
-        addlast(General)
-        {
-            field("User ID"; Rec."User ID")
-            {
-                ApplicationArea = all;
-                Editable = false;
-            }
-        }
         addBefore(ServInvLines)
         {
             part(ServLines; "BA Service Item Lines")
@@ -62,6 +54,14 @@ pageextension 80055 "BA Posted Service Invoice" extends "Posted Service Invoice"
                 ApplicationArea = all;
                 Caption = 'Service Item Lines';
                 SubPageLink = "No." = field ("BA Shipment No.");
+            }
+        }
+        addlast(General)
+        {
+            field("User ID"; Rec."User ID")
+            {
+                ApplicationArea = all;
+                Editable = false;
             }
         }
         addbefore("Order No.")

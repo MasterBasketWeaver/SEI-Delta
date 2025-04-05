@@ -1,4 +1,4 @@
-pageextension 80150 "BA General Journal" extends "General Journal"
+pageextension 80152 "BA General Journal" extends "General Journal"
 {
     layout
     {

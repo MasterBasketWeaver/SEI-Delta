@@ -28,6 +28,10 @@ pageextension 80075 "BA Sales & Rec. Setup" extends "Sales & Receivables Setup"
                 Enabled = "BA Restrict Order Creation";
                 Caption = 'Restrict Order End Time (PST)';
             }
+            field("BA Ledger Start Date"; Rec."BA Ledger Start Date")
+            {
+                ApplicationArea = all;
+            }
             // group("Custom Pricing")
             // {
             //     field("BA Use Single Currency Pricing"; "BA Use Single Currency Pricing")

@@ -79,6 +79,7 @@ tableextension 80062 "BA Sales Cr.Memo Header" extends "Sales Cr.Memo Header"
         {
             DataClassification = CustomerContent;
             Caption = 'Salesperson Verified';
+            Editable = false;
         }
     }
 

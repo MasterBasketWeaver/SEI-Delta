@@ -61,6 +61,13 @@ tableextension 80012 "BA Item" extends Item
             FieldClass = FlowFilter;
             TableRelation = Location.Code where ("BA Inactive" = const (false));
         }
+        field(80031; "BA Product Profile Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Product Profile Code';
+            TableRelation = "BA Product Profile"."Profile Code";
+            // Editable = false;
+        }
         field(80035; "BC NC Cut Sheet"; Boolean)
         {
             DataClassification = CustomerContent;

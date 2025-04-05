@@ -80,6 +80,19 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             Editable = false;
             TableRelation = "Service Header"."No." where ("Document Type" = const (Order));
         }
+        field(80110; "BA Payment Bank Account No."; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Payment Bank Account No.';
+            Editable = false;
+            TableRelation = "Bank Account"."No.";
+        }
+        field(80111; "BA Payment Filter Record ID"; RecordId)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Payment Filter Record ID';
+            Editable = false;
+        }
         field(80120; "BA Can Edit Ledger Pages"; Boolean)
         {
             DataClassification = CustomerContent;
@@ -94,6 +107,6 @@ tableextension 80024 "BA User Setup" extends "User Setup"
         {
             DataClassification = CustomerContent;
             Caption = 'Can Deactivate Items';
-        }  
+        }
     }
 }

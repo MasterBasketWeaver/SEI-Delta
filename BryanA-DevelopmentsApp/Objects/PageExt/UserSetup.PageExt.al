@@ -49,10 +49,6 @@ pageextension 80044 "BA User Setup" extends "User Setup"
             {
                 ApplicationArea = all;
             }
-            field("BA Allow Deleting Orders"; Rec."BA Allow Deleting Orders")
-            {
-                ApplicationArea = all;
-            }
             field("BA Allow Changing Pay. Terms"; Rec."BA Allow Changing Pay. Terms")
             {
                 ApplicationArea = all;
@@ -61,15 +57,19 @@ pageextension 80044 "BA User Setup" extends "User Setup"
             {
                 ApplicationArea = all;
             }
+            field("BA Allow Deleting Orders"; Rec."BA Allow Deleting Orders")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Can Edit Ledger Pages"; Rec."BA Can Edit Ledger Pages")
+            {
+                ApplicationArea = all;
+            }
             field("BA Can Create Orders Anytime"; Rec."BA Can Create Orders Anytime")
             {
                 ApplicationArea = all;
             }
             field("BA Can Deactivate Items"; Rec."BA Can Deactivate Items")
-            {
-                ApplicationArea = all;
-            }
-            field("BA Can Edit Ledger Pages"; Rec."BA Can Edit Ledger Pages")
             {
                 ApplicationArea = all;
             }

@@ -40,5 +40,10 @@ tableextension 80036 "BA Sales & Rec. Setup" extends "Sales & Receivables Setup"
             DataClassification = CustomerContent;
             Caption = 'Restrict Order End Time';
         }
+        field(80020; "BA Ledger Start Date"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Ledger Start Date';
+        }
     }
 }

@@ -119,6 +119,14 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
                 ApplicationArea = all;
             }
         }
+        modify("Posting Date")
+        {
+            trigger OnAfterValidate()
+            begin
+                Rec."BA Modified Posting Date" := true;
+                Rec.Modify(true);
+            end;
+        }
         addbefore("Work Description")
         {
             field("BA SEI Int'l Ref. No."; Rec."BA SEI Int'l Ref. No.")
@@ -190,20 +198,6 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
                 ApplicationArea = all;
             }
         }
-        addafter("Salesperson Code")
-        {
-            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
-            {
-                ApplicationArea = all;
-                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
-                Importance = Additional;
-            }
-        }
-        modify("Campaign No.")
-        {
-            ApplicationArea = all;
-            Visible = false;
-        }
         addlast(General)
         {
             field("BA Approval Count"; Rec."BA Approval Count")
@@ -225,6 +219,20 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
             {
                 ApplicationArea = all;
             }
+        }
+        addafter("Salesperson Code")
+        {
+            field("BA Salesperson Verified"; Rec."BA Salesperson Verified")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
+                Importance = Additional;
+            }
+        }
+        modify("Campaign No.")
+        {
+            ApplicationArea = all;
+            Visible = false;
         }
     }
 
@@ -260,16 +268,14 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
         // [InDataSet]
         // ShowApprovalRejection: Boolean;
 
-    trigger OnAfterGetRecord()
-    var
-        Customer: Record Customer;
-    begin
-        MandatoryDeliveryDate := Customer.Get(Rec."Bill-to Customer No.") and not Customer."BA Non-Mandatory Delivery Date";
-        // ShowApprovalRejection := Rec."BA Appr. Reject. Reason Code" <> '';
-    end;
 
 
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
+    begin
+        UpdateExchangeRate();
+    end;
+
+    local procedure UpdateExchangeRate()
     var
         ExchangeRate: Record "Currency Exchange Rate";
         SalesRecSetup: Record "Sales & Receivables Setup";
@@ -279,10 +285,26 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
         if not SalesRecSetup."BA Use Single Currency Pricing" then
             exit;
         SalesRecSetup.TestField("BA Single Price Currency");
-        if Subscribers.GetExchangeRate(ExchangeRate, SalesRecSetup."BA Single Price Currency") then begin
+        if Subscribers.GetExchangeRate(ExchangeRate, SalesRecSetup."BA Single Price Currency") then
             Rec."BA Quote Exch. Rate" := ExchangeRate."Relational Exch. Rate Amount";
-            CurrPage.SalesLines.Page.SetExchangeRate(Rec."BA Quote Exch. Rate");
-        end
+    end;
+
+    trigger OnAfterGetRecord()
+    var
+        ResetStatus: Boolean;
+        SalesLine: Record "Sales Line";
+        Customer: Record Customer;
+    begin
+        MandatoryDeliveryDate := Customer.Get(Rec."Bill-to Customer No.") and not Customer."BA Non-Mandatory Delivery Date";
+        if Rec."BA Modified Posting Date" or (Rec."Posting Date" = WorkDate()) or not CurrPage.Editable() or (Rec.Status <> Rec.Status::Open) then
+            exit;
+        Rec.SetHideValidationDialog(true);
+        Rec."BA Skip Sales Line Recreate" := true;
+        Rec.Validate("Posting Date", WorkDate());
+        UpdateExchangeRate();
+        Rec.SetHideValidationDialog(false);
+        Rec."BA Skip Sales Line Recreate" := false;
+        Rec.Modify(true);
     end;
 
 }

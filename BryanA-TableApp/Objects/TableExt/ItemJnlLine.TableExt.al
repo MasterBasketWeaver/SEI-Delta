@@ -21,9 +21,45 @@ tableextension 80049 "BA Item Jnl. Line" extends "Item Journal Line"
             Caption = 'Warning Message';
             Editable = false;
         }
+        field(80010; "BA Item Tracking Code"; Code[20])
+        {
+            FieldClass = FlowField;
+            CalcFormula = lookup (Item."Item Tracking Code" where ("No." = field ("Item No.")));
+            Caption = 'Item Tracking Code';
+            Editable = false;
+        }
 
-
-
+        field(80011; "BA Adjust. Reason Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Adjustment Reason Code';
+            TableRelation = "BA Adjustment Reason".Code;
+        }
+        field(80012; "BA Approved By"; Code[50])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approved By';
+            TableRelation = "User Setup"."User ID";
+            Editable = false;
+        }
+        field(80013; "BA Status"; Enum "BA Approval Status")
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Status';
+            Editable = false;
+        }
+        field(80014; "BA Locked For Approval"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Locked For Approval';
+            Editable = false;
+        }
+        field(80015; "BA Approval GUID"; Guid)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Approval GUID';
+            Editable = false;
+        }
         field(80100; "BA Product ID Code"; Code[20])
         {
             DataClassification = CustomerContent;

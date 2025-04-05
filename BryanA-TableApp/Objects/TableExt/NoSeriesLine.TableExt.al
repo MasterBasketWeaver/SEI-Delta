@@ -1,4 +1,4 @@
-tableextension 80079 "BA No. Series Line" extends "No. Series Line"
+tableextension 80084 "BA No. Series Line" extends "No. Series Line"
 {
     fields
     {

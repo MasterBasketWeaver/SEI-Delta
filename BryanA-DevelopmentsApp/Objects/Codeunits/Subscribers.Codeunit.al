@@ -528,7 +528,7 @@ codeunit 75010 "BA SEI Subscibers"
             exit;
         CustPostGroup.Get(Rec."Customer Posting Group");
         if CustPostGroup."BA Blocked" then
-            Error('%1 %2 is blocked', CustPostGroup.TableCaption, CustPostGroup.Code);
+            Error(CustGroupBlockedError, CustPostGroup.TableCaption, CustPostGroup.Code);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnBeforeAutoReserve', '', false, false)]
@@ -815,11 +815,21 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeSalesInvHeaderInsert', '', false, false)]
     local procedure SalesPostOnBeforeSalesInvHeaderInsert(var SalesInvHeader: Record "Sales Invoice Header"; SalesHeader: Record "Sales Header")
+    var
+        FreightTerm: Record "ENC Freight Term";
+        ShippingAgent: Record "Shipping Agent";
     begin
         SalesHeader.CalcFields("BA Ship-to County Fullname", "BA Bill-to County Fullname", "BA Sell-to County Fullname");
         SalesInvHeader."BA Bill-to County Fullname" := SalesHeader."BA Bill-to County Fullname";
         SalesInvHeader."BA Ship-to County Fullname" := SalesHeader."BA Ship-to County Fullname";
         SalesInvHeader."BA Sell-to County Fullname" := SalesHeader."BA Sell-to County Fullname";
+        SalesInvHeader."BA Order No. DrillDown" := SalesHeader."No.";
+        SalesInvHeader."BA Ext. Doc. No. DrillDown" := SalesHeader."External Document No.";
+        SalesInvHeader."BA Posting Date DrillDown" := SalesHeader."Posting Date";
+        if (SalesInvHeader."Shipping Agent Code" <> '') and ShippingAgent.Get(SalesInvHeader."Shipping Agent Code") then
+            SalesInvHeader."BA Freight Carrier Name" := ShippingAgent.Name;
+        if (SalesInvHeader."ENC Freight Term" <> '') and FreightTerm.Get(SalesInvHeader."ENC Freight Term") then
+            SalesInvHeader."BA Freight Term Name" := FreightTerm.Description;
         SalesInvHeader."BA SEI Int'l Ref. No." := SalesHeader."BA SEI Int'l Ref. No.";
         SalesInvHeader."BA SEI Barbados Order" := SalesHeader."BA SEI Barbados Order";
         UpdateOrderPostedFields(SalesHeader, SalesInvHeader);
@@ -846,9 +856,10 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnAfterPostItemJnlLine', '', false, false)]
     local procedure ItemJnlLinePostOnAfterPostItemJnlLine(ItemLedgerEntry: Record "Item Ledger Entry"; var ItemJournalLine: Record "Item Journal Line"; var ValueEntryNo: Integer)
     begin
-        if not ItemJournalLine."BA Updated" then
-            exit;
-        ItemLedgerEntry."BA Year-end Adjst." := true;
+        ItemLedgerEntry."BA Adjust. Reason Code" := ItemJournalLine."BA Adjust. Reason Code";
+        ItemLedgerEntry."BA Approved By" := ItemJournalLine."BA Approved By";
+        if ItemJournalLine."BA Updated" then
+            ItemLedgerEntry."BA Year-end Adjst." := true;
         ItemLedgerEntry.Modify(false);
     end;
 
@@ -1084,7 +1095,7 @@ codeunit 75010 "BA SEI Subscibers"
         DateRec.SetRange("Period Type", DateRec."Period Type"::Month);
         DateRec.SetRange("Period Start", DMY2Date(1, Date2DMY(CurrExchRate."Starting Date", 2), 2000));
         DateRec.FindFirst();
-        CompInfo."Custom System Indicator Text" := CopyStr(StrSubstNo('%1 - USD Exch. Rate %2 (%3)', CompanyName(), CurrExchRate."Relational Exch. Rate Amount", DateRec."Period Name"), 1, MaxStrLen(CompInfo."Custom System Indicator Text"));
+        CompInfo."Custom System Indicator Text" := CopyStr(StrSubstNo(ExchangeRateText, CompanyName(), CurrExchRate."Relational Exch. Rate Amount", DateRec."Period Name"), 1, MaxStrLen(CompInfo."Custom System Indicator Text"));
         CompInfo.Modify(false);
     end;
 
@@ -1127,7 +1138,7 @@ codeunit 75010 "BA SEI Subscibers"
                         FilterStr += '|' + WarehouseEmployee."Location Code";
                 until WarehouseEmployee.Next() = 0
             else
-                Error('%1 must be setup as an %2', UserId(), WarehouseEmployee.TableCaption());
+                Error(WarehouseEmployeeSetupError, UserId(), WarehouseEmployee.TableCaption());
             Location.SetFilter(Code, FilterStr);
         end;
         Location.FilterGroup(0);
@@ -1164,6 +1175,348 @@ codeunit 75010 "BA SEI Subscibers"
         ProdBOMHeader.Modify(false);
         ProductionOrder."BA Source Version" := ProdBOMHeader."BA Active Version";
         ProductionOrder.Modify(true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"ENC SEI Functions", 'CopyCustomTemplateFieldsOnAfterSetFilters', '', false, false)]
+    local procedure CopyCustomTemplateFieldsOnAfterSetFilters(var FieldRec: Record Field)
+    begin
+        AddFieldFilter(FieldRec);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"ENC SEI Functions", 'AssignCustomTemplateFieldsOnAfterSetFilters1', '', false, false)]
+    local procedure AssignCustomTemplateFieldsOnAfterSetFilters1(var FieldRec: Record Field)
+    begin
+        AddFieldFilter(FieldRec);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"ENC SEI Functions", 'AssignCustomTemplateFieldsOnAfterSetFilters2', '', false, false)]
+    local procedure AssignCustomTemplateFieldsOnAfterSetFilters2(var FieldRec: Record Field)
+    begin
+        AddFieldFilter(FieldRec);
+    end;
+
+    local procedure AddFieldFilter(var FieldRec: Record Field)
+    var
+        FilterText: Text;
+        MinValue: Integer;
+        MaxValue: Integer;
+    begin
+        MinValue := 80000;
+        MaxValue := 80199;
+        FilterText := FieldRec.GetFilter("No.");
+        if FilterText <> '' then
+            FieldRec.SetFilter("No.", StrSubstNo('%1|%2', FilterText, StrSubstNo('%1..%2', MinValue, MaxValue)))
+        else
+            FieldRec.SetRange("No.", MinValue, MaxValue);
+    end;
+
+    //test
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnBeforeRunWithCheck', '', false, false)]
+    local procedure ItemJnlPostLineOnBeforeRunWithCheck(var ItemJournalLine: Record "Item Journal Line")
+    begin
+        if not IsInventoryApprovalEnabled() or (ItemJournalLine."Journal Template Name" <> 'ITEM') then
+            exit;
+        ItemJournalLine.TestField("BA Adjust. Reason Code");
+        if ItemJournalLine."BA Status" = ItemJournalLine."BA Status"::Rejected then
+            Error(RejectedLineError, ItemJournalLine."Line No.");
+        if ItemJournalLine."BA Status" = ItemJournalLine."BA Status"::Pending then
+            Error(PendingLineError, ItemJournalLine."Line No.");
+        if (ItemJournalLine."BA Status" <> ItemJournalLine."BA Status"::Released) and not CheckInventoryLimit(ItemJournalLine) then
+            Error(JnlLimitError);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnApproveApprovalRequest', '', false, false)]
+    local procedure ApprovalsMgtOnApproveApprovalRequest(var ApprovalEntry: Record "Approval Entry")
+    begin
+        ApprovalUpdateActions(ApprovalEntry, false);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnRejectApprovalRequest', '', false, false)]
+    local procedure ApprovalsMgtOnRejectApprovalRequest(var ApprovalEntry: Record "Approval Entry")
+    begin
+        ApprovalUpdateActions(ApprovalEntry, true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnAfterSetApprovalCommentLine', '', false, false)]
+    local procedure ApprovalsMgtOnAfterSetApprovalCommentLine(var ApprovalCommentLine: Record "Approval Comment Line"; WorkflowStepInstanceID: Guid)
+    begin
+        ApprovalCommentLine.SetRange("Workflow Step Instance ID", WorkflowStepInstanceID)
+    end;
+
+    local procedure IsInventoryApprovalEnabled(): Boolean;
+    var
+        InventorySetup: Record "Inventory Setup";
+    begin
+        exit(InventorySetup.Get() and InventorySetup."BA Approval Required");
+    end;
+
+    local procedure ApprovalUpdateActions(var ApprovalEntry: Record "Approval Entry"; Rejected: Boolean)
+    var
+        ItemJnlBatch: Record "Item Journal Batch";
+    begin
+        if not IsInventoryApprovalEnabled() or (ApprovalEntry."Table ID" <> Database::"Item Journal Batch") or not ItemJnlBatch.Get(ApprovalEntry."Record ID to Approve") then
+            exit;
+        UpdateItemLineApprovalStatus(ItemJnlBatch, Rejected);
+        UpdateOtherApprovalEntries(ApprovalEntry, Rejected);
+        SendApprovalNotification(ApprovalEntry);
+    end;
+
+    local procedure UpdateOtherApprovalEntries(var ApprovalEntry: Record "Approval Entry"; Rejected: Boolean)
+    var
+        OtherEntry: Record "Approval Entry";
+        NewStatus: Option;
+    begin
+        if Rejected then
+            NewStatus := ApprovalEntry.Status::Rejected
+        else
+            NewStatus := ApprovalEntry.Status::Approved;
+        OtherEntry.SetCurrentKey("Table ID", "Record ID to Approve", "Status", "Workflow Step Instance ID", "Sequence No.");
+        OtherEntry.SetRange("Table ID", Database::"Item Journal Batch");
+        OtherEntry.SetRange("Record ID to Approve", ApprovalEntry."Record ID to Approve");
+        OtherEntry.SetRange(Status, OtherEntry.Status::Open);
+        OtherEntry.SetRange("Workflow Step Instance ID", ApprovalEntry."Workflow Step Instance ID");
+        OtherEntry.ModifyAll(Status, NewStatus, true);
+    end;
+
+    local procedure UpdateItemLineApprovalStatus(var ItemJnlBatch: Record "Item Journal Batch"; Rejected: Boolean)
+    var
+        ItemJnlLine: Record "Item Journal Line";
+        RecIDList: List of [RecordId];
+        RecID: RecordId;
+    begin
+        ItemJnlLine.SetRange("Journal Template Name", ItemJnlBatch."Journal Template Name");
+        ItemJnlLine.SetRange("Journal Batch Name", ItemJnlBatch.Name);
+        ItemJnlLine.SetRange("BA Locked For Approval", true);
+        ItemJnlLine.SetRange("BA Status", ItemJnlLine."BA Status"::Pending);
+        if not ItemJnlLine.FindSet() then
+            exit;
+        repeat
+            RecIDList.Add(ItemJnlLine.RecordId());
+        until ItemJnlLine.Next() = 0;
+        foreach RecID in RecIDList do begin
+            ItemJnlLine.Get(RecID);
+            ItemJnlLine.Validate("BA Locked For Approval", false);
+            if Rejected then
+                ItemJnlLine.Validate("BA Status", ItemJnlLine."BA Status"::Rejected)
+            else begin
+                ItemJnlLine.Validate("BA Status", ItemJnlLine."BA Status"::Released);
+                ItemJnlLine.Validate("BA Approved By", UserId());
+            end;
+            ItemJnlLine.Modify(false);
+        end;
+    end;
+
+    procedure CheckInventoryLimit(var ItemJournalLine: Record "Item Journal Line"): Boolean
+    var
+        InventorySetup: Record "Inventory Setup";
+        ItemJnlLine: Record "Item Journal Line";
+    begin
+        InventorySetup.Get();
+        if not InventorySetup."BA Approval Required" or (InventorySetup."BA Approval Limit" = 0) then
+            exit(true);
+        ItemJnlLine.SetRange("Journal Template Name", ItemJournalLine."Journal Template Name");
+        ItemJnlLine.SetRange("Journal Batch Name", ItemJournalLine."Journal Batch Name");
+        ItemJnlLine.SetFilter(Amount, '>%1', InventorySetup."BA Approval Limit");
+        exit(ItemJnlLine.IsEmpty());
+    end;
+
+    procedure SendItemJnlApproval(var ItemJnlLine: Record "Item Journal Line"; Cancelled: Boolean)
+    var
+        ItemJnlBatch: Record "Item Journal Batch";
+        InventorySetup: Record "Inventory Setup";
+        FilterRec: Record "Item Journal Line";
+        ApprovalEntry: Record "Approval Entry";
+        CheckItemJnlLine: Codeunit "Item Jnl.-Check Line";
+        ApprovalAmt: Decimal;
+        TempGUID: Guid;
+        EntryList: List of [Integer];
+        EntryNo: Integer;
+    begin
+        InventorySetup.Get();
+        if not InventorySetup."BA Approval Required" then
+            Error(InventoryAppDisabledError);
+        if (InventorySetup."BA Approval Admin1" = '') and (InventorySetup."BA Approval Admin2" = '') then
+            Error(NoApprovalAdminError);
+        InventorySetup.TestField("BA Approval Code");
+        ItemJnlBatch.Get(ItemJnlLine."Journal Template Name", ItemJnlLine."Journal Batch Name");
+        FilterRec.CopyFilters(ItemJnlLine);
+        ItemJnlLine.Reset();
+        ItemJnlLine.SetRange("Journal Template Name", ItemJnlLine."Journal Template Name");
+        ItemJnlLine.SetRange("Journal Batch Name", ItemJnlLine."Journal Batch Name");
+        ItemJnlLine.SetRange("BA Locked For Approval", true);
+        if Cancelled then begin
+            if ItemJnlLine.IsEmpty() then
+                Error(NoApprovalToCancelError, ItemJnlBatch.RecordId());
+            ApprovalEntry.SetCurrentKey("Table ID", "Record ID to Approve", "Status", "Workflow Step Instance ID", "Sequence No.");
+            ApprovalEntry.SetRange("Table ID", Database::"Item Journal Batch");
+            ApprovalEntry.SetRange("Record ID to Approve", ItemJnlBatch.RecordId());
+            ApprovalEntry.SetRange(Status, ApprovalEntry.Status::Approved);
+            ApprovalEntry.SetRange("Workflow Step Instance ID", ItemJnlLine."BA Approval GUID");
+            if not ApprovalEntry.IsEmpty() then
+                Error(AlreadyApprovedError);
+        end else
+            if not Cancelled and not ItemJnlLine.IsEmpty() then
+                Error(AlreadySubmittedError, ItemJnlBatch.RecordId());
+
+        ItemJnlLine.SetRange("BA Locked For Approval");
+        ItemJnlLine.FindSet(true);
+        if Cancelled then begin
+            repeat
+                ItemJnlLine.Validate("BA Locked For Approval", false);
+                ItemJnlLine.Validate("BA Status", ItemJnlLine."BA Status"::" ");
+                ItemJnlLine.Modify(false);
+            until ItemJnlLine.Next() = 0;
+            ItemJnlLine.Reset();
+            ItemJnlLine.CopyFilters(FilterRec);
+            ApprovalEntry.SetCurrentKey("Table ID", "Record ID to Approve", "Status", "Workflow Step Instance ID", "Sequence No.");
+            ApprovalEntry.SetRange("Table ID", Database::"Item Journal Batch");
+            ApprovalEntry.SetRange("Record ID to Approve", ItemJnlBatch.RecordId());
+            ApprovalEntry.SetRange(Status, ApprovalEntry.Status::Open);
+            ApprovalEntry.SetRange("Workflow Step Instance ID", ItemJnlLine."BA Approval GUID");
+            ApprovalEntry.SetRange("Sender ID", UserId());
+            if ApprovalEntry.FindSet(true) then
+                repeat
+                    EntryList.Add(ApprovalEntry."Entry No.");
+                until ApprovalEntry.Next() = 0;
+            foreach EntryNo in EntryList do begin
+                ApprovalEntry.Get(EntryNo);
+                ApprovalEntry.Validate(Status, ApprovalEntry.Status::Canceled);
+                ApprovalEntry.Modify(true);
+            end;
+            Message(CancelRequestMsg);
+            exit;
+        end;
+
+        ItemJnlLine.SetRange("BA Adjust. Reason Code", '');
+        if not ItemJnlLine.IsEmpty() then
+            Error(NoAdjustReasonError, ItemJnlLine.FieldCaption("BA Adjust. Reason Code"));
+        ItemJnlLine.SetRange("BA Adjust. Reason Code");
+        repeat
+            CheckItemJnlLine.RunCheck(ItemJnlLine);
+            ApprovalAmt += ItemJnlLine.Amount;
+        until ItemJnlLine.Next() = 0;
+
+        ItemJnlLine.FindSet(true);
+        if CheckInventoryLimit(ItemJnlLine) then begin
+            repeat
+                ItemJnlLine.Validate("BA Locked For Approval", false);
+                ItemJnlLine.Validate("BA Status", ItemJnlLine."BA Status"::Released);
+                ItemJnlLine.Modify(false);
+            until ItemJnlLine.Next() = 0;
+            Message(NoApprovalNeededMsg);
+        end else begin
+            TempGUID := CreateGuid();
+            repeat
+                ItemJnlLine.Validate("BA Locked For Approval", true);
+                ItemJnlLine.Validate("BA Status", ItemJnlLine."BA Status"::Pending);
+                ItemJnlLine."BA Approval GUID" := TempGUID;
+                ItemJnlLine.Modify(false);
+            until ItemJnlLine.Next() = 0;
+
+            ApprovalEntry.SetCurrentKey("Table ID", "Record ID to Approve", "Status", "Workflow Step Instance ID", "Sequence No.");
+            ApprovalEntry.SetRange("Table ID", Database::"Item Journal Batch");
+            ApprovalEntry.SetRange("Record ID to Approve", ItemJnlBatch.RecordId());
+            ApprovalEntry.SetRange(Status, ApprovalEntry.Status::Open);
+            ApprovalEntry.SetRange("Workflow Step Instance ID", TempGUID);
+            if not ApprovalEntry.IsEmpty() then
+                Error(AlreadyAwaitingApprovalError, ItemJnlBatch.RecordId());
+            ApprovalEntry.Reset();
+            if ApprovalEntry.FindLast() then
+                EntryNo := ApprovalEntry."Entry No.";
+            if InventorySetup."BA Approval Admin1" <> '' then
+                AddItemJnlBatchApprovalEntry(EntryNo, ItemJnlBatch, InventorySetup."BA Approval Admin1", ApprovalAmt, InventorySetup."BA Approval Code", TempGUID);
+            if InventorySetup."BA Approval Admin2" <> '' then
+                AddItemJnlBatchApprovalEntry(EntryNo, ItemJnlBatch, InventorySetup."BA Approval Admin2", ApprovalAmt, InventorySetup."BA Approval Code", TempGUID);
+            Message(RequestSentMsg);
+        end;
+        ItemJnlLine.Reset();
+        ItemJnlLine.CopyFilters(FilterRec);
+    end;
+
+    procedure ReopenApprovalRequest(var ItemJnlLine: Record "Item Journal Line")
+    var
+        ApprovalEntry: Record "Approval Entry";
+        ItemJnlBatch: Record "Item Journal Batch";
+    begin
+        ItemJnlBatch.Get(ItemJnlLine."Journal Template Name", ItemJnlLine."Journal Batch Name");
+        ApprovalEntry.SetCurrentKey("Table ID", "Record ID to Approve", "Status", "Workflow Step Instance ID", "Sequence No.");
+        ApprovalEntry.SetRange("Table ID", Database::"Item Journal Batch");
+        ApprovalEntry.SetRange("Record ID to Approve", ItemJnlBatch.RecordId());
+        ApprovalEntry.SetFilter(Status, '%1|%2', ApprovalEntry.Status::Approved, ApprovalEntry.Status::Canceled);
+        ApprovalEntry.SetRange("Workflow Step Instance ID", ItemJnlLine."BA Approval GUID");
+        ApprovalEntry.SetRange("Sender ID", UserId());
+        ApprovalEntry.ModifyAll(Status, ApprovalEntry.Status::Canceled);
+        ApprovalEntry.SetRange(Status, ApprovalEntry.Status::Open);
+        ApprovalEntry.SetRange("Workflow Step Instance ID");
+        ApprovalEntry.DeleteAll(true);
+    end;
+
+    local procedure AddItemJnlBatchApprovalEntry(var EntryNo: Integer; ItemJnlBatch: Record "Item Journal Batch"; Approver: Code[50]; ApprovalAmt: Decimal; ApprovalCode: Code[20]; WorkflowGUID: Guid)
+    var
+        ApprovalEntry: Record "Approval Entry";
+    begin
+        EntryNo += 1;
+        ApprovalEntry.Init();
+        ApprovalEntry."Entry No." := EntryNo;
+        ApprovalEntry.Validate("Table ID", Database::"Item Journal Batch");
+        ApprovalEntry.Validate("Sender ID", UserId());
+        ApprovalEntry.Validate("Record ID to Approve", ItemJnlBatch.RecordId());
+        ApprovalEntry.Validate(Status, ApprovalEntry.Status::Open);
+        ApprovalEntry.Validate("Date-Time Sent for Approval", CurrentDateTime());
+        ApprovalEntry.Validate("Due Date", WorkDate());
+        ApprovalEntry.Validate(Amount, ApprovalAmt);
+        ApprovalEntry.Validate("Amount (LCY)", ApprovalAmt);
+        ApprovalEntry.Validate("Approval Type", ApprovalEntry."Approval Type"::Approver);
+        ApprovalEntry.Validate("Limit Type", ApprovalEntry."Limit Type"::"No Limits");
+        ApprovalEntry.Validate("Approval Code", ApprovalCode);
+        ApprovalEntry.Validate("Document Type", ApprovalEntry."Document Type"::" ");
+        ApprovalEntry.Validate("Approver ID", Approver);
+        ApprovalEntry.Insert(true);
+        ApprovalEntry.Validate("BA Journal Batch Name", ItemJnlBatch.Name);
+        ApprovalEntry.Validate("Workflow Step Instance ID", WorkflowGUID);
+        ApprovalEntry.Modify(true);
+        SendApprovalNotification(ApprovalEntry);
+    end;
+
+    procedure ClearApprovalEntries()
+    var
+        ApprovalEntry: Record "Approval Entry";
+    begin
+        if UserId <> 'ENCORE' then
+            exit;
+        ApprovalEntry.SetRange("Table ID", Database::"Item Journal Batch");
+        ApprovalEntry.DeleteAll(true);
+    end;
+
+
+    local procedure SendApprovalNotification(var ApprovalEntry: Record "Approval Entry")
+    var
+        NotificationEntry: Record "Notification Entry";
+        ItemJnlBatch: Record "Item Journal Batch";
+        ItemJnlLine: Record "Item Journal Line";
+        PageMgt: Codeunit "Page Management";
+        RecRef: RecordRef;
+    begin
+        if not ItemJnlBatch.Get(ApprovalEntry."Record ID to Approve") then
+            exit;
+        ItemJnlLine.SetRange("Journal Template Name", ItemJnlBatch."Journal Template Name");
+        ItemJnlLine.SetRange("Journal Batch Name", ItemJnlBatch.Name);
+        if not ItemJnlLine.FindFirst() then
+            exit;
+        RecRef.GetTable(ItemJnlLine);
+        NotificationEntry.CreateNewEntry(NotificationEntry.Type::Approval, ApprovalEntry."Approver ID",
+            ApprovalEntry, Page::"Item Journal", PageMgt.GetRTCUrl(RecRef, Page::"Item Journal"), ApprovalEntry."Sender ID");
+    end;
+
+
+    [EventSubscriber(ObjectType::Report, Report::"Notification Email", 'OnAfterSetReportFieldPlaceholders', '', false, false)]
+    local procedure NotificationEmailOnAfterSetReportFieldPlaceholders(var NotificationEntry: Record "Notification Entry"; var DocumentURL: Text)
+    begin
+        if (NotificationEntry.Type = NotificationEntry.Type::Approval) and (NotificationEntry."Link Target Page" = Page::"Item Journal")
+                and (NotificationEntry."Custom Link" <> '') then
+            DocumentURL := NotificationEntry."Custom Link";
     end;
 
 
@@ -1251,8 +1604,6 @@ codeunit 75010 "BA SEI Subscibers"
         end;
     end;
 
-
-
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnAfterPostServiceDoc', '', false, false)]
     local procedure ServicePostOnAfterPostServiceDoc(var ServiceHeader: Record "Service Header"; ServInvoiceNo: Code[20])
     var
@@ -1265,6 +1616,21 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         if ServiceInvHeader.Get(ServInvoiceNo) then
             UpdateOrderPostedFields(ServiceHeader, ServiceInvHeader);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnBeforeServiceInvHeaderInsert', '', false, false)]
+    local procedure ServicePostOnBeforeServiceInvHeaderInsert(var ServiceInvoiceHeader: Record "Service Invoice Header"; ServiceHeader: Record "Service Header")
+    var
+        FreightTerm: Record "ENC Freight Term";
+        ShippingAgent: Record "Shipping Agent";
+    begin
+        ServiceInvoiceHeader."BA Order No. DrillDown" := ServiceHeader."No.";
+        ServiceInvoiceHeader."BA Order No. DrillDown" := ServiceHeader."No.";
+        ServiceInvoiceHeader."BA Posting Date DrillDown" := ServiceHeader."Posting Date";
+        if (ServiceInvoiceHeader."Shipping Agent Code" <> '') and ShippingAgent.Get(ServiceInvoiceHeader."Shipping Agent Code") then
+            ServiceInvoiceHeader."BA Freight Carrier Name" := ShippingAgent.Name;
+        if (ServiceInvoiceHeader."ENC Freight Term" <> '') and FreightTerm.Get(ServiceInvoiceHeader."ENC Freight Term") then
+            ServiceInvoiceHeader."BA Freight Term Name" := FreightTerm.Description;
     end;
 
 
@@ -1372,6 +1738,210 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         RecRef.GetTable(RecVar);
     end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Purchase Line", 'OnBeforeValidateEvent', 'BA SEI Order Type', false, false)]
+    local procedure PurchaseLineOnBeforeValidateSEIOrderType(var Rec: Record "Purchase Line"; var xRec: Record "Purchase Line")
+    begin
+        if Rec."BA SEI Order Type" = xRec."BA SEI Order Type" then
+            exit;
+        Rec.Validate("BA SEI Order No.", '');
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Purchase Line", 'OnBeforeValidateEvent', 'BA SEI Order No.', false, false)]
+    local procedure PurchaseLineOnBeforeValidateSEIOrderNo(var Rec: Record "Purchase Line"; var xRec: Record "Purchase Line")
+    begin
+        if Rec."BA SEI Order No." = xRec."BA SEI Order No." then
+            exit;
+        if Rec."BA SEI Order No." = '' then begin
+            Rec."BA SEI Invoice No." := '';
+            exit;
+        end;
+        case Rec."BA SEI Order Type" of
+            Rec."BA SEI Order Type"::"Delta SO":
+                GetRelatedSalesFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.", true);
+            Rec."BA SEI Order Type"::"Delta SVO":
+                GetRelatedServiceFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.", true);
+            Rec."BA SEI Order Type"::"Int. SO":
+                GetRelatedSalesFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.", false);
+            Rec."BA SEI Order Type"::"Int. SVO":
+                GetRelatedServiceFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.", false);
+            Rec."BA SEI Order Type"::Transfer:
+                GetRelatedTransferFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.");
+            Rec."BA SEI Order Type"::" ":
+                Error(MissingOrderTypeErr, Rec.FieldCaption("BA SEI Order Type"), Rec.FieldCaption("BA SEI Order No."));
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Purch. Inv. Line", 'OnBeforeValidateEvent', 'BA SEI Order No.', false, false)]
+    local procedure PurchInvLineOnBeforeValidateSEIOrderNo(var Rec: Record "Purch. Inv. Line"; var xRec: Record "Purch. Inv. Line")
+    begin
+        if Rec."BA SEI Order No." = xRec."BA SEI Order No." then
+            exit;
+        if Rec."BA SEI Order No." = '' then begin
+            Rec."BA SEI Invoice No." := '';
+            exit;
+        end;
+        case Rec."BA SEI Order Type" of
+            Rec."BA SEI Order Type"::"Delta SO":
+                GetRelatedSalesFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.", true);
+            Rec."BA SEI Order Type"::"Delta SVO":
+                GetRelatedServiceFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.", true);
+            Rec."BA SEI Order Type"::"Int. SO":
+                GetRelatedSalesFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.", false);
+            Rec."BA SEI Order Type"::"Int. SVO":
+                GetRelatedServiceFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.", false);
+            Rec."BA SEI Order Type"::Transfer:
+                GetRelatedTransferFields(Rec."BA SEI Order No.", Rec."BA SEI Invoice No.");
+            Rec."BA SEI Order Type"::" ":
+                Error(MissingOrderTypeErr, Rec.FieldCaption("BA SEI Order Type"), Rec.FieldCaption("BA SEI Order No."));
+        end;
+    end;
+
+    local procedure GetRelatedSalesFields(var DocNo: Code[20]; var PostedDocNo: Code[20]; LocalCustomer: Boolean)
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        FilterText: Text;
+    begin
+        SalesInvHeader.SetCurrentKey("Order No.");
+        if LocalCustomer then
+            SalesInvHeader.SetRange("Order No.", DocNo)
+        else
+            SalesInvHeader.SetRange("External Document No.", DocNo);
+
+        FilterText := GetIntCustFilter(LocalCustomer);
+        if FilterText <> '' then
+            SalesInvHeader.SetFilter("Bill-to Customer No.", FilterText);
+        if not SalesInvHeader.FindFirst() then
+            if LocalCustomer then
+                SalesInvHeader.SetFilter("Order No.", StrSubstNo('%1*', DocNo))
+            else
+                SalesInvHeader.SetFilter("External Document No.", StrSubstNo('%1*', DocNo));
+        SalesInvHeader.FindFirst();
+        if LocalCustomer then
+            DocNo := SalesInvHeader."Order No."
+        else
+            DocNo := SalesInvHeader."External Document No.";
+        PostedDocNo := SalesInvHeader."No.";
+    end;
+
+    local procedure GetRelatedServiceFields(var DocNo: Code[20]; var PostedDocNo: Code[20]; LocalCustomer: Boolean)
+    var
+        ServiceInvHeader: Record "Service Invoice Header";
+        FilterText: Text;
+    begin
+        ServiceInvHeader.SetCurrentKey("Order No.");
+        if LocalCustomer then
+            ServiceInvHeader.SetRange("Order No.", DocNo)
+        else
+            ServiceInvHeader.SetRange("ENC External Document No.", DocNo);
+        FilterText := GetIntCustFilter(LocalCustomer);
+        if FilterText <> '' then
+            ServiceInvHeader.SetFilter("Bill-to Customer No.", FilterText);
+        if not ServiceInvHeader.FindFirst() then
+            if LocalCustomer then
+                ServiceInvHeader.SetFilter("Order No.", StrSubstNo('%1*', DocNo))
+            else
+                ServiceInvHeader.SetFilter("ENC External Document No.", StrSubstNo('%1*', DocNo));
+        ServiceInvHeader.FindFirst();
+        if LocalCustomer then
+            DocNo := ServiceInvHeader."Order No."
+        else
+            DocNo := ServiceInvHeader."ENC External Document No.";
+        PostedDocNo := ServiceInvHeader."No.";
+    end;
+
+
+
+    local procedure GetRelatedTransferFields(var DocNo: Code[20]; var PostedDocNo: Code[20])
+    var
+        TransferShptHeader: Record "Transfer Shipment Header";
+    begin
+        TransferShptHeader.SetCurrentKey("Transfer Order No.");
+        TransferShptHeader.SetRange("Transfer Order No.", DocNo);
+        if not TransferShptHeader.FindFirst() then
+            TransferShptHeader.SetFilter("Transfer Order No.", StrSubstNo('%1*', DocNo));
+        TransferShptHeader.FindFirst();
+        DocNo := TransferShptHeader."Transfer Order No.";
+        PostedDocNo := TransferShptHeader."No.";
+    end;
+
+    local procedure GetIntCustFilter(Exclude: Boolean): Text
+    var
+        CustomerList: List of [Code[20]];
+        CustNo: Code[20];
+        FilterTxt: TextBuilder;
+    begin
+        GetInternationalCustomers(CustomerList, true);
+        if CustomerList.Count() = 0 then
+            exit('');
+        CustomerList.Get(1, CustNo);
+        if Exclude then
+            FilterTxt.Append('<>');
+        FilterTxt.Append(CustNo);
+        CustomerList.RemoveAt(1);
+        if Exclude then
+            foreach CustNo in CustomerList do
+                FilterTxt.Append('&<>' + CustNo)
+        else
+            foreach CustNo in CustomerList do
+                FilterTxt.Append('|' + CustNo);
+        exit(FilterTxt.ToText());
+    end;
+
+    local procedure GetInternationalCustomers(var CustomerList: List of [Code[20]]; Sales: Boolean)
+    var
+        Customer: Record Customer;
+    begin
+        Clear(CustomerList);
+        if Sales then
+            Customer.SetRange("BA Int. Customer", true)
+        else
+            Customer.SetRange("BA Serv. Int. Customer", true);
+        if Customer.FindSet() then
+            repeat
+                CustomerList.Add(Customer."No.");
+            until Customer.Next() = 0;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnBeforePostGLAccICLine', '', false, false)]
+    local procedure PurchPostOnBeforePostGLAccICLine(var PurchHeader: Record "Purchase Header"; var PurchLine: Record "Purchase Line")
+    var
+        GLAccount: Record "G/L Account";
+    begin
+        if not GLAccount.Get(PurchLine."No.") or
+            (not GLAccount."BA Freight Charge" and not GLAccount."BA Transfer Charge") then
+            exit;
+        if GLAccount."BA Freight Charge" then begin
+            if PurchLine."BA SEI Order Type" = PurchLine."BA SEI Order Type"::" " then
+                Error(LineFieldTypeMissingErr, PurchLine.FieldCaption(PurchLine."BA SEI Order Type"), PurchLine."Line No.");
+            if PurchLine."BA Freight Charge Type" = PurchLine."BA Freight Charge Type"::" " then
+                Error(LineFieldTypeMissingErr, PurchLine.FieldCaption(PurchLine."BA Freight Charge Type"), PurchLine."Line No.");
+        end;
+        if PurchLine."BA SEI Order Type" <> PurchLine."BA SEI Order Type"::" " then begin
+            PurchLine.TestField("BA SEI Order No.");
+            PurchLine.TestField("BA Freight Charge Type");
+        end;
+        if PurchLine."BA Freight Charge Type" <> PurchLine."BA Freight Charge Type"::" " then begin
+            PurchLine.TestField("BA SEI Order No.");
+            if PurchLine."BA SEI Order Type" = PurchLine."BA SEI Order Type"::" " then
+                Error(LineFieldTypeMissingErr, PurchLine.FieldCaption(PurchLine."BA SEI Order Type"), PurchLine."Line No.");
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"TransferOrder-Post Shipment", 'OnBeforeInsertTransShptHeader', '', false, false)]
+    local procedure TransferOrderPostShptOnBeforeInsertTransShptHeader(var TransShptHeader: Record "Transfer Shipment Header"; TransHeader: Record "Transfer Header")
+    var
+        FreightTerm: Record "ENC Freight Term";
+        ShippingAgent: Record "Shipping Agent";
+    begin
+        TransShptHeader."BA Trans. Order No. DrillDown" := TransHeader."No.";
+        if (TransShptHeader."Shipping Agent Code" <> '') and ShippingAgent.Get(TransShptHeader."Shipping Agent Code") then
+            TransShptHeader."BA Freight Carrier Name" := ShippingAgent.Name;
+        if (TransShptHeader."ENC Freight Term" <> '') and FreightTerm.Get(TransShptHeader."ENC Freight Term") then
+            TransShptHeader."BA Freight Term Name" := FreightTerm.Description;
+    end;
+
+
 
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeMessageIfSalesLinesExist', '', false, false)]
@@ -1805,6 +2375,12 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Deposit-Post", 'OnBeforePostedDepositHeaderInsert', '', false, false)]
+    local procedure DepositPostOnBeforePostedDepositHeaderInsert(var PostedDepositHeader: Record "Posted Deposit Header")
+    begin
+        PostedDepositHeader."BA User ID" := UserId();
+    end;
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Gen. Jnl.-Check Line", 'OnAfterCheckGenJnlLine', '', false, false)]
     local procedure GenJnlCheckLineOnAfterCheckGenJnlLine(var GenJournalLine: Record "Gen. Journal Line")
     var
@@ -1832,10 +2408,18 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Deposit-Post", 'OnBeforePostedDepositHeaderInsert', '', false, false)]
-    local procedure DepositPostOnBeforePostedDepositHeaderInsert(var PostedDepositHeader: Record "Posted Deposit Header")
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Document-Print", 'OnBeforeCalcServDisc', '', false, false)]
+    local procedure DocumentPrintOnBeforeCalcServDisc(var ServiceHeader: Record "Service Header"; var IsHandled: Boolean)
+    var
+        SalesRecSetup: Record "Sales & Receivables Setup";
+        ServLine: Record "Service Line";
     begin
-        PostedDepositHeader."BA User ID" := UserId();
+        if not SalesRecSetup.Get('') or not SalesRecSetup."Calc. Inv. Discount" then
+            exit;
+        ServLine.SetRange("Document Type", ServiceHeader."Document Type");
+        ServLine.SetRange("Document No.", ServiceHeader."No.");
+        IsHandled := ServLine.IsEmpty();
     end;
 
 
@@ -2058,6 +2642,43 @@ codeunit 75010 "BA SEI Subscibers"
         SalesHeader.TransferFields(SalesHeaderArchive, true);
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeRecreateSalesLinesHandler', '', false, false)]
+    local procedure SalesHeaderOnBeforeRecreateSalesLinesHandler(var SalesHeader: Record "Sales Header"; var IsHandled: Boolean)
+    begin
+        if SalesHeader."BA Skip Sales Line Recreate" then
+            IsHandled := true;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnBeforeRecreateServiceLinesHandler', '', false, false)]
+    local procedure ServiceHeaderOnBeforeRecreateServiceLinesHandler(var Rec: Record "Service Header"; var IsHandled: Boolean)
+    begin
+        if Rec."BA Skip Sales Line Recreate" then
+            IsHandled := true;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Quote to Order", 'OnBeforeModifySalesOrderHeader', '', false, false)]
+    local procedure SalesQuoteToOrderOnBeforeModifySalesOrderHeader(var SalesOrderHeader: Record "Sales Header"; SalesQuoteHeader: Record "Sales Header")
+    var
+        CustPostingGroup: Record "Customer Posting Group";
+        CurrExchRate: Record "Currency Exchange Rate";
+        DiffDate: Boolean;
+    begin
+        if (SalesOrderHeader."Order Date" = WorkDate()) and (SalesOrderHeader."Posting Date" = WorkDate()) then
+            exit;
+        SalesOrderHeader.SetHideValidationDialog(true);
+        SalesOrderHeader."BA Skip Sales Line Recreate" := true;
+        SalesOrderHeader.Validate("Posting Date", WorkDate());
+        DiffDate := SalesOrderHeader."Order Date" = 0D;
+        if not DiffDate then
+            DiffDate := ((Date2DMY(WorkDate(), 2) <> Date2DMY(SalesOrderHeader."Order Date", 2))
+                or (Date2DMY(WorkDate(), 3) <> Date2DMY(SalesOrderHeader."Order Date", 3)));
+        if DiffDate and CustPostingGroup.Get(SalesOrderHeader."Customer Posting Group") and (CustPostingGroup."BA Posting Currency" <> '') then
+            SalesOrderHeader.Validate("Currency Factor", CurrExchRate.GetCurrentCurrencyFactor(SalesOrderHeader."Currency Code"));
+        SalesOrderHeader.SetHideValidationDialog(false);
+        SalesOrderHeader."BA Skip Sales Line Recreate" := false;
+        SalesOrderHeader.Modify(true);
+    end;
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Inventory Adjustment", 'OnPostItemJnlLineCopyFromValueEntry', '', false, false)]
     local procedure InventoryAdjustmentOnPostItemJnlLineCopyFromValueEntry(var ItemJournalLine: Record "Item Journal Line"; ValueEntry: Record "Value Entry")
     var
@@ -2092,7 +2713,6 @@ codeunit 75010 "BA SEI Subscibers"
         Rec."BA Actual Posting DateTime" := CurrentDateTime();
         Rec.Modify(false);
     end;
-
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Quote to Order", 'OnAfterOnRun', '', false, false)]
@@ -2498,7 +3118,6 @@ codeunit 75010 "BA SEI Subscibers"
             SalesLine.Modify(false);
         end;
 
-
         SalesHeader."Posting Description" := StrSubstNo('%1 %2', SalesHeader."Document Type", SalesHeader."No.");
     end;
 
@@ -2615,18 +3234,6 @@ codeunit 75010 "BA SEI Subscibers"
         end;
     end;
 
-
-    [EventSubscriber(ObjectType::Table, Database::"Service Item Line", 'OnBeforeUpdateResponseTimeHours', '', false, false)]
-    local procedure ServiceItemLineOnBeforeUpdateResponseTimeHours(var ServiceItemLine: Record "Service Item Line")
-    var
-        ServiceHeader: Record "Service Header";
-    begin
-        if (ServiceItemLine."Response Time (Hours)" = 0) or (ServiceItemLine."Response Date" <> 0D) then
-            exit;
-        ServiceHeader.Get(ServiceItemLine."Document Type", ServiceItemLine."Document No.");
-        ServiceItemLine.CalculateResponseDateTime(ServiceHeader."Order Date", ServiceHeader."Order Time");
-    end;
-
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterValidateEvent', 'Bill-to Customer No.', false, false)]
     local procedure SalesHeaderOnAfterValidateBillToCustomerNo(var Rec: Record "Sales Header"; var xRec: Record "Sales Header")
     var
@@ -2706,6 +3313,19 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    [EventSubscriber(ObjectType::Table, Database::"Document Sending Profile", 'OnBeforeTrySendToEMail', '', false, false)]
+    local procedure DocumentSendingProfileOnBeforeTrySendToEMail(var ReportUsage: Integer; RecordVariant: Variant)
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ReportSelection: Record "Report Selections";
+        RecRef: RecordRef;
+    begin
+        if ReportUsage <> ReportSelection.Usage::"S.Invoice" then
+            exit;
+        RecRef.GetTable(RecordVariant);
+        if Format(RecRef.Field(SalesInvHeader.FieldNo("Prepayment Invoice"))) = Format(true) then
+            ReportUsage := 50015;
+    end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Quote to Order", 'OnBeforeInsertSalesOrderLine', '', false, false)]
     local procedure SalesQuoteToOrderOnBeforeInsertSalesOrderLine(var SalesOrderLine: Record "Sales Line")
@@ -2782,7 +3402,6 @@ codeunit 75010 "BA SEI Subscibers"
             until ExcelBuffer.Next() = 0;
 
         Window.Close();
-
 
         Message('Updated %1 of %2.', i2, RecCount);
     end;
@@ -3410,55 +4029,6 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    procedure ImportFreightInvoicesToFixUpdate()
-    var
-        SalesInvHeader: Record "Sales Invoice Header";
-        ExcelBuffer: Record "Excel Buffer" temporary;
-        ErrorBuffer: Record "Name/Value Buffer" temporary;
-        TempBlob: Record TempBlob;
-        FileMgt: Codeunit "File Management";
-        IStream: InStream;
-        Window: Dialog;
-        FileName: Text;
-        RecCount: Integer;
-        i: Integer;
-        i2: Integer;
-    begin
-        if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Freight Invoice List', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
-            exit;
-        TempBlob.Blob.CreateInStream(IStream);
-        if not ExcelBuffer.GetSheetsNameListFromStream(IStream, ErrorBuffer) then
-            Error('No Sheets in file.');
-        ErrorBuffer.FindFirst();
-        ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
-        ExcelBuffer.ReadSheet();
-
-        ExcelBuffer.SetRange("Column No.", 1);
-        ExcelBuffer.SetFilter("Row No.", '>%1', 3);
-        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
-        if not ExcelBuffer.FindSet() then
-            exit;
-
-        RecCount := ExcelBuffer.Count();
-        Window.Open('#1####/#2####');
-        repeat
-            i += 1;
-            if SalesInvHeader.Get(ExcelBuffer."Cell Value as Text") then begin
-                SalesInvHeader.Validate("Shipping Agent Code", 'FDX');
-                SalesInvHeader.Modify(true);
-                i2 += 1;
-            end;
-            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
-        until ExcelBuffer.Next() = 0;
-        Window.Close();
-
-        Message('Updated %1 of %2.', i2, RecCount);
-    end;
-
-
-
-
-
     local procedure GetLinkedAssemblyHeader(var SalesLine: Record "Sales Line"; var AssemblyHeader: Record "Assembly Header"): Boolean
     var
         ATOLink: Record "Assemble-to-Order Link";
@@ -3548,32 +4118,212 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    [EventSubscriber(ObjectType::Page, Page::"Sales Order", 'OnBeforeActionEvent', 'SendApprovalRequest', false, false)]
-    local procedure SalesOrderOnBeforeSendApprovalRequest(var Rec: Record "Sales Header")
-    begin
-        if Rec."Document Type" = Rec."Document Type"::Order then
-            Rec.TestField("BA Salesperson Verified", true);
-    end;
-
-    [EventSubscriber(ObjectType::Page, Page::"Sales Order List", 'OnBeforeActionEvent', 'SendApprovalRequest', false, false)]
-    local procedure SalesOrderListOnBeforeSendApprovalRequest(var Rec: Record "Sales Header")
-    begin
-        if Rec."Document Type" = Rec."Document Type"::Order then
-            Rec.TestField("BA Salesperson Verified", true);
-    end;
-
-    [EventSubscriber(ObjectType::Table, Database::"Service Item Line", 'OnAfterValidateEvent', 'Repair Status Code', false, false)]
-    local procedure ServiceItemLineOnAfterValidateRepairStatusCode(var Rec: Record "Service Item Line")
+    [EventSubscriber(ObjectType::Page, Page::"Payment Journal", 'OnBeforeActionEvent', 'ExportPaymentsToFile', false, false)]
+    local procedure PaymentJournalOnBeforeExportPaymentsToFile(var Rec: Record "Gen. Journal Line")
     var
-        ServiceHeader: Record "Service Header";
-        RepairStatus: Record "Repair Status";
+        UserSetup: Record "User Setup";
     begin
-        if (Rec."Repair Status Code" = '') or not RepairStatus.Get(Rec."Repair Status Code") or Rec.IsTemporary() then
+        if not UserSetup.Get(UserId()) then begin
+            UserSetup.Init();
+            UserSetup.Validate("User ID", UserId());
+            UserSetup.Insert(true);
+        end;
+        UserSetup.Validate("BA Payment Bank Account No.", Rec."Bal. Account No.");
+        UserSetup.Validate("BA Payment Filter Record ID", Rec.RecordId());
+        UserSetup.Modify(true);
+    end;
+
+    [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeOpenPage', '', false, false)]
+    local procedure ExportElectronicPaymentsOnBeforeOpenPage(var BankAccount: Record "Bank Account"; var SupportedOutputMethod: Option; var FilterRecordID: RecordId)
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if UserSetup.Get(UserId()) then begin
+            FilterRecordID := UserSetup."BA Payment Filter Record ID";
+            if UserSetup."BA Payment Bank Account No." <> '' then begin
+                BankAccount."No." := UserSetup."BA Payment Bank Account No.";
+                UserSetup."BA Payment Bank Account No." := '';
+                UserSetup.Modify(false);
+            end;
+        end;
+        SupportedOutputMethod := 0;
+    end;
+
+    [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeGenJournalLineOnAfterGetRecord', '', false, false)]
+    local procedure ExportElectronicPaymentsOnBeforeGenJournalLineOnAfterGetRecord(var GenJournalLine: Record "Gen. Journal Line")
+    var
+        TempDimSetEntry: Record "Dimension Set Entry" temporary;
+        DimValue: Record "Dimension Value";
+        DimMgt: Codeunit DimensionManagement;
+    begin
+        DimMgt.GetDimensionSet(TempDimSetEntry, GenJournalLine."Dimension Set ID");
+        if TempDimSetEntry.FindSet() then
+            repeat
+                DimValue.Get(TempDimSetEntry."Dimension Code", TempDimSetEntry."Dimension Value Code");
+                if DimValue.Blocked then
+                    Error(BlockedDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
+                if DimValue."ENC Inactive" then
+                    Error(InactiveDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
+            until TempDimSetEntry.Next() = 0;
+    end;
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
+    local procedure GenerateEFTOnBeforeSelectFolder(var BankAccount: Record "Bank Account"; SaveFolderMsg: Text; var Path: Text; var IsHandled: Boolean)
+    var
+        FileMgt: Codeunit "File Management";
+    begin
+        if BankAccount."E-Pay Export File Path" <> '' then begin
+            IsHandled := true;
+            FileMgt.SelectDefaultFolderDialog(SaveFolderMsg, Path, BankAccount."E-Pay Export File Path");
+        end;
+    end;
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
+    local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
+    begin
+        ACHRBHeader."File Creation Date" := FormatACHDate(Today());
+        ACHRBHeader."Federal ID No." := StrSubstNo('%1', FormatACHDate(Today() - 30));
+        ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]
+    local procedure ExportETFRBOnBeforeACHRBDetailModify(var ACHRBDetail: Record "ACH RB Detail"; var TempEFTExportWorkset: Record "EFT Export Workset")
+    var
+        VendorBankAccount: Record "Vendor Bank Account";
+    begin
+        VendorBankAccount.SetRange("Vendor No.", TempEFTExportWorkset."Account No.");
+        VendorBankAccount.SetRange("Use for Electronic Payments", true);
+        VendorBankAccount.FindFirst();
+        VendorBankAccount.TestField("Bank Code");
+        VendorBankAccount.TestField("Bank Branch No.");
+        VendorBankAccount.TestField("Bank Account No.");
+        VendorBankAccount.TestField(Name);
+        ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
+        ACHRBDetail."Language Code" := FormatPaymentAmount(ACHRBDetail."Payment Amount");
+        ACHRBDetail."Vendor/Customer Name" := VendorBankAccount.Name;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBFooterModify', '', false, false)]
+    local procedure ExportETFRBOnBeforeACHRBFooterModify(var ACHRBFooter: Record "ACH RB Footer"; var TempEFTExportWorkset: Record "EFT Export Workset")
+    begin
+        ACHRBFooter."Record Count" := TempEFTExportWorkset.Count();
+        ACHRBFooter."BA Payment Amount Text" := FormatPaymentAmount(ACHRBFooter."Total File Credit");
+    end;
+
+
+
+
+    local procedure FormatACHDate(Input: Date): Integer
+    begin
+        exit((Date2DMY(Input, 3) - 2000) * 10000 + Date2DMY(Input, 2) * 100 + Date2DMY(Input, 1));
+    end;
+
+    local procedure FormatPaymentAmount(Input: Decimal): Text
+    var
+        Parts: List of [Text];
+        PaymentText: Text;
+        s1: Text;
+        s2: Text;
+    begin
+        PaymentText := Format(Input);
+        if PaymentText.Contains('.') then begin
+            Parts := PaymentText.Split('.');
+            s1 := DelChr(Parts.Get(1), '=', ',.');
+            s2 := DelChr(Parts.Get(2), '=', ',.');
+            if StrLen(s2) = 1 then
+                s2 += '0';
+            exit(s1 + s2);
+        end;
+        exit(DelChr(PaymentText, '=', ',.') + '00');
+    end;
+
+
+    local procedure PrintRecord(RecVar: Variant): Text
+    var
+        FieldRec: Record Field;
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        Output: TextBuilder;
+    begin
+        RecRef.GetTable(RecVar);
+        FieldRec.SetRange(TableNo, RecRef.Number());
+        FieldRec.SetRange(Enabled, true);
+        FieldRec.SetFilter(ObsoleteState, '<>%1', FieldRec.ObsoleteState::Removed);
+        if FieldRec.FindSet() then
+            repeat
+                FldRef := RecRef.Field(FieldRec."No.");
+                if FldRef.Class = FldRef.Class::FlowField then
+                    FldRef.CalcField();
+                Output.AppendLine(StrSubstNo('%1 %2: %3', FldRef.Number, FldRef.Caption, FldRef.Value));
+            until FieldRec.Next() = 0;
+        exit(Output.ToText());
+    end;
+
+
+
+    procedure ImportFreightInvoicesToFixUpdate()
+    var
+        SalesInvHeader: Record "Sales Invoice Header";
+        ExcelBuffer: Record "Excel Buffer" temporary;
+        ErrorBuffer: Record "Name/Value Buffer" temporary;
+        TempBlob: Record TempBlob;
+        FileMgt: Codeunit "File Management";
+        IStream: InStream;
+        Window: Dialog;
+        FileName: Text;
+        RecCount: Integer;
+        i: Integer;
+        i2: Integer;
+    begin
+        if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Freight Invoice List', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
             exit;
-        if RepairStatus."BA Salesperson Verification" then
-            if ServiceHeader.Get(Rec."Document Type", Rec."Document No.") then
-                if not ServiceHeader."BA Salesperson Verified" then
-                    Error(NotVerifiedSalespersonErr, Rec.FieldCaption("Repair Status Code"), Rec."Repair Status Code");
+        TempBlob.Blob.CreateInStream(IStream);
+        if not ExcelBuffer.GetSheetsNameListFromStream(IStream, ErrorBuffer) then
+            Error('No Sheets in file.');
+        ErrorBuffer.FindFirst();
+        ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
+        ExcelBuffer.ReadSheet();
+
+        ExcelBuffer.SetRange("Column No.", 1);
+        ExcelBuffer.SetFilter("Row No.", '>%1', 3);
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        if not ExcelBuffer.FindSet() then
+            exit;
+
+        RecCount := ExcelBuffer.Count();
+        Window.Open('#1####/#2####');
+        repeat
+            i += 1;
+            if SalesInvHeader.Get(ExcelBuffer."Cell Value as Text") then begin
+                SalesInvHeader.Validate("Shipping Agent Code", 'FDX');
+                SalesInvHeader.Modify(true);
+                i2 += 1;
+            end;
+            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+        until ExcelBuffer.Next() = 0;
+        Window.Close();
+
+        Message('Updated %1 of %2.', i2, RecCount);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeInsertEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeInsertEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeModifyEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeModifyEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeDeleteEvent', '', false, false)]
+    local procedure PaymentTermsOnBeforeDeleteEvent()
+    begin
+        CheckIfCanEditPaymentTerms();
     end;
 
 
@@ -3633,23 +4383,6 @@ codeunit 75010 "BA SEI Subscibers"
         exit(80002);
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeInsertEvent', '', false, false)]
-    local procedure PaymentTermsOnBeforeInsertEvent()
-    begin
-        CheckIfCanEditPaymentTerms();
-    end;
-
-    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeModifyEvent', '', false, false)]
-    local procedure PaymentTermsOnBeforeModifyEvent()
-    begin
-        CheckIfCanEditPaymentTerms();
-    end;
-
-    [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeDeleteEvent', '', false, false)]
-    local procedure PaymentTermsOnBeforeDeleteEvent()
-    begin
-        CheckIfCanEditPaymentTerms();
-    end;
 
     [EventSubscriber(ObjectType::Table, Database::"Payment Terms", 'OnBeforeRenameEvent', '', false, false)]
     local procedure PaymentTermsOnBeforeRenameEvent()
@@ -3671,42 +4404,48 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SalesLineOnAfterInsert(var Rec: Record "Sales Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, false, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, false, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterModifyEvent', '', false, false)]
     local procedure SalesLineOnAfterModify(var Rec: Record "Sales Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, False, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, False, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterDeleteEvent', '', false, false)]
     local procedure SalesLineOnAfterDelete(var Rec: Record "Sales Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, true, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, true, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterInsertEvent', '', false, false)]
     local procedure SalesHeaderOnAfterInsert(var Rec: Record "Sales Header")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, Rec."Document Type", false);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, Rec."Document Type", false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterModifyEvent', '', false, false)]
     local procedure SalesHeaderOnAfterModify(var Rec: Record "Sales Header")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, Rec."Document Type", false);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, Rec."Document Type", false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterDeleteEvent', '', false, false)]
     local procedure SalesHeaderOnAfterDelete(var Rec: Record "Sales Header")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, Rec."Document Type", true);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, Rec."Document Type", true);
     end;
 
 
@@ -3719,21 +4458,24 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ServiceLineOnAfterInsert(var Rec: Record "Service Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, false, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, false, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Line", 'OnAfterModifyEvent', '', false, false)]
     local procedure ServiceLineOnAfterModify(var Rec: Record "Service Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, false, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, false, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Line", 'OnAfterDeleteEvent', '', false, false)]
     local procedure ServiceLineOnAfterDelete(var Rec: Record "Service Line")
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderLine(Rec, true, false);
+            if IsValidLedgerDate(Rec."BA Booking Date") then
+                SaveOrderLine(Rec, true, false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterInsertEvent', '', false, false)]
@@ -3742,7 +4484,8 @@ codeunit 75010 "BA SEI Subscibers"
         DocType: Enum "BA Order Document Type";
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, DocType::"Service Order", false);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, DocType::"Service Order", false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterModifyEvent', '', false, false)]
@@ -3751,7 +4494,8 @@ codeunit 75010 "BA SEI Subscibers"
         DocType: Enum "BA Order Document Type";
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, DocType::"Service Order", false);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, DocType::"Service Order", false);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterDeleteEvent', '', false, false)]
@@ -3760,7 +4504,8 @@ codeunit 75010 "BA SEI Subscibers"
         DocType: Enum "BA Order Document Type";
     begin
         if Rec."Document Type" = Rec."Document Type"::Order then
-            SaveOrderHeader(Rec, DocType::"Service Order", true);
+            if IsValidLedgerDate(Rec."Posting Date") or IsValidLedgerDate(Rec."Document Date") then
+                SaveOrderHeader(Rec, DocType::"Service Order", true);
     end;
 
 
@@ -3771,6 +4516,16 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    local procedure IsValidLedgerDate(CheckDate: Date): Boolean
+    var
+        SalesRecSetup: Record "Sales & Receivables Setup";
+    begin
+        if CheckDate = 0D then
+            exit(false);
+        if not SalesRecSetup.Get() or (SalesRecSetup."BA Ledger Start Date" = 0D) then
+            exit(false);
+        exit(CheckDate >= SalesRecSetup."BA Ledger Start Date");
+    end;
 
 
 
@@ -3797,6 +4552,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; var OrderHeader: Record "BA Order Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
         SalesLine: Record "Sales Line";
+        SalesRecSetup: Record "Sales & Receivables Setup";
     begin
         if OrderHeader.GetFilters() = '' then begin
             OrderHeader.SetRange("Document Type", DocType);
@@ -3808,6 +4564,7 @@ codeunit 75010 "BA SEI Subscibers"
             OrderHeader."Document Type" := DocType;
             OrderHeader.Insert(true);
         end;
+        SalesRecSetup.Get();
         OrderHeader."Order Date" := SalesHeader."Order Date";
         OrderHeader."Currency Code" := SalesHeader."Currency Code";
         OrderHeader."Currency Factor" := SalesHeader."Currency Factor";
@@ -3826,6 +4583,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderHeader.Modify(true);
         SalesLine.SetRange("Document Type", SalesHeader."Document Type");
         SalesLine.SetRange("Document No.", SalesHeader."No.");
+        if SalesRecSetup."BA Ledger Start Date" <> 0D then
+            SalesLine.SetFilter("BA Booking Date", '>=%1', SalesRecSetup."BA Ledger Start Date");
         if SalesLine.FindSet() then
             repeat
                 SaveOrderLine(SalesLine, Deleted, false);
@@ -3938,6 +4697,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         ServiceLine: Record "Service Line";
         Customer: Record Customer;
+        SalesRecSetup: Record "Sales & Receivables Setup";
     begin
         if OrderHeader.GetFilters() = '' then begin
             OrderHeader.SetRange("Document Type", DocType);
@@ -3949,6 +4709,7 @@ codeunit 75010 "BA SEI Subscibers"
             OrderHeader."Document Type" := DocType;
             OrderHeader.Insert(true);
         end;
+        SalesRecSetup.Get();
         OrderHeader."Order Date" := ServiceHeader."Order Date";
         OrderHeader."Currency Code" := ServiceHeader."Currency Code";
         OrderHeader."Currency Factor" := ServiceHeader."Currency Factor";
@@ -3968,6 +4729,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderHeader.Modify(true);
         ServiceLine.SetRange("Document Type", ServiceHeader."Document Type");
         ServiceLine.SetRange("Document No.", ServiceHeader."No.");
+        if SalesRecSetup."BA Ledger Start Date" <> 0D then
+            ServiceLine.SetFilter("BA Booking Date", '>=%1', SalesRecSetup."BA Ledger Start Date");
         if ServiceLine.FindSet() then
             repeat
                 SaveOrderLine(ServiceLine, Deleted, false);
@@ -4079,6 +4842,37 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+    [EventSubscriber(ObjectType::Page, Page::"Sales Order", 'OnBeforeActionEvent', 'SendApprovalRequest', false, false)]
+    local procedure SalesOrderOnBeforeSendApprovalRequest(var Rec: Record "Sales Header")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            Rec.TestField("BA Salesperson Verified", true);
+    end;
+
+    [EventSubscriber(ObjectType::Page, Page::"Sales Order List", 'OnBeforeActionEvent', 'SendApprovalRequest', false, false)]
+    local procedure SalesOrderListOnBeforeSendApprovalRequest(var Rec: Record "Sales Header")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            Rec.TestField("BA Salesperson Verified", true);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Service Item Line", 'OnAfterValidateEvent', 'Repair Status Code', false, false)]
+    local procedure ServiceItemLineOnAfterValidateRepairStatusCode(var Rec: Record "Service Item Line")
+    var
+        ServiceHeader: Record "Service Header";
+        RepairStatus: Record "Repair Status";
+    begin
+        if (Rec."Repair Status Code" = '') or not RepairStatus.Get(Rec."Repair Status Code") or Rec.IsTemporary() then
+            exit;
+        if RepairStatus."BA Salesperson Verification" then
+            if ServiceHeader.Get(Rec."Document Type", Rec."Document No.") then
+                if not ServiceHeader."BA Salesperson Verified" then
+                    Error(NotVerifiedSalespersonErr, Rec.FieldCaption("Repair Status Code"), Rec."Repair Status Code");
+    end;
+
+
+
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnBeforeInsertEvent', '', false, false)]
     local procedure OnBeforeServiceHeaderInsert(var Rec: Record "Service Header")
     begin
@@ -4127,6 +4921,36 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Tracking Data Collection", 'OnBeforeUpdateBinContent', '', false, false)]
+    local procedure ItemTrackingDataCollectionOnBeforeUpdateBinContent(var TempEntrySummary: Record "Entry Summary"; var TempReservationEntry: Record "Reservation Entry")
+    var
+        WarehouseEntry: Record "Warehouse Entry";
+        ItemLedgerEntry: Record "Item Ledger Entry";
+    begin
+        if TempEntrySummary."Table ID" <> Database::"Item Ledger Entry" then
+            exit;
+        if TempReservationEntry."Entry No." > 0 then
+            TempEntrySummary."BA Item Ledger Entry No." := TempReservationEntry."Entry No."
+        else
+            TempEntrySummary."BA Item Ledger Entry No." := -TempReservationEntry."Entry No.";
+        if not ItemLedgerEntry.Get(TempEntrySummary."BA Item Ledger Entry No.") then
+            exit;
+        TempEntrySummary."BA Location Code" := ItemLedgerEntry."Location Code";
+        if ItemLedgerEntry."Serial No." = '' then
+            exit;
+        WarehouseEntry.SetCurrentKey("Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
+        WarehouseEntry.SetRange("Item No.", ItemLedgerEntry."Item No.");
+        WarehouseEntry.SetRange("Location Code", ItemLedgerEntry."Location Code");
+        WarehouseEntry.SetRange("Variant Code", ItemLedgerEntry."Variant Code");
+        WarehouseEntry.SetRange("Unit of Measure Code", ItemLedgerEntry."Unit of Measure Code");
+        WarehouseEntry.SetRange("Lot No.", ItemLedgerEntry."Lot No.");
+        WarehouseEntry.SetRange("Serial No.", ItemLedgerEntry."Serial No.");
+        WarehouseEntry.SetFilter("Registering Date", '>=%1', ItemLedgerEntry."Posting Date");
+        if WarehouseEntry.FindLast() then
+            TempEntrySummary."BA Source Bin Code" := WarehouseEntry."Bin Code";
+    end;
+
     [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'BA Hide Visibility', false, false)]
     local procedure ItemOnAfterValidateHideVisibility(var Rec: Record Item)
     var
@@ -4158,34 +4982,6 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Tracking Data Collection", 'OnBeforeUpdateBinContent', '', false, false)]
-    local procedure ItemTrackingDataCollectionOnBeforeUpdateBinContent(var TempEntrySummary: Record "Entry Summary"; var TempReservationEntry: Record "Reservation Entry")
-    var
-        WarehouseEntry: Record "Warehouse Entry";
-        ItemLedgerEntry: Record "Item Ledger Entry";
-    begin
-        if TempEntrySummary."Table ID" <> Database::"Item Ledger Entry" then
-            exit;
-        if TempReservationEntry."Entry No." > 0 then
-            TempEntrySummary."BA Item Ledger Entry No." := TempReservationEntry."Entry No."
-        else
-            TempEntrySummary."BA Item Ledger Entry No." := -TempReservationEntry."Entry No.";
-        if not ItemLedgerEntry.Get(TempEntrySummary."BA Item Ledger Entry No.") then
-            exit;
-        TempEntrySummary."BA Location Code" := ItemLedgerEntry."Location Code";
-        if ItemLedgerEntry."Serial No." = '' then
-            exit;
-        WarehouseEntry.SetCurrentKey("Item No.", "Bin Code", "Location Code", "Variant Code", "Unit of Measure Code", "Lot No.", "Serial No.", "Entry Type", Dedicated);
-        WarehouseEntry.SetRange("Item No.", ItemLedgerEntry."Item No.");
-        WarehouseEntry.SetRange("Location Code", ItemLedgerEntry."Location Code");
-        WarehouseEntry.SetRange("Variant Code", ItemLedgerEntry."Variant Code");
-        WarehouseEntry.SetRange("Unit of Measure Code", ItemLedgerEntry."Unit of Measure Code");
-        WarehouseEntry.SetRange("Lot No.", ItemLedgerEntry."Lot No.");
-        WarehouseEntry.SetRange("Serial No.", ItemLedgerEntry."Serial No.");
-        WarehouseEntry.SetFilter("Registering Date", '>=%1', ItemLedgerEntry."Posting Date");
-        if WarehouseEntry.FindLast() then
-            TempEntrySummary."BA Source Bin Code" := WarehouseEntry."Bin Code";
-    end;
 
 
 
@@ -4359,8 +5155,26 @@ codeunit 75010 "BA SEI Subscibers"
         ExchageRateUpdateMsg: Label 'Updated exchange rate to %1.';
         MultiItemMsg: Label 'Item %1 occurs on multiple lines.';
         ImportWarningsMsg: Label 'Inventory calculation completed with warnings.\Please review warning messages per line, where applicable.';
+        JnlLimitError: Label 'This journal adjustment is outside the limit, please request approval.';
+        NoApprovalAdminError: Label 'An inventory approval admin must be set before approvals can be sent.';
+        NoApprovalToCancelError: Label '%1 has not been submitted for approval.';
+        AlreadyApprovedError: Label 'Cannot cancel approval request as it as been approved by one or more approvers.';
+        AlreadySubmittedError: Label '%1 has already been submitted for approval.';
+        CancelRequestMsg: Label 'Cancelled approval request.';
+        NoAdjustReasonError: Label '%1 has not been specified for one or more lines.';
+        NoApprovalNeededMsg: Label 'Inventory adjustment is within the limit, no approval needed.';
+        AlreadyAwaitingApprovalError: Label '%1 is already awaiting approval.';
+        RequestSentMsg: Label 'An approval request has been sent.';
+        RejectedLineError: Label 'Line %1 has been rejected and must be re-submitted for approval.';
+        PendingLineError: Label 'Line %1 is still awaiting approval.';
+        CustGroupBlockedError: Label '%1 %2 is blocked';
+        ExchangeRateText: Label '%1 - USD Exch. Rate %2 (%3)';
+        WarehouseEmployeeSetupError: Label '%1 must be setup as an %2';
+        InventoryAppDisabledError: Label 'Inventory Approval is not enabled.';
+        MissingOrderTypeErr: Label '%1 must be specified before a value can be entered in the %2 field.';
         UpdateSalesLinesLocationMsg: Label 'The Location Code on the Sales Header has been changed, do you want to update the lines?';
         SalesLinesLocationCodeErr: Label 'There is one or more lines that do not have %1 as their location code.';
+        LineFieldTypeMissingErr: Label '%1 must be specified for line %2.';
         NoSourceRecErr: Label 'Source Record not set.';
         TitleMsg: Label 'Job Queue Failed:';
         InvalidCustomerPostingGroupCurrencyErr: Label 'Must use %1 currency for Customers in %2 Customer Posting Group.';
@@ -4374,6 +5188,8 @@ codeunit 75010 "BA SEI Subscibers"
         NonServiceCustomerErr: Label '%1 can only be sold to Service Center customers.';
         UpdateItemManfDeptConf: Label 'Would you like to update the %1 listed on the Item Card?';
         PendingApprovalErr: Label 'Cannot set as Barbados Order as there is one or more pending approval requests.';
+        SEIFuncAppName: Label 'BryanA - SEI Functionality by BryanA BC Developments Inc.';
+        ConfigPackageMgtCU: Label '"Config. Validate Management"(CodeUnit 8617).ValidateFieldRefRelationAgainstCompanyData';
         NoPromDelDateErr: Label '%1 must be assigned before invoicing.\Please have the sales staff fill in the %1.';
         UpdateReasonCodeMsg: Label 'Please update the %1 field to a new value.';
         SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';
@@ -4382,9 +5198,13 @@ codeunit 75010 "BA SEI Subscibers"
         ShipmentSendErr: Label 'Unable to send Shipment Details due to the following error:\\%1';
         ShipmentDetailsSubject: Label '%1 - %2 - Shipment Confirmation for %3';
         MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
-        ServiceItemWarrantyError: Label 'You cannot change the warranty information when a value has been specified in the %1 field.';
-        DeleteOrderErr: Label 'Order deletion is not authorized. Please contact your NAV / Business Central System Administrator to request permission and reason for the order deletion.';
         PaymentTermsPermErr: Label 'You do not have permission to change Payment Terms.';
+        ServiceItemWarrantyError: Label 'You cannot change the warranty information when a value has been specified in the %1 field.';
+        BlockedDimErr: Label 'Dimension %1 %2 on line %3 is blocked.';
+        InactiveDimErr: Label 'Dimension %1 %2 on line %3 is inactive.';
+        DeleteOrderErr: Label 'Order deletion is not authorized. Please contact your NAV / Business Central System Administrator to request permission and reason for the order deletion.';
+        SingleRepairCodeErr: Label 'Repair Status must be set to %1 for all Service Item Lines before %2 can be posted';
+        MultiRepairCodeErr: Label 'Repair Status must be set to one of the following for all Service Item Lines before %1 can be posted:\%2';
         NotVerifiedSalespersonErr: Label 'Salesperson must be verified before %1 %2 can be specified.';
         WeekendCreateErr: Label 'Cannot created Sales Order on weekends';
         EarlyCreateErr: Label 'Cannot create Sales Orders before %1.';

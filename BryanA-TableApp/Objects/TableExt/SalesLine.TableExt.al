@@ -22,6 +22,13 @@ tableextension 80002 "BA Sales Line" extends "Sales Line"
             Editable = false;
             OptionMembers = " ","Open","Closed/Lost","Closed/Other","Archive";
         }
+        field(80020; "BA Exchange Rate"; Decimal)
+        {
+            Caption = 'Exchange Rate';
+            Editable = false;
+            FieldClass = FlowField;
+            CalcFormula = lookup ("Sales Header"."BA Quote Exch. Rate" where ("Document Type" = field ("Document Type"), "No." = field ("Document No.")));
+        }
         field(80046; "BA Allow Rename"; Boolean)
         {
             DataClassification = CustomerContent;

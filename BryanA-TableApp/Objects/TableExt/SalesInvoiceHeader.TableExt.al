@@ -38,6 +38,52 @@ tableextension 80061 "BA Sales Invoice Header" extends "Sales Invoice Header"
             Caption = 'Web Lead Date';
             Editable = false;
         }
+        field(80030; "BA Order No. DrillDown"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Order No.';
+            Description = 'Used for Lookup DropDown';
+            Editable = false;
+        }
+        field(80031; "BA Ext. Doc. No. DrillDown"; Code[35])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'External Document No.';
+            Description = 'Used for Lookup DropDown';
+            Editable = false;
+        }
+        field(80032; "BA Freight Carrier Name"; Text[100])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Freight Carrier Name';
+            Editable = false;
+        }
+        field(80033; "BA Freight Term Name"; Text[100])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Freight Term Name';
+            Editable = false;
+        }
+        field(80034; "BA Posting Date DrillDown"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Posting Date';
+            Description = 'Used for Lookup DropDown';
+            Editable = false;
+        }
+        field(80035; "BA Ship-to Name DrillDown"; Text[100])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Ship-to Name';
+            Description = 'Used for Lookup DropDown';
+            Editable = false;
+        }
+        field(80036; "BA Bill-to Name DrillDown"; Text[100])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Bill-to Name';
+            Description = 'Used for Lookup DropDown';
+        }
         field(80046; "BA SEI Barbados Order"; Boolean)
         {
             DataClassification = CustomerContent;
@@ -96,19 +142,26 @@ tableextension 80061 "BA Sales Invoice Header" extends "Sales Invoice Header"
         {
             DataClassification = CustomerContent;
             Caption = 'Invoice/Packing Slip Usernames';
-            Editable = false;
         }
         field(80125; "BA Salesperson Verified"; Boolean)
         {
             DataClassification = CustomerContent;
             Caption = 'Salesperson Verified';
+            Editable = false;
         }
     }
 
 
     keys
     {
+        key(K1; "BA Ext. Doc. No. DrillDown") { }
         key("BA Actual Posting"; "BA Actual Posting DateTime") { }
+    }
+
+    fieldgroups
+    {
+        addlast(DropDown; "BA Order No. DrillDown", "No.", "BA Ext. Doc. No. DrillDown", "BA Posting Date DrillDown", "BA Bill-to Name DrillDown", "BA Ship-to Name DrillDown", "BA Freight Carrier Name", "BA Freight Term Name", "Package Tracking No.", "ENC Physical Ship Date") { }
+
     }
 
     trigger OnInsert()

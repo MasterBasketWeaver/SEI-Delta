@@ -67,11 +67,13 @@ pageextension 80040 "BA Post. Purch. Inv." extends "Posted Purchase Invoice"
             {
                 ApplicationArea = all;
                 Visible = true;
+                Editable = false;
             }
             field("Received Date"; "ENC Received Date")
             {
                 ApplicationArea = all;
                 Visible = true;
+                Editable = false;
             }
         }
         addlast(General)

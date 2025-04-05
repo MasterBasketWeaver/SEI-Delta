@@ -1,25 +1,25 @@
-// pageextension 80905 "BAZD Posted Sales Invoices" extends "Posted Sales Invoices"
-// {
-//     PromotedActionCategories = 'New,Process,Report,Invoice,Navigate,Correct,Print/Send,Zetadocs';
-//     actions
-//     {
-//         modify(ZddSend)
-//         {
-//             Promoted = true;
-//             PromotedCategory = Category8;
-//             PromotedIsBig = true;
-//         }
-//         modify(ZddOutbox)
-//         {
-//             Promoted = true;
-//             PromotedCategory = Category8;
-//             PromotedIsBig = true;
-//         }
-//         modify(ZddRules)
-//         {
-//             Promoted = true;
-//             PromotedCategory = Category8;
-//             PromotedIsBig = true;
-//         }
-//     }
-// }
+pageextension 80912 "BAZD Posted Service Invoices" extends "Posted Service Invoices"
+{
+    PromotedActionCategories = 'New,Process,Report,Zetadocs';
+    actions
+    {
+        modify(ZddSend)
+        {
+            Promoted = true;
+            PromotedCategory = Category4;
+            PromotedIsBig = true;
+        }
+        modify(ZddOutbox)
+        {
+            Promoted = true;
+            PromotedCategory = Category4;
+            PromotedIsBig = true;
+        }
+        modify(ZddRules)
+        {
+            Promoted = true;
+            PromotedCategory = Category4;
+            PromotedIsBig = true;
+        }
+    }
+}

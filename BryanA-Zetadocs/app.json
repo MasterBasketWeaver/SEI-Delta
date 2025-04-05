@@ -17,6 +17,12 @@
       "name": "Zetadocs - AP automation and bulk emailing",
       "publisher": "Equisys",
       "version": "1.0.0.0"
+    },
+    {
+      "appId": "8b947661-0d09-4c78-8307-636732ddc6ab",
+      "publisher": "Equisys, Inc.",
+      "name": "Zetadocs Customization",
+      "version": "1.0.4.14"
     }
   ],
   "screenshots": [],

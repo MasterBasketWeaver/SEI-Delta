@@ -1,8 +1,9 @@
 codeunit 75011 "BA Install Codeunit"
 {
     Subtype = Install;
-    Permissions = tabledata "Sales Invoice Header" = r,
-                  tabledata "Service Invoice Header" = r,
+    Permissions = tabledata "Sales Invoice Header" = rm,
+                  tabledata "Service Invoice Header" = rm,
+                  tabledata "Transfer Shipment Header" = rm,
                   tabledata Customer = m,
                   tabledata "Purch. Inv. Header" = m,
                   tabledata "Purch. Cr. Memo Hdr." = m,
@@ -12,6 +13,13 @@ codeunit 75011 "BA Install Codeunit"
 
     trigger OnInstallAppPerCompany()
     begin
+        // AddItemJnlApprovalCode();
+        // AddCustomerSalesActivity();
+        // AddNewDimValues();
+        // PopulateDropDownFields();
+        // AddJobQueueFailNotificationSetup();
+        // PopulateCustomerPostingGroupCurrencies();
+        // PopulateCountryRegionDimensions();
         // AddCustomerSalesActivity();
         // AddNewDimValues();
         // AddJobQueueFailNotificationSetup();
@@ -25,8 +33,6 @@ codeunit 75011 "BA Install Codeunit"
         // PopulatePrepyamentInvReportUsage();
         // PopulateCustomerApprovalGroups();
         // PopulateProdOrderNotificationReportUsage();
-
-        //test
     end;
 
 
@@ -189,6 +195,176 @@ codeunit 75011 "BA Install Codeunit"
             until Item.Next() = 0;
     end;
 
+    procedure PopulateDropDownFields()
+    var
+        SalesInvoiceHeader: Record "Sales Invoice Header";
+        ServiceInvoiceHeader: Record "Service Invoice Header";
+        TransferShptHeader: Record "Transfer Shipment Header";
+        FreightTerm: Record "ENC Freight Term";
+        ShippingAgent: Record "Shipping Agent";
+        DocNos1: List of [RecordID];
+        DocNos2: List of [RecordID];
+        DocNos3: List of [RecordID];
+        RecID: RecordId;
+    begin
+        SalesInvoiceHeader.SetRange("BA Order No. DrillDown", '');
+        if SalesInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos1.Contains(SalesInvoiceHeader.RecordId()) then
+                    DocNos1.Add(SalesInvoiceHeader.RecordId());
+            until SalesInvoiceHeader.Next() = 0;
+        SalesInvoiceHeader.Reset();
+        SalesInvoiceHeader.SetRange("BA Ext. Doc. No. DrillDown", '');
+        if SalesInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos1.Contains(SalesInvoiceHeader.RecordId()) then
+                    DocNos1.Add(SalesInvoiceHeader.RecordId());
+            until SalesInvoiceHeader.Next() = 0;
+        SalesInvoiceHeader.Reset();
+        SalesInvoiceHeader.SetRange("BA Ship-to Name DrillDown", '');
+        if SalesInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos1.Contains(SalesInvoiceHeader.RecordId()) then
+                    DocNos1.Add(SalesInvoiceHeader.RecordId());
+            until SalesInvoiceHeader.Next() = 0;
+        SalesInvoiceHeader.Reset();
+        SalesInvoiceHeader.SetFilter("Shipping Agent Code", '<>%1', '');
+        SalesInvoiceHeader.SetRange("BA Freight Carrier Name", '');
+        if SalesInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos1.Contains(SalesInvoiceHeader.RecordId()) then
+                    DocNos1.Add(SalesInvoiceHeader.RecordId());
+            until SalesInvoiceHeader.Next() = 0;
+        SalesInvoiceHeader.Reset();
+        SalesInvoiceHeader.SetFilter("ENC Freight Term", '<>%1', '');
+        SalesInvoiceHeader.SetRange("BA Freight Term Name", '');
+        if SalesInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos1.Contains(SalesInvoiceHeader.RecordId()) then
+                    DocNos1.Add(SalesInvoiceHeader.RecordId());
+            until SalesInvoiceHeader.Next() = 0;
+        SalesInvoiceHeader.Reset();
+        SalesInvoiceHeader.SetRange("BA Posting Date DrillDown", 0D);
+        if SalesInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos1.Contains(SalesInvoiceHeader.RecordId()) then
+                    DocNos1.Add(SalesInvoiceHeader.RecordId());
+            until SalesInvoiceHeader.Next() = 0;
+        SalesInvoiceHeader.Reset();
+        SalesInvoiceHeader.SetRange("BA Bill-to Name DrillDown", '');
+        if SalesInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos1.Contains(SalesInvoiceHeader.RecordId()) then
+                    DocNos1.Add(SalesInvoiceHeader.RecordId());
+            until SalesInvoiceHeader.Next() = 0;
+        foreach RecID in DocNos1 do begin
+            SalesInvoiceHeader.Get(RecID);
+            SalesInvoiceHeader."BA Order No. DrillDown" := SalesInvoiceHeader."Order No.";
+            SalesInvoiceHeader."BA Ext. Doc. No. DrillDown" := SalesInvoiceHeader."External Document No.";
+            SalesInvoiceHeader."BA Ship-to Name DrillDown" := SalesInvoiceHeader."Ship-to Name";
+            if (SalesInvoiceHeader."Shipping Agent Code" <> '') and ShippingAgent.Get(SalesInvoiceHeader."Shipping Agent Code") then
+                SalesInvoiceHeader."BA Freight Carrier Name" := ShippingAgent.Name;
+            if (SalesInvoiceHeader."ENC Freight Term" <> '') and FreightTerm.Get(SalesInvoiceHeader."ENC Freight Term") then
+                SalesInvoiceHeader."BA Freight Term Name" := FreightTerm.Description;
+            SalesInvoiceHeader."BA Posting Date DrillDown" := SalesInvoiceHeader."Posting Date";
+            SalesInvoiceHeader."BA Bill-to Name DrillDown" := SalesInvoiceHeader."Bill-to Name";
+            SalesInvoiceHeader.Modify(false);
+        end;
+
+
+
+        ServiceInvoiceHeader.SetRange("BA Order No. DrillDown", '');
+        if ServiceInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos2.Contains(ServiceInvoiceHeader.RecordId()) then
+                    DocNos2.Add(ServiceInvoiceHeader.RecordId());
+            until ServiceInvoiceHeader.Next() = 0;
+        ServiceInvoiceHeader.Reset();
+        ServiceInvoiceHeader.SetRange("BA Ship-to Name DrillDown", '');
+        if ServiceInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos2.Contains(ServiceInvoiceHeader.RecordId()) then
+                    DocNos2.Add(ServiceInvoiceHeader.RecordId());
+            until ServiceInvoiceHeader.Next() = 0;
+        ServiceInvoiceHeader.Reset();
+        ServiceInvoiceHeader.SetFilter("ENC Shipping Agent Code", '<>%1', '');
+        ServiceInvoiceHeader.SetRange("BA Freight Carrier Name", '');
+        if ServiceInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos2.Contains(ServiceInvoiceHeader.RecordId()) then
+                    DocNos2.Add(ServiceInvoiceHeader.RecordId());
+            until ServiceInvoiceHeader.Next() = 0;
+        ServiceInvoiceHeader.Reset();
+        ServiceInvoiceHeader.SetFilter("ENC Freight Term", '<>%1', '');
+        ServiceInvoiceHeader.SetRange("BA Freight Term Name", '');
+        if ServiceInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos2.Contains(ServiceInvoiceHeader.RecordId()) then
+                    DocNos2.Add(ServiceInvoiceHeader.RecordId());
+            until ServiceInvoiceHeader.Next() = 0;
+        ServiceInvoiceHeader.Reset();
+        ServiceInvoiceHeader.SetRange("BA Posting Date DrillDown", 0D);
+        if ServiceInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos2.Contains(ServiceInvoiceHeader.RecordId()) then
+                    DocNos2.Add(ServiceInvoiceHeader.RecordId());
+            until ServiceInvoiceHeader.Next() = 0;
+        ServiceInvoiceHeader.Reset();
+        ServiceInvoiceHeader.SetRange("BA Bill-to Name DrillDown", '');
+        if ServiceInvoiceHeader.FindSet(true) then
+            repeat
+                if not DocNos2.Contains(ServiceInvoiceHeader.RecordId()) then
+                    DocNos2.Add(ServiceInvoiceHeader.RecordId());
+            until ServiceInvoiceHeader.Next() = 0;
+        foreach RecID in DocNos2 do begin
+            ServiceInvoiceHeader.Get(RecID);
+            ServiceInvoiceHeader."BA Order No. DrillDown" := ServiceInvoiceHeader."Order No.";
+            if (ServiceInvoiceHeader."ENC Shipping Agent Code" <> '') and ShippingAgent.Get(ServiceInvoiceHeader."ENC Shipping Agent Code") then
+                ServiceInvoiceHeader."BA Freight Carrier Name" := ShippingAgent.Name;
+            if (ServiceInvoiceHeader."ENC Freight Term" <> '') and FreightTerm.Get(ServiceInvoiceHeader."ENC Freight Term") then
+                ServiceInvoiceHeader."BA Freight Term Name" := FreightTerm.Description;
+            ServiceInvoiceHeader."BA Posting Date DrillDown" := ServiceInvoiceHeader."Posting Date";
+            ServiceInvoiceHeader."BA Ship-to Name DrillDown" := ServiceInvoiceHeader."Ship-to Name";
+            ServiceInvoiceHeader."BA Bill-to Name DrillDown" := ServiceInvoiceHeader."Bill-to Name";
+            ServiceInvoiceHeader.Modify(false);
+        end;
+
+
+        TransferShptHeader.SetRange("BA Trans. Order No. DrillDown", '');
+        if TransferShptHeader.FindSet(true) then
+            repeat
+                DocNos3.Add(TransferShptHeader.RecordId());
+            until TransferShptHeader.Next() = 0;
+        TransferShptHeader.Reset();
+        TransferShptHeader.SetFilter("Shipping Agent Code", '<>%1', '');
+        TransferShptHeader.SetRange("BA Freight Carrier Name", '');
+        if TransferShptHeader.FindSet(true) then
+            repeat
+                if not DocNos2.Contains(TransferShptHeader.RecordId()) then
+                    DocNos2.Add(TransferShptHeader.RecordId());
+            until TransferShptHeader.Next() = 0;
+        TransferShptHeader.Reset();
+        TransferShptHeader.SetFilter("ENC Freight Term", '<>%1', '');
+        TransferShptHeader.SetRange("BA Freight Term Name", '');
+        if TransferShptHeader.FindSet(true) then
+            repeat
+                if not DocNos2.Contains(TransferShptHeader.RecordId()) then
+                    DocNos2.Add(TransferShptHeader.RecordId());
+            until TransferShptHeader.Next() = 0;
+        TransferShptHeader.Reset();
+        foreach RecID in DocNos3 do begin
+            TransferShptHeader.Get(RecID);
+            TransferShptHeader."BA Trans. Order No. DrillDown" := TransferShptHeader."Transfer Order No.";
+            if (TransferShptHeader."Shipping Agent Code" <> '') and ShippingAgent.Get(TransferShptHeader."Shipping Agent Code") then
+                TransferShptHeader."BA Freight Carrier Name" := ShippingAgent.Name;
+            if (TransferShptHeader."ENC Freight Term" <> '') and FreightTerm.Get(TransferShptHeader."ENC Freight Term") then
+                TransferShptHeader."BA Freight Term Name" := FreightTerm.Description;
+            TransferShptHeader.Modify(false);
+        end;
+
+        if GuiAllowed then
+            Message('%1, %2, %3', DocNos1.Count, DocNos2.Count, DocNos3.Count);
+    end;
 
     local procedure AddJobQueueFailNotificationSetup()
     var
@@ -297,6 +473,27 @@ codeunit 75011 "BA Install Codeunit"
         end;
         RecRef.Close();
     end;
+
+    local procedure AddItemJnlApprovalCode()
+    var
+        InventorySetup: Record "Inventory Setup";
+        ApprovalCode: Record "Approval Code";
+    begin
+        InventorySetup.Get();
+        if (InventorySetup."BA Approval Code" <> '') then
+            exit;
+        InventorySetup."BA Approval Code" := 'ITEM-JNL';
+        InventorySetup.Modify(false);
+
+        if ApprovalCode.Get(InventorySetup."BA Approval Code") then
+            exit;
+        ApprovalCode.Init();
+        ApprovalCode.Validate(Code, InventorySetup."BA Approval Code");
+        ApprovalCode.Validate(Description, 'Inventory Adjustment Approvals.');
+        ApprovalCode.Validate("Linked To Table No.", Database::"Item Journal Batch");
+        ApprovalCode.Insert(true);
+    end;
+
 
 
     local procedure AddCustomerSalesActivity()
