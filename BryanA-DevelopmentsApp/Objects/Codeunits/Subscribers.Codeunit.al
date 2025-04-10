@@ -86,6 +86,15 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if Rec.Quantity <> xRec.Quantity then
             ClearShipmentDates(Rec, true);
+        if (Rec."Document Type" = Rec."Document Type"::Order) and (Rec."BA Booking Date" = 0D) then
+            Rec."BA Booking Date" := WorkDate();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Type', false, false)]
+    local procedure SalesLineOnAfterValdiateType(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
+    begin
+        if (Rec."Document Type" = Rec."Document Type"::Order) and (Rec."BA Booking Date" = 0D) then
+            Rec."BA Booking Date" := WorkDate();
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeSalesLineByChangedFieldNo', '', false, false)]
@@ -2172,6 +2181,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Item: Record Item;
     begin
+        SalesLine.TestField("BA Booking Date");
         if (SalesLine.Type <> SalesLine.Type::Item) or not Item.Get(SalesLine."No.") then
             exit;
         Item.TestField("ENC Not for Sale", false);
@@ -3832,8 +3842,8 @@ codeunit 75010 "BA SEI Subscibers"
         case ReportUsage of
             GetShipmentTrackingInfoReportUsage():
                 SetSalesServiceEmailToAddress(RecVar, IsHandled, ToAddress);
-                // SalesApprovalMgt.GetProdApprovalReportUsage():
-                //     SalesApprovalMgt.SetProdNotificationEmailToAddress(RecVar, IsHandled, ToAddress);
+        // SalesApprovalMgt.GetProdApprovalReportUsage():
+        //     SalesApprovalMgt.SetProdNotificationEmailToAddress(RecVar, IsHandled, ToAddress);
         end;
     end;
 
@@ -3861,8 +3871,8 @@ codeunit 75010 "BA SEI Subscibers"
         case ReportID of
             Report::"BA Shipment Tracking Info":
                 SetSalesServiceEmailFilters(RecordVariant);
-                // Report::"BA Prod. Order Approval":
-                //     SalesApprovalMgt.SetProdNotificationEmailFilters(RecordVariant);
+        // Report::"BA Prod. Order Approval":
+        //     SalesApprovalMgt.SetProdNotificationEmailFilters(RecordVariant);
         end;
     end;
 
@@ -3893,8 +3903,8 @@ codeunit 75010 "BA SEI Subscibers"
         case ReportUsage of
             GetShipmentTrackingInfoReportUsage():
                 UpdateSalesServiceEmailSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
-                // SalesApprovalMgt.GetProdApprovalReportUsage():
-                //     SalesApprovalMgt.UpdateProdNotificationSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
+        // SalesApprovalMgt.GetProdApprovalReportUsage():
+        //     SalesApprovalMgt.UpdateProdNotificationSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
         end;
     end;
 
