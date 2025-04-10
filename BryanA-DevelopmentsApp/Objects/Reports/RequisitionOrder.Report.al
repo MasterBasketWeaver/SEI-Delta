@@ -8,7 +8,7 @@ report 50008 "BA Requisition Order"
     {
         dataitem("Purchase Header"; "Purchase Header")
         {
-            DataItemTableView = SORTING ("Document Type", "No.");
+            DataItemTableView = SORTING("Document Type", "No.");
             // WHERE ("Document Type" = CONST (Order));
             PrintOnlyIfDetail = true;
             RequestFilterFields = "No.", "Buy-from Vendor No.", "Pay-to Vendor No.", "No. Printed";
@@ -35,11 +35,11 @@ report 50008 "BA Requisition Order"
 
             dataitem(CopyLoop; Integer)
             {
-                DataItemTableView = SORTING (Number);
+                DataItemTableView = SORTING(Number);
                 dataitem(PageLoop; Integer)
                 {
-                    DataItemTableView = SORTING (Number)
-                                        WHERE (Number = CONST (1));
+                    DataItemTableView = SORTING(Number)
+                                        WHERE(Number = CONST(1));
                     column(CompanyAddress1; CompanyAddress[1])
                     {
                     }
@@ -209,9 +209,9 @@ report 50008 "BA Requisition Order"
 
                     dataitem("Purchase Line"; "Purchase Line")
                     {
-                        DataItemLink = "Document No." = FIELD ("No.");
+                        DataItemLink = "Document No." = FIELD("No.");
                         DataItemLinkReference = "Purchase Header";
-                        DataItemTableView = SORTING ("Document Type", "Document No.", "Line No.");
+                        DataItemTableView = SORTING("Document Type", "Document No.", "Line No.");
                         // WHERE ("Document Type" = CONST (Order));
                         column(AmountExclInvDisc; AmountExclInvDisc)
                         {
@@ -486,7 +486,7 @@ report 50008 "BA Requisition Order"
                     CompanyInformation."Phone No." := RespCenter."Phone No.";
                     CompanyInformation."Fax No." := RespCenter."Fax No.";
                 END;
-                CurrReport.LANGUAGE := Language.GetLanguageID("Language Code");
+                CurrReport.LANGUAGE := LanguageRec.GetLanguageID("Language Code");
 
                 IF "Purchaser Code" = '' THEN
                     CLEAR(SalesPurchPerson)
@@ -702,7 +702,7 @@ report 50008 "BA Requisition Order"
         SalesPurchPerson: Record "Salesperson/Purchaser";
         CompanyInformation: Record "Company Information";
         RespCenter: Record "Responsibility Center";
-        Language: Record Language;
+        LanguageRec: Record Language;
         TempSalesTaxAmtLine: Record "Sales Tax Amount Line" temporary;
         TaxArea: Record "Tax Area";
         Vend: Record Vendor;
