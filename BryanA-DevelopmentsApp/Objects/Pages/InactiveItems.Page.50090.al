@@ -4,7 +4,7 @@ page 50090 "BA Inactive Items"
     ApplicationArea = all;
     UsageCategory = Lists;
     SourceTable = Item;
-    SourceTableView = sorting ("No.") where ("BA Hide Visibility" = const (true));
+    SourceTableView = sorting("No.") where("BA Hide Visibility" = const(true));
     PageType = List;
     CardPageId = "Item Card";
     LinksAllowed = false;
@@ -29,6 +29,10 @@ page 50090 "BA Inactive Items"
             repeater(Items)
             {
                 field("No."; Rec."No.")
+                {
+                    ApplicationArea = all;
+                }
+                field("No. 2"; Rec."No. 2")
                 {
                     ApplicationArea = all;
                 }
@@ -129,7 +133,7 @@ page 50090 "BA Inactive Items"
                 PromotedOnly = true;
                 Image = ItemLedger;
                 RunObject = page "Item Ledger Entries";
-                RunPageLink = "Item No." = field ("No.");
+                RunPageLink = "Item No." = field("No.");
             }
         }
     }
