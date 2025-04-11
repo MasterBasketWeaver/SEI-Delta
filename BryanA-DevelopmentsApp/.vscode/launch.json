@@ -21,7 +21,6 @@
             "port": 7114,
             "serverInstance": "Test",
             "authentication": "UserPassword",
-            "launchBrowser": false,
             "schemaUpdateMode": "Synchronize"
         }
         ,
@@ -33,7 +32,6 @@
             "port": 7054,
             "serverInstance": "SEI140",
             "authentication": "UserPassword",
-            "launchBrowser": false,
             "schemaUpdateMode": "Synchronize"
         }
     ]
