@@ -8,6 +8,7 @@
             "server": "http://localhost",
             "port": 7119,
             "serverInstance": "Dev",
+            "launchBrowser":  false,
             "authentication": "UserPassword",
             // "schemaUpdateMode":"Recreate"
             // "schemaUpdateMode": "ForceSync"
@@ -21,29 +22,20 @@
             "port": 7114,
             "serverInstance": "Test",
             "authentication": "UserPassword",
+            "launchBrowser":  false,
             // "schemaUpdateMode": "ForceSync"
         }
-        // ,
-        // {
-        //     "type": "al",
-        //     "request": "launch",
-        //     "name": "Test",
-        //     "server": "http://localhost",
-        //     "port": 7114,
-        //     "serverInstance": "Test",
-        //     "authentication": "UserPassword",
-        //     // "schemaUpdateMode": "ForceSync"
-        // }
-        // ,
-        // {
-        //     "type": "al",
-        //     "request": "launch",
-        //     "name": "Live",
-        //     "server": "http://localhost",
-        //     "port": 7109,
-        //     "serverInstance": "SEI140",
-        //     "authentication": "UserPassword",
-        //     "schemaUpdateMode": "Synchronize"
-        // }
+        ,
+        {
+            "type": "al",
+            "request": "launch",
+            "name": "Live",
+            "server": "http://localhost",
+            "port": 7054,
+            "serverInstance": "SEI140",
+            "launchBrowser":  false,
+            "authentication": "UserPassword",
+            "schemaUpdateMode": "Synchronize"
+        }
     ]
 }

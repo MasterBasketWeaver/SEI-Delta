@@ -13,10 +13,10 @@ codeunit 75011 "BA Install Codeunit"
 
     trigger OnInstallAppPerCompany()
     begin
-        // AddItemJnlApprovalCode();
+        AddItemJnlApprovalCode();
         // AddCustomerSalesActivity();
         // AddNewDimValues();
-        // PopulateDropDownFields();
+        PopulateDropDownFields();
         // AddJobQueueFailNotificationSetup();
         // PopulateCustomerPostingGroupCurrencies();
         // PopulateCountryRegionDimensions();
