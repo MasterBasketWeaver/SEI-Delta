@@ -3832,8 +3832,8 @@ codeunit 75010 "BA SEI Subscibers"
         case ReportUsage of
             GetShipmentTrackingInfoReportUsage():
                 SetSalesServiceEmailToAddress(RecVar, IsHandled, ToAddress);
-        // SalesApprovalMgt.GetProdApprovalReportUsage():
-        //     SalesApprovalMgt.SetProdNotificationEmailToAddress(RecVar, IsHandled, ToAddress);
+                // SalesApprovalMgt.GetProdApprovalReportUsage():
+                //     SalesApprovalMgt.SetProdNotificationEmailToAddress(RecVar, IsHandled, ToAddress);
         end;
     end;
 
@@ -3861,8 +3861,8 @@ codeunit 75010 "BA SEI Subscibers"
         case ReportID of
             Report::"BA Shipment Tracking Info":
                 SetSalesServiceEmailFilters(RecordVariant);
-        // Report::"BA Prod. Order Approval":
-        //     SalesApprovalMgt.SetProdNotificationEmailFilters(RecordVariant);
+                // Report::"BA Prod. Order Approval":
+                //     SalesApprovalMgt.SetProdNotificationEmailFilters(RecordVariant);
         end;
     end;
 
@@ -3893,8 +3893,8 @@ codeunit 75010 "BA SEI Subscibers"
         case ReportUsage of
             GetShipmentTrackingInfoReportUsage():
                 UpdateSalesServiceEmailSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
-        // SalesApprovalMgt.GetProdApprovalReportUsage():
-        //     SalesApprovalMgt.UpdateProdNotificationSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
+                // SalesApprovalMgt.GetProdApprovalReportUsage():
+                //     SalesApprovalMgt.UpdateProdNotificationSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
         end;
     end;
 
@@ -5135,6 +5135,32 @@ codeunit 75010 "BA SEI Subscibers"
         WarehouseEntry.SetRange("Unit of Measure Code", UoMCode);
         WarehouseEntry.SetFilter("Serial No.", '<>%1', '');
     end;
+
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Prepayment Mgt.", 'OnBeforeTestSalesPrepayment', '', false, false)]
+    local procedure PrepaymentMgtOnBeforeTestSalesPrepayment(var IsHandled: Boolean; var TestResult: Boolean; SalesHeader: Record "Sales Header")
+    begin
+        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then
+            if SingleInstance.GetSkipSalesPrepaymentApprovalCheck() then begin
+                IsHandled := true;
+                TestResult := false;
+            end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Release Sales Document", 'OnPerformManualReleaseOnBeforeTestSalesPrepayment', '', false, false)]
+    local procedure ReleaseSalesDocumentOnPerformManualReleaseOnBeforeTestSalesPrepayment()
+    begin
+        SingleInstance.SetSkipSalesPrepaymentApprovalCheck(true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Release Sales Document", 'OnBeforeManualReleaseSalesDoc', '', false, false)]
+    local procedure ReleaseSalesDocumentOnBeforeManualReleaseSalesDoc()
+    begin
+        SingleInstance.SetSkipSalesPrepaymentApprovalCheck(false);
+    end;
+
 
 
 
