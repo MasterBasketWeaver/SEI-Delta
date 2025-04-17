@@ -8,6 +8,7 @@
             "server": "http://localhost",
             "port": 7119,
             "serverInstance": "Dev",
+            "launchBrowser":  false,
             "authentication": "UserPassword",
             // "schemaUpdateMode":"Recreate"
             // "schemaUpdateMode": "ForceSync"
@@ -21,6 +22,7 @@
             "port": 7114,
             "serverInstance": "Test",
             "authentication": "UserPassword",
+            "launchBrowser":  false,
             // "schemaUpdateMode": "ForceSync"
         }
         // ,

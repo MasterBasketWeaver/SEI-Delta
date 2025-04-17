@@ -4143,84 +4143,84 @@ codeunit 75010 "BA SEI Subscibers"
         UserSetup.Modify(true);
     end;
 
-    [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeOpenPage', '', false, false)]
-    local procedure ExportElectronicPaymentsOnBeforeOpenPage(var BankAccount: Record "Bank Account"; var SupportedOutputMethod: Option; var FilterRecordID: RecordId)
-    var
-        UserSetup: Record "User Setup";
-    begin
-        if UserSetup.Get(UserId()) then begin
-            FilterRecordID := UserSetup."BA Payment Filter Record ID";
-            if UserSetup."BA Payment Bank Account No." <> '' then begin
-                BankAccount."No." := UserSetup."BA Payment Bank Account No.";
-                UserSetup."BA Payment Bank Account No." := '';
-                UserSetup.Modify(false);
-            end;
-        end;
-        SupportedOutputMethod := 0;
-    end;
+    // [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeOpenPage', '', false, false)]
+    // local procedure ExportElectronicPaymentsOnBeforeOpenPage(var BankAccount: Record "Bank Account"; var SupportedOutputMethod: Option; var FilterRecordID: RecordId)
+    // var
+    //     UserSetup: Record "User Setup";
+    // begin
+    //     if UserSetup.Get(UserId()) then begin
+    //         FilterRecordID := UserSetup."BA Payment Filter Record ID";
+    //         if UserSetup."BA Payment Bank Account No." <> '' then begin
+    //             BankAccount."No." := UserSetup."BA Payment Bank Account No.";
+    //             UserSetup."BA Payment Bank Account No." := '';
+    //             UserSetup.Modify(false);
+    //         end;
+    //     end;
+    //     SupportedOutputMethod := 0;
+    // end;
 
-    [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeGenJournalLineOnAfterGetRecord', '', false, false)]
-    local procedure ExportElectronicPaymentsOnBeforeGenJournalLineOnAfterGetRecord(var GenJournalLine: Record "Gen. Journal Line")
-    var
-        TempDimSetEntry: Record "Dimension Set Entry" temporary;
-        DimValue: Record "Dimension Value";
-        DimMgt: Codeunit DimensionManagement;
-    begin
-        DimMgt.GetDimensionSet(TempDimSetEntry, GenJournalLine."Dimension Set ID");
-        if TempDimSetEntry.FindSet() then
-            repeat
-                DimValue.Get(TempDimSetEntry."Dimension Code", TempDimSetEntry."Dimension Value Code");
-                if DimValue.Blocked then
-                    Error(BlockedDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
-                if DimValue."ENC Inactive" then
-                    Error(InactiveDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
-            until TempDimSetEntry.Next() = 0;
-    end;
-
-
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
-    local procedure GenerateEFTOnBeforeSelectFolder(var BankAccount: Record "Bank Account"; SaveFolderMsg: Text; var Path: Text; var IsHandled: Boolean)
-    var
-        FileMgt: Codeunit "File Management";
-    begin
-        if BankAccount."E-Pay Export File Path" <> '' then begin
-            IsHandled := true;
-            FileMgt.SelectDefaultFolderDialog(SaveFolderMsg, Path, BankAccount."E-Pay Export File Path");
-        end;
-    end;
+    // [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeGenJournalLineOnAfterGetRecord', '', false, false)]
+    // local procedure ExportElectronicPaymentsOnBeforeGenJournalLineOnAfterGetRecord(var GenJournalLine: Record "Gen. Journal Line")
+    // var
+    //     TempDimSetEntry: Record "Dimension Set Entry" temporary;
+    //     DimValue: Record "Dimension Value";
+    //     DimMgt: Codeunit DimensionManagement;
+    // begin
+    //     DimMgt.GetDimensionSet(TempDimSetEntry, GenJournalLine."Dimension Set ID");
+    //     if TempDimSetEntry.FindSet() then
+    //         repeat
+    //             DimValue.Get(TempDimSetEntry."Dimension Code", TempDimSetEntry."Dimension Value Code");
+    //             if DimValue.Blocked then
+    //                 Error(BlockedDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
+    //             if DimValue."ENC Inactive" then
+    //                 Error(InactiveDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
+    //         until TempDimSetEntry.Next() = 0;
+    // end;
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
-    local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
-    begin
-        ACHRBHeader."File Creation Date" := FormatACHDate(Today());
-        ACHRBHeader."Federal ID No." := StrSubstNo('%1', FormatACHDate(Today() - 30));
-        ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
+    // local procedure GenerateEFTOnBeforeSelectFolder(var BankAccount: Record "Bank Account"; SaveFolderMsg: Text; var Path: Text; var IsHandled: Boolean)
+    // var
+    //     FileMgt: Codeunit "File Management";
+    // begin
+    //     if BankAccount."E-Pay Export File Path" <> '' then begin
+    //         IsHandled := true;
+    //         FileMgt.SelectDefaultFolderDialog(SaveFolderMsg, Path, BankAccount."E-Pay Export File Path");
+    //     end;
+    // end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]
-    local procedure ExportETFRBOnBeforeACHRBDetailModify(var ACHRBDetail: Record "ACH RB Detail"; var TempEFTExportWorkset: Record "EFT Export Workset")
-    var
-        VendorBankAccount: Record "Vendor Bank Account";
-    begin
-        VendorBankAccount.SetRange("Vendor No.", TempEFTExportWorkset."Account No.");
-        VendorBankAccount.SetRange("Use for Electronic Payments", true);
-        VendorBankAccount.FindFirst();
-        VendorBankAccount.TestField("Bank Code");
-        VendorBankAccount.TestField("Bank Branch No.");
-        VendorBankAccount.TestField("Bank Account No.");
-        VendorBankAccount.TestField(Name);
-        ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
-        ACHRBDetail."Language Code" := FormatPaymentAmount(ACHRBDetail."Payment Amount");
-        ACHRBDetail."Vendor/Customer Name" := VendorBankAccount.Name;
-    end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBFooterModify', '', false, false)]
-    local procedure ExportETFRBOnBeforeACHRBFooterModify(var ACHRBFooter: Record "ACH RB Footer"; var TempEFTExportWorkset: Record "EFT Export Workset")
-    begin
-        ACHRBFooter."Record Count" := TempEFTExportWorkset.Count();
-        ACHRBFooter."BA Payment Amount Text" := FormatPaymentAmount(ACHRBFooter."Total File Credit");
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
+    // local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
+    // begin
+    //     ACHRBHeader."File Creation Date" := FormatACHDate(Today());
+    //     ACHRBHeader."Federal ID No." := StrSubstNo('%1', FormatACHDate(Today() - 30));
+    //     ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
+    // end;
+
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]
+    // local procedure ExportETFRBOnBeforeACHRBDetailModify(var ACHRBDetail: Record "ACH RB Detail"; var TempEFTExportWorkset: Record "EFT Export Workset")
+    // var
+    //     VendorBankAccount: Record "Vendor Bank Account";
+    // begin
+    //     VendorBankAccount.SetRange("Vendor No.", TempEFTExportWorkset."Account No.");
+    //     VendorBankAccount.SetRange("Use for Electronic Payments", true);
+    //     VendorBankAccount.FindFirst();
+    //     VendorBankAccount.TestField("Bank Code");
+    //     VendorBankAccount.TestField("Bank Branch No.");
+    //     VendorBankAccount.TestField("Bank Account No.");
+    //     VendorBankAccount.TestField(Name);
+    //     ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
+    //     ACHRBDetail."Language Code" := FormatPaymentAmount(ACHRBDetail."Payment Amount");
+    //     ACHRBDetail."Vendor/Customer Name" := VendorBankAccount.Name;
+    // end;
+
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBFooterModify', '', false, false)]
+    // local procedure ExportETFRBOnBeforeACHRBFooterModify(var ACHRBFooter: Record "ACH RB Footer"; var TempEFTExportWorkset: Record "EFT Export Workset")
+    // begin
+    //     ACHRBFooter."Record Count" := TempEFTExportWorkset.Count();
+    //     ACHRBFooter."BA Payment Amount Text" := FormatPaymentAmount(ACHRBFooter."Total File Credit");
+    // end;
 
 
 
@@ -5145,6 +5145,32 @@ codeunit 75010 "BA SEI Subscibers"
         WarehouseEntry.SetRange("Unit of Measure Code", UoMCode);
         WarehouseEntry.SetFilter("Serial No.", '<>%1', '');
     end;
+
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Prepayment Mgt.", 'OnBeforeTestSalesPrepayment', '', false, false)]
+    local procedure PrepaymentMgtOnBeforeTestSalesPrepayment(var IsHandled: Boolean; var TestResult: Boolean; SalesHeader: Record "Sales Header")
+    begin
+        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then
+            if SingleInstance.GetSkipSalesPrepaymentApprovalCheck() then begin
+                IsHandled := true;
+                TestResult := false;
+            end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Release Sales Document", 'OnPerformManualReleaseOnBeforeTestSalesPrepayment', '', false, false)]
+    local procedure ReleaseSalesDocumentOnPerformManualReleaseOnBeforeTestSalesPrepayment()
+    begin
+        SingleInstance.SetSkipSalesPrepaymentApprovalCheck(true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Release Sales Document", 'OnBeforeManualReleaseSalesDoc', '', false, false)]
+    local procedure ReleaseSalesDocumentOnBeforeManualReleaseSalesDoc()
+    begin
+        SingleInstance.SetSkipSalesPrepaymentApprovalCheck(false);
+    end;
+
 
 
 

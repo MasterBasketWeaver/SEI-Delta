@@ -36,8 +36,6 @@ codeunit 75011 "BA Install Codeunit"
     end;
 
 
-
-
     local procedure PopulatePrepyamentInvReportUsage()
     var
         AllObjWithCaption: Record AllObjWithCaption;

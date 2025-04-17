@@ -22,7 +22,18 @@ codeunit 75014 "BA Single Instance"
         ForceUSDCreditLimit := Update;
     end;
 
+    procedure GetSkipSalesPrepaymentApprovalCheck(): Boolean
+    begin
+        exit(SkipSalesPrepaymentApprovalCheck);
+    end;
+
+    procedure SetSkipSalesPrepaymentApprovalCheck(Update: Boolean)
+    begin
+        SkipSalesPrepaymentApprovalCheck := Update;
+    end;
+
     var
         SkipUSDCreditLimit: Boolean;
         ForceUSDCreditLimit: Boolean;
+        SkipSalesPrepaymentApprovalCheck: Boolean;
 }
