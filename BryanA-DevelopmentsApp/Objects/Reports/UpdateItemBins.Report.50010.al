@@ -175,14 +175,17 @@ report 50010 "BA Update Item Bins"
 
         Window.Open('Populating Lines...\#1##');
         RecCount := ExcelBuffer.Count;
+        BinContent.SetCurrentKey("Default", "Location Code", "Item No.", "Variant Code", "Bin Code");
         BinContent.SetRange("Location Code", OldLocationCode);
+        BinContent.SetFilter("Bin Code", '<>%1', '');
         BinContent.SetFilter(Quantity, '>%1', 0);
+        BinContent.SetAutoCalcFields(Quantity);
         repeat
             i += 1;
-            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
+            Window.Update(1, StrSubstNo('%1 of %2', i, RecCount));
             if ExcelBuffer.Get(i, 1) and Item.Get(CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(Item."No."))) then begin
-                BinContent.SetRange("Item No.", Item."No.");
                 BinContent.SetRange(Default, true);
+                BinContent.SetRange("Item No.", Item."No.");
                 if BinContent.FindFirst() then begin
                     DefaultBin := BinContent."Bin Code";
                     BinContent.SetRange(Default, false);
