@@ -4342,6 +4342,18 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
