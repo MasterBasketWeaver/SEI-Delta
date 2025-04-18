@@ -86,6 +86,15 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if Rec.Quantity <> xRec.Quantity then
             ClearShipmentDates(Rec, true);
+        if (Rec."Document Type" = Rec."Document Type"::Order) and (Rec."BA Booking Date" = 0D) then
+            Rec."BA Booking Date" := WorkDate();
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Type', false, false)]
+    local procedure SalesLineOnAfterValdiateType(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
+    begin
+        if (Rec."Document Type" = Rec."Document Type"::Order) and (Rec."BA Booking Date" = 0D) then
+            Rec."BA Booking Date" := WorkDate();
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeSalesLineByChangedFieldNo', '', false, false)]
@@ -1987,12 +1996,21 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostSalesDoc', '', false, false)]
     local procedure SalesPostOnBeforePostSalesDoc(var SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
     begin
         CheckIfLinesHaveValidLocationCode(SalesHeader);
         CheckCustomerCurrency(SalesHeader);
         CheckPromisedDeliveryDate(SalesHeader);
-        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then
+        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
             SalesHeader.TestField("BA Salesperson Verified", true);
+            SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+            SalesLine.SetRange("Document No.", SalesHeader."No.");
+            SalesLine.SetFilter(Type, '<>%1', SalesLine.Type::" ");
+            SalesLine.SetRange("BA Booking Date", 0D);
+            if SalesLine.IsEmpty() then
+                Error('Booking Date on line %1 must be specified.', SalesLine."Line No.");
+        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnBeforePostWithLines', '', false, false)]
