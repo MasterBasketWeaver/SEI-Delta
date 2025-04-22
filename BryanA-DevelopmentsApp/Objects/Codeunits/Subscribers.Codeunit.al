@@ -2008,8 +2008,8 @@ codeunit 75010 "BA SEI Subscibers"
             SalesLine.SetRange("Document No.", SalesHeader."No.");
             SalesLine.SetFilter(Type, '<>%1', SalesLine.Type::" ");
             SalesLine.SetRange("BA Booking Date", 0D);
-            if SalesLine.IsEmpty() then
-                Error('Booking Date on line %1 must be specified.', SalesLine."Line No.");
+            if SalesLine.FindFirst() then
+                Error(NoBookingDateErr, SalesLine."Line No.");
         end;
     end;
 
@@ -5256,5 +5256,6 @@ codeunit 75010 "BA SEI Subscibers"
         LateStartTimeErr: Label 'Restrict Start Time must be earlier than Restrict End Time: %1';
         EarlyStartTimeErr: Label 'Restrict End Time must be later than Restrict Start Time: %1';
         DeactivateItemErr: Label 'You do not have permission to change item visibility.';
+        NoBookingDateErr: Label 'Booking Date on line %1 must be specified.';
 }
 
