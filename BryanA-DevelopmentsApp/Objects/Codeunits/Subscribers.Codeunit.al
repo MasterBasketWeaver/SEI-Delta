@@ -1996,12 +1996,21 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostSalesDoc', '', false, false)]
     local procedure SalesPostOnBeforePostSalesDoc(var SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
     begin
         CheckIfLinesHaveValidLocationCode(SalesHeader);
         CheckCustomerCurrency(SalesHeader);
         CheckPromisedDeliveryDate(SalesHeader);
-        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then
+        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
             SalesHeader.TestField("BA Salesperson Verified", true);
+            SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+            SalesLine.SetRange("Document No.", SalesHeader."No.");
+            SalesLine.SetFilter(Type, '<>%1', SalesLine.Type::" ");
+            SalesLine.SetRange("BA Booking Date", 0D);
+            if SalesLine.FindFirst() then
+                Error(NoBookingDateErr, SalesLine."Line No.");
+        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnBeforePostWithLines', '', false, false)]
@@ -5248,5 +5257,6 @@ codeunit 75010 "BA SEI Subscibers"
         LateStartTimeErr: Label 'Restrict Start Time must be earlier than Restrict End Time: %1';
         EarlyStartTimeErr: Label 'Restrict End Time must be later than Restrict Start Time: %1';
         DeactivateItemErr: Label 'You do not have permission to change item visibility.';
+        NoBookingDateErr: Label 'Booking Date on line %1 must be specified.';
 }
 
