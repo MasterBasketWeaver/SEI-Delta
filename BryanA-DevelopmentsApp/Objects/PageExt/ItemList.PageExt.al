@@ -60,6 +60,10 @@ pageextension 80046 "BA Item List" extends "Item List"
             {
                 ApplicationArea = all;
             }
+            field("BA Number of Bins On Hand"; Rec."BA Number of Bins On Hand")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 

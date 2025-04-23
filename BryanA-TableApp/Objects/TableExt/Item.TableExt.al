@@ -121,6 +121,13 @@ tableextension 80012 "BA Item" extends Item
             Caption = 'Skip Blocked Reason';
             Editable = false;
         }
+        field(80070; "BA Number of Bins On Hand"; Integer)
+        {
+            Caption = 'Number of Bins On Hand';
+            Editable = false;
+            FieldClass = FlowField;
+            CalcFormula = count ("Bin Content" where ("Item No." = field ("No."), "Quantity (Base)" = filter ('>0')));
+        }
     }
 
     procedure SetLastCurrencyPurchCost(CurrCode: Code[10]; LastPurchCost: Decimal)
