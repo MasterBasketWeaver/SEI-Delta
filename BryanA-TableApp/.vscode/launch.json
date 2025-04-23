@@ -1,19 +1,19 @@
 {
     "version": "1.0.0",
     "configurations": [
-        {
-            "type": "al",
-            "request": "launch",
-            "name": "Dev",
-            "server": "http://localhost",
-            "port": 7119,
-            "serverInstance": "Dev",
-            "launchBrowser":  false,
-            "authentication": "UserPassword",
-            // "schemaUpdateMode":"Recreate"
-            // "schemaUpdateMode": "ForceSync"
-        }
-        ,
+        // {
+        //     "type": "al",
+        //     "request": "launch",
+        //     "name": "Dev",
+        //     "server": "http://localhost",
+        //     "port": 7119,
+        //     "serverInstance": "Dev",
+        //     "launchBrowser":  false,
+        //     "authentication": "UserPassword",
+        //     // "schemaUpdateMode":"Recreate"
+        //     // "schemaUpdateMode": "ForceSync"
+        // }
+        // ,
         {
             "type": "al",
             "request": "launch",
