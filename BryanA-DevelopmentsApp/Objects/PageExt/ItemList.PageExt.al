@@ -63,6 +63,16 @@ pageextension 80046 "BA Item List" extends "Item List"
             field("BA Number of Bins On Hand"; Rec."BA No. of Bins On Hand")
             {
                 ApplicationArea = all;
+
+                trigger OnDrillDown()
+                var
+                    BinContent: Record "Bin Content";
+                begin
+                    BinContent.SetCurrentKey("Item No.");
+                    BinContent.SetRange("Item No.", Rec."No.");
+                    BinContent.SetFilter("Quantity (Base)", '>%1', 0);
+                    Page.Run(0, BinContent);
+                end;
             }
         }
     }
