@@ -42,7 +42,7 @@ codeunit 75011 "BA Install Codeunit"
         Item: Record Item;
         BinContent: Record "Bin Content";
     begin
-        Item.SetFilter("BA Number of Bins On Hand", '<>%1', 0);
+        Item.SetFilter("BA No. of Bins On Hand", '<>%1', 0);
         if not Item.IsEmpty then
             exit;
         Item.Reset();
@@ -51,7 +51,7 @@ codeunit 75011 "BA Install Codeunit"
         if Item.FindSet(true) then
             repeat
                 BinContent.SetRange("Item No.", Item."No.");
-                Item."BA Number of Bins On Hand" := BinContent.Count();
+                Item."BA No. of Bins On Hand" := BinContent.Count();
                 Item.Modify(true);
             until Item.Next() = 0;
     end;
