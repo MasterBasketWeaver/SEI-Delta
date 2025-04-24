@@ -5179,6 +5179,21 @@ codeunit 75010 "BA SEI Subscibers"
         SingleInstance.SetSkipSalesPrepaymentApprovalCheck(false);
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"Warehouse Entry", 'OnAfterInsertEvent', '', false, false)]
+    local procedure WarehouseEntryOnAfterInsert(var Rec: Record "Warehouse Entry")
+    var
+        Item: Record Item;
+        BinContent: Record "Bin Content";
+    begin
+        if Rec.IsTemporary then
+            exit;
+        BinContent.SetCurrentKey("Item No.");
+        BinContent.SetRange("Item No.", Rec."Item No.");
+        BinContent.SetFilter("Quantity (Base)", '>%1', 0);
+        Item.Get(Rec."Item No.");
+        Item.Validate("BA Number of Bins On Hand", BinContent.Count());
+        Item.Modify(true);
+    end;
 
 
 

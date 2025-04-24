@@ -33,6 +33,27 @@ codeunit 75011 "BA Install Codeunit"
         // PopulatePrepyamentInvReportUsage();
         // PopulateCustomerApprovalGroups();
         // PopulateProdOrderNotificationReportUsage();
+        PopulateItemBinCount();
+    end;
+
+
+    local procedure PopulateItemBinCount()
+    var
+        Item: Record Item;
+        BinContent: Record "Bin Content";
+    begin
+        Item.SetFilter("BA Number of Bins On Hand", '<>%1', 0);
+        if not Item.IsEmpty then
+            exit;
+        Item.Reset();
+        BinContent.SetCurrentKey("Item No.");
+        BinContent.SetFilter("Quantity (Base)", '>%1', 0);
+        if Item.FindSet(true) then
+            repeat
+                BinContent.SetRange("Item No.", Item."No.");
+                Item."BA Number of Bins On Hand" := BinContent.Count();
+                Item.Modify(true);
+            until Item.Next() = 0;
     end;
 
 
