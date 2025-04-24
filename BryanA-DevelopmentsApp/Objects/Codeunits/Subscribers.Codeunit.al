@@ -5192,7 +5192,7 @@ codeunit 75010 "BA SEI Subscibers"
         BinContent.SetRange("Item No.", Rec."Item No.");
         BinContent.SetFilter("Quantity (Base)", '>%1', 0);
         Item.Get(Rec."Item No.");
-        Item.Validate("BA Number of Bins On Hand", BinContent.Count());
+        Item.Validate("BA No. of Bins On Hand", BinContent.Count());
         Item.Modify(true);
     end;
 

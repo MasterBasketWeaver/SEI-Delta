@@ -252,6 +252,10 @@ pageextension 80009 "BA Item Card" extends "Item Card"
                     UpdateDimArray(RecRef);
                 end;
             }
+            field("BA Number of Bins On Hand"; Rec."BA No. of Bins On Hand")
+            {
+                ApplicationArea = all;
+            }
         }
         modify("Vendor Item No.")
         {
