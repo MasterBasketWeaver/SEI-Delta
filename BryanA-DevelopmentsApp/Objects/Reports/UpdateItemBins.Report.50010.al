@@ -14,13 +14,6 @@ report 50010 "BA Update Item Bins"
             {
                 group(Options)
                 {
-                    // field(ItemFilter; ItemFilter)
-                    // {
-                    //     ApplicationArea = all;
-                    //     TableRelation = Item."No." where (Blocked = const (false));
-                    //     ShowMandatory = true;
-                    //     Caption = 'Item Filter';
-                    // }
                     field(OldLocationCode; OldLocationCode)
                     {
                         ApplicationArea = all;
@@ -28,17 +21,6 @@ report 50010 "BA Update Item Bins"
                         ShowMandatory = true;
                         Caption = 'Current Location Code';
                     }
-                    // field(OldBinCode; OldBinCode)
-                    // {
-                    //     ApplicationArea = all;
-                    //     Caption = 'Current Bin Code';
-                    //     ShowMandatory = true;
-
-                    //     trigger OnLookup(var Text: Text): Boolean
-                    //     begin
-                    //         exit(BinLookup(OldLocationCode, NewBinCode, OldBinCode, true));
-                    //     end;
-                    // }
                     field(NewLocationCode; NewLocationCode)
                     {
                         ApplicationArea = all;
@@ -46,24 +28,6 @@ report 50010 "BA Update Item Bins"
                         ShowMandatory = true;
                         Caption = 'New Location Code';
                     }
-                    // field(NewBinCode; NewBinCode)
-                    // {
-                    //     ApplicationArea = all;
-                    //     Caption = 'New Bin Code';
-                    //     ShowMandatory = true;
-
-                    //     trigger OnLookup(var Text: Text): Boolean
-                    //     begin
-                    //         exit(BinLookup(NewLocationCode, OldBinCode, NewBinCode, false));
-                    //     end;
-                    // }
-                    // field("Quantity to Handle"; QtyToHandle)
-                    // {
-                    //     ApplicationArea = all;
-                    //     ShowMandatory = true;
-                    //     BlankZero = true;
-                    //     DecimalPlaces = 0 : 2;
-                    // }
                     field("Posting Date"; PostingDate)
                     {
                         ApplicationArea = all;
@@ -82,6 +46,7 @@ report 50010 "BA Update Item Bins"
         begin
             OldLocationCode := 'DELTA';
             NewLocationCode := 'DELTA';
+            PostingDate := WorkDate();
         end;
 
         trigger OnQueryClosePage(CloseAction: Action): Boolean
@@ -89,46 +54,16 @@ report 50010 "BA Update Item Bins"
             if CloseAction = Action::Cancel then
                 exit;
             if OldLocationCode = '' then
-                Error('Current Location must be specified');
-            // if OldBinCode = '' then
-            //     Error('Current Bin Code must be specified');
+                Error(NoCurrentLocationErr);
             if NewLocationCode = '' then
-                Error('New Location must be specified');
-            // if NewBinCode = '' then
-            //     Error('New Bin Code must be specified');
-            // if OldBinCode = NewBinCode then
-            //     Error('Current and new bin codes must be different: %1', OldBinCode);
-            // if QtyToHandle = 0 then
-            //     Error('Quantity to handle must be specified.');
+                Error(NoNewLocationErr);
             if PostingDate = 0D then
-                Error('Posting Date must be specified.');
+                Error(NoPostingDateErr);
             if DocNo = '' then
-                Error('Document No. must be specfied.');
+                Error(NoDocNoErr);
         end;
     }
 
-    // local procedure BinLookup(LocationCode: Code[10]; OldCode: Code[20]; var NewCode: Code[20]; HideEmpty: Boolean): Boolean
-    // var
-    //     Item: Record Item;
-    //     Bin: Record Bin;
-    //     BinList: Page "Bin List";
-    // begin
-    //     if LocationCode = '' then
-    //         exit;
-    //     Bin.FilterGroup(2);
-    //     Bin.SetRange("Location Code", LocationCode);
-    //     if HideEmpty then
-    //         Bin.SetRange(Empty, false);
-    //     if OldCode <> '' then
-    //         Bin.SetFilter(Code, '<>%1', OldCode);
-    //     Bin.FilterGroup(0);
-    //     BinList.LookupMode(true);
-    //     BinList.SetTableView(Bin);
-    //     if BinList.RunModal() <> Action::LookupOK then
-    //         exit;
-    //     BinList.GetRecord(Bin);
-    //     NewCode := Bin.Code;
-    // end;
 
     procedure SetItemJnlLine(var ItemJnlLine: Record "Item Journal Line")
     begin
@@ -157,7 +92,7 @@ report 50010 "BA Update Item Bins"
             exit;
         TempBlob.Blob.CreateInStream(IStream);
         if not ExcelBuffer.GetSheetsNameListFromStream(IStream, NameBuffer) then
-            Error('No Sheets in file.');
+            Error(NoSheetErr);
         NameBuffer.FindFirst();
         ExcelBuffer.OpenBookStream(IStream, NameBuffer.Value);
         ExcelBuffer.ReadSheet();
@@ -166,29 +101,31 @@ report 50010 "BA Update Item Bins"
         ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
         ExcelBuffer.SetRange("Column No.", 1);
         if not ExcelBuffer.FindSet() then
-            Error('No data found in file.');
+            Error(NoDataErr);
 
         ItemJnlLine.SetRange("Journal Template Name", TemplateName);
         ItemJnlLine.SetRange("Journal Batch Name", BatchName);
         if ItemJnlLine.FindLast() then
             LineNo := ItemJnlLine."Line No.";
 
-        Window.Open('Populating Lines...\#1##');
+        Window.Open(WindowTitle);
         RecCount := ExcelBuffer.Count;
         BinContent.SetCurrentKey("Default", "Location Code", "Item No.", "Variant Code", "Bin Code");
         BinContent.SetRange("Location Code", OldLocationCode);
         BinContent.SetFilter("Bin Code", '<>%1', '');
-        BinContent.SetFilter(Quantity, '>%1', 0);
         BinContent.SetAutoCalcFields(Quantity);
+        i := 1;
         repeat
             i += 1;
             Window.Update(1, StrSubstNo('%1 of %2', i, RecCount));
             if ExcelBuffer.Get(i, 1) and Item.Get(CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(Item."No."))) then begin
+                BinContent.SetRange(Quantity);
                 BinContent.SetRange(Default, true);
                 BinContent.SetRange("Item No.", Item."No.");
                 if BinContent.FindFirst() then begin
                     DefaultBin := BinContent."Bin Code";
                     BinContent.SetRange(Default, false);
+                    BinContent.SetFilter(Quantity, '>%1', 0);
                     if BinContent.FindSet() then
                         repeat
                             LineNo += 10000;
@@ -215,14 +152,20 @@ report 50010 "BA Update Item Bins"
         Window.Close();
     end;
 
+
     var
         PostingDate: Date;
-        ItemFilter: Text;
         OldLocationCode: Code[10];
         NewLocationCode: Code[10];
         TemplateName: Code[10];
         BatchName: Code[10];
         DocNo: Code[20];
 
-
+        NoCurrentLocationErr: Label 'Current Location must be specified';
+        NoNewLocationErr: Label 'New Location must be specified';
+        NoPostingDateErr: Label 'Posting Date must be specified.';
+        NoDocNoErr: Label 'Document No. must be specfied.';
+        NoSheetErr: Label 'No Sheets in file.';
+        NoDataErr: Label 'No data found in file.';
+        WindowTitle: Label 'Populating Lines...\#1##';
 }
