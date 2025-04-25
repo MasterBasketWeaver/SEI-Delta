@@ -121,6 +121,12 @@ tableextension 80012 "BA Item" extends Item
             Caption = 'Skip Blocked Reason';
             Editable = false;
         }
+        field(80070; "BA No. of Bins On Hand"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'No. of Bins On Hand';
+            Editable = false;
+        }
     }
 
     procedure SetLastCurrencyPurchCost(CurrCode: Code[10]; LastPurchCost: Decimal)
