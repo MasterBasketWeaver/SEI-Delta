@@ -41,6 +41,7 @@ report 50010 "BA Update Default Bin Qtys"
                     field(InstructionsDrillDown; InstructionsCaption)
                     {
                         ApplicationArea = all;
+                        ShowCaption = false;
 
                         trigger OnDrillDown()
                         begin
