@@ -2,16 +2,17 @@ pageextension 80201 "BA Production Journal" extends "Production Journal"
 {
     actions
     {
-        addlast("&Line")
+        addlast(Processing)
         {
             action("BA Update to Default Bins")
             {
                 ApplicationArea = all;
                 Promoted = true;
-                PromotedCategory = Process;
+                PromotedCategory = Category5;
                 PromotedIsBig = true;
                 PromotedOnly = true;
                 Caption = 'Update to Default Bins';
+                Image = CreateBinContent;
 
                 trigger OnAction()
                 var
@@ -29,18 +30,26 @@ pageextension 80201 "BA Production Journal" extends "Production Journal"
                     BinContent.SetRange(Default, true);
                     BinContent.SetFilter("Bin Code", '<>%1', '');
                     repeat
-                        BinContent.SetRange("Item No.", ItemJournalLine."Bin Code");
+                        BinContent.SetRange("Item No.", ItemJournalLine."Item No.");
                         BinContent.SetRange("Location Code", ItemJournalLine."Location Code");
-                        if BinContent.FindFirst() and (ItemJournalLine."Bin Code" <> BinContent."Bin Code") then begin
-                            ItemJournalLine.Validate("Bin Code", BinContent."Bin Code");
-                            ItemJournalLine.Modify(true);
-                            UpdateCount += 1;
-                        end;
+                        if BinContent.FindFirst() then
+                            if ItemJournalLine."Bin Code" <> BinContent."Bin Code" then begin
+                                ItemJournalLine.Validate("Bin Code", BinContent."Bin Code");
+                                ItemJournalLine.Modify(true);
+                                UpdateCount += 1;
+                            end;
                     until ItemJournalLine.Next() = 0;
                     CurrPage.Update(false);
-                    Message('Updated %1 line(s) with default bin code.');
+                    if UpdateCount = 1 then
+                        Message(SingleUpdateMsg)
+                    else
+                        Message(MultiUpdateMsg, UpdateCount);
                 end;
             }
         }
     }
+
+    var
+        SingleUpdateMsg: Label 'Updated 1 line with default bin code.';
+        MultiUpdateMsg: Label 'Updated %1 lines with default bin code.';
 }
