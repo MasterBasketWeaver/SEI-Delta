@@ -1,7 +1,7 @@
-report 50010 "BA Update Item Bins"
+report 50010 "BA Update Default Bin Qtys"
 {
     ProcessingOnly = true;
-    Caption = 'Update Item Bins';
+    Caption = 'Update Default Bin Quantities';
 
 
     requestpage
@@ -37,6 +37,15 @@ report 50010 "BA Update Item Bins"
                     {
                         ApplicationArea = all;
                         ShowMandatory = true;
+                    }
+                    field(InstructionsDrillDown; InstructionsCaption)
+                    {
+                        ApplicationArea = all;
+
+                        trigger OnDrillDown()
+                        begin
+                            Message(Instructions);
+                        end;
                     }
                 }
             }
@@ -168,4 +177,6 @@ report 50010 "BA Update Item Bins"
         NoSheetErr: Label 'No Sheets in file.';
         NoDataErr: Label 'No data found in file.';
         WindowTitle: Label 'Populating Lines...\#1##';
+        InstructionsCaption: Label 'Detailed Instructions';
+        Instructions: Label 'This feature is used when an item(s) default bin has been updated and the quantity on hand needs to transfer from a different bin or bins to the new default bin setup. Users can upload multiple items at a time to update the quantities with the new default bin locations.\-Format an Excel spreadsheet with the header “Item No.”\\-List Item numbers below in text format\-After selecting the Location Code, Posting Date and Document No., click “OK”\-Select the Excel file for uploading\-The Item No. and bin codes involved will be populated onto the Item Reclass Journal for review';
 }
