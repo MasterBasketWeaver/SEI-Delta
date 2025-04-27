@@ -42,7 +42,7 @@ pageextension 80165 "BA Item Reclass. Jnl." extends "Item Reclass. Journal"
     {
         addafter("Item &Tracking Lines")
         {
-            action("BA Update Item Bin Quantities")
+            action("BA Update Default Bin Quantities")
             {
                 ApplicationArea = all;
                 Promoted = true;
@@ -50,11 +50,11 @@ pageextension 80165 "BA Item Reclass. Jnl." extends "Item Reclass. Journal"
                 PromotedCategory = Category5;
                 PromotedIsBig = true;
                 PromotedOnly = true;
-                Caption = 'Update Item Bin Quantities';
+                Caption = 'Update Default Bin Quantities';
 
                 trigger OnAction()
                 var
-                    UpdateItemBins: Report "BA Update Item Bins";
+                    UpdateItemBins: Report "BA Update Default Bin Qtys";
                 begin
                     UpdateItemBins.SetItemJnlLine(Rec);
                     UpdateItemBins.RunModal();
