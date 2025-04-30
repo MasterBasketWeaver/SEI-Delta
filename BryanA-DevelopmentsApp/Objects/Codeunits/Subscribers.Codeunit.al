@@ -2190,7 +2190,8 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Item: Record Item;
     begin
-        SalesLine.TestField("BA Booking Date");
+        if SalesLine.Type in [SalesLine.Type::"G/L Account", SalesLine.Type::Item, SalesLine.Type::Resource] then
+            SalesLine.TestField("BA Booking Date");
         if (SalesLine.Type <> SalesLine.Type::Item) or not Item.Get(SalesLine."No.") then
             exit;
         Item.TestField("ENC Not for Sale", false);

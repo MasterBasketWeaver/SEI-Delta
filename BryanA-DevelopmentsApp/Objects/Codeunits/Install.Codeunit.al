@@ -33,7 +33,7 @@ codeunit 75011 "BA Install Codeunit"
         // PopulatePrepyamentInvReportUsage();
         // PopulateCustomerApprovalGroups();
         // PopulateProdOrderNotificationReportUsage();
-        PopulateItemBinCount();
+        // PopulateItemBinCount();
     end;
 
 
