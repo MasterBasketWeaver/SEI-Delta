@@ -24,15 +24,15 @@
         //     "schemaUpdateMode": "Synchronize"
         // }
         // ,
-        {
-            "type": "al",
-            "request": "launch",
-            "name": "Live",
-            "server": "http://localhost",
-            "port": 7054,
-            "serverInstance": "SEI140",
-            "authentication": "UserPassword",
-            "schemaUpdateMode": "Synchronize"
-        }
+        // {
+        //     "type": "al",
+        //     "request": "launch",
+        //     "name": "Live",
+        //     "server": "http://localhost",
+        //     "port": 7054,
+        //     "serverInstance": "SEI140",
+        //     "authentication": "UserPassword",
+        //     "schemaUpdateMode": "Synchronize"
+        // }
     ]
 }
