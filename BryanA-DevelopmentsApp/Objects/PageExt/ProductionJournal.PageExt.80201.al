@@ -1,5 +1,16 @@
 pageextension 80201 "BA Production Journal" extends "Production Journal"
 {
+    layout
+    {
+        addfirst(Control1)
+        {
+            field("Line No."; Rec."Line No.")
+            {
+                ApplicationArea = all;
+            }
+        }
+    }
+
     actions
     {
         addlast(Processing)
@@ -47,7 +58,30 @@ pageextension 80201 "BA Production Journal" extends "Production Journal"
                 end;
             }
         }
+        addlast("Pro&d. Order")
+        {
+            action("BA Item Card")
+            {
+                ApplicationArea = all;
+                Image = Item;
+                RunObject = Page "Item Card";
+                RunPageLink = "No." = field ("Item No.");
+                Enabled = Rec."No." <> '';
+                Promoted = true;
+                PromotedCategory = Category6;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+            }
+        }
+        modify("Item Ledger E&ntries")
+        {
+            Promoted = true;
+            ApplicationArea = all;
+            PromotedCategory = Category6;
+            PromotedIsBig = true;
+        }
     }
+
 
     var
         SingleUpdateMsg: Label 'Updated 1 line with default bin code.';
