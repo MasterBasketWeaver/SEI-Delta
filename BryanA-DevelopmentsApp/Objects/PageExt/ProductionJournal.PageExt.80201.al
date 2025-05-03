@@ -60,18 +60,6 @@ pageextension 80201 "BA Production Journal" extends "Production Journal"
         }
         addlast("Pro&d. Order")
         {
-            action("BA Item Card")
-            {
-                ApplicationArea = all;
-                Image = Item;
-                RunObject = Page "Item Card";
-                RunPageLink = "No." = field ("Item No.");
-                Promoted = true;
-                PromotedCategory = Category6;
-                PromotedIsBig = true;
-                PromotedOnly = true;
-                Caption = 'Item Card';
-            }
             action("BA Item Ledger Entries")
             {
                 ApplicationArea = all;
@@ -90,6 +78,18 @@ pageextension 80201 "BA Production Journal" extends "Production Journal"
                     ItemLedgerEntry.SetRange("Item No.", Rec."Item No.");
                     Page.Run(Page::"Item Ledger Entries", ItemLedgerEntry);
                 end;
+            }
+            action("BA Item Card")
+            {
+                ApplicationArea = all;
+                Image = Item;
+                RunObject = Page "Item Card";
+                RunPageLink = "No." = field ("Item No.");
+                Promoted = true;
+                PromotedCategory = Category6;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Item Card';
             }
         }
     }
