@@ -70,14 +70,27 @@ pageextension 80201 "BA Production Journal" extends "Production Journal"
                 PromotedCategory = Category6;
                 PromotedIsBig = true;
                 PromotedOnly = true;
+                Caption = 'Item Card';
             }
-        }
-        modify("Item Ledger E&ntries")
-        {
-            Promoted = true;
-            ApplicationArea = all;
-            PromotedCategory = Category6;
-            PromotedIsBig = true;
+            action("BA Item Ledger Entries")
+            {
+                ApplicationArea = all;
+                Image = ItemLedger;
+                Promoted = true;
+                PromotedCategory = Category6;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Item Ledger Entries';
+
+                trigger OnAction()
+                var
+                    ItemLedgerEntry: Record "Item Ledger Entry";
+                begin
+                    ItemLedgerEntry.SetCurrentKey("Item No.");
+                    ItemLedgerEntry.SetRange("Item No.", Rec."Item No.");
+                    Page.Run(Page::"Item Ledger Entries", ItemLedgerEntry);
+                end;
+            }
         }
     }
 
