@@ -66,7 +66,6 @@ pageextension 80201 "BA Production Journal" extends "Production Journal"
                 Image = Item;
                 RunObject = Page "Item Card";
                 RunPageLink = "No." = field ("Item No.");
-                Enabled = Rec."No." <> '';
                 Promoted = true;
                 PromotedCategory = Category6;
                 PromotedIsBig = true;
