@@ -1996,31 +1996,29 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostSalesDoc', '', false, false)]
     local procedure SalesPostOnBeforePostSalesDoc(var SalesHeader: Record "Sales Header")
-    var
-        SalesLine: Record "Sales Line";
     begin
         CheckIfLinesHaveValidLocationCode(SalesHeader);
         CheckCustomerCurrency(SalesHeader);
         CheckPromisedDeliveryDate(SalesHeader);
-        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then begin
-            SalesHeader.TestField("BA Salesperson Verified", true);
-            SalesLine.SetRange("Document Type", SalesHeader."Document Type");
-            SalesLine.SetRange("Document No.", SalesHeader."No.");
-            SalesLine.SetFilter(Type, '<>%1', SalesLine.Type::" ");
-            SalesLine.SetRange("BA Booking Date", 0D);
-            if SalesLine.FindFirst() then
-                Error(NoBookingDateErr, SalesLine."Line No.");
-        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnBeforePostWithLines', '', false, false)]
     local procedure ServicePostOnBeforePostWithLines(var PassedServHeader: Record "Service Header")
     var
         Customer: Record Customer;
+        ServiceLine: Record "Service Line";
     begin
         PassedServHeader.TestField("Customer No.");
-        if PassedServHeader."Document Type" = PassedServHeader."Document Type"::Order then
+        if PassedServHeader."Document Type" = PassedServHeader."Document Type"::Order then begin
             PassedServHeader.TestField("BA Salesperson Verified", true);
+            ServiceLine.SetRange("Document Type", PassedServHeader."Document Type");
+            ServiceLine.SetRange("Document No.", PassedServHeader."No.");
+            ServiceLine.SetFilter(Type, '%1|%2|%3', ServiceLine.Type::"G/L Account", ServiceLine.Type::Item, ServiceLine.Type::Resource);
+            if ServiceLine.FindSet() then
+                repeat
+                    ServiceLine.TestField("BA Booking Date");
+                until ServiceLine.Next() = 0;
+        end;
         Customer.Get(PassedServHeader."Customer No.");
         CheckCustomerCurrency(PassedServHeader, Customer);
         CheckPromisedDeliveryDate(PassedServHeader);
@@ -2190,7 +2188,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Item: Record Item;
     begin
-        if SalesLine."Document Type" in [SalesLine."Document Type"::Quote, SalesLine."Document Type"::Order, SalesLine."Document Type"::Invoice] then
+        if SalesLine."Document Type" = SalesLine."Document Type"::Order then
             if SalesLine.Type in [SalesLine.Type::"G/L Account", SalesLine.Type::Item, SalesLine.Type::Resource] then
                 SalesLine.TestField("BA Booking Date");
         if (SalesLine.Type <> SalesLine.Type::Item) or not Item.Get(SalesLine."No.") then
