@@ -35,5 +35,13 @@ pageextension 80008 "BA Purch. & Payables Setup" extends "Purchases & Payables S
             //     ToolTip = 'Specifies the code for the number series that will be used to assign numbers to posted requisition credit memos.';
             // }
         }
+        addlast(General)
+        {
+            field("BA Enable Tax Pass Through"; "BA Enable Tax Pass Through")
+            {
+                ApplicationArea = all;
+                ToolTip = 'Specifies if tax jurisdictions with Pass Through enabled will post tax directly to the related G/L entries.';
+            }
+        }
     }
 }

@@ -38,5 +38,10 @@ tableextension 80006 "BA Purch. & Payables Setup" extends "Purchases & Payables 
             Caption = 'Posted Requisition Credit Memo Nos.';
             TableRelation = "No. Series".Code;
         }
+        field(80010; "BA Enable Tax Pass Through"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Enable Tax Pass Through';
+        }
     }
 }
