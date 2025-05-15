@@ -50,11 +50,12 @@ codeunit 75014 "BA Single Instance"
     procedure UpdateBuffer(var NewBuffer: Record "Name/Value Buffer")
     begin
         if NameValueBuffer.Get(NewBuffer.ID) then begin
-            NameValueBuffer.FindLast();
-            NewBuffer.ID := NameValueBuffer.ID + 1;
+            NameValueBuffer := NewBuffer;
+            NameValueBuffer.Modify(false)
+        end else begin
+            NameValueBuffer := NewBuffer;
+            NameValueBuffer.Insert(false);
         end;
-        NameValueBuffer := NewBuffer;
-        NameValueBuffer.Insert(false);
     end;
 
     procedure SetBuffer(var NewBuffer: Record "Name/Value Buffer")
