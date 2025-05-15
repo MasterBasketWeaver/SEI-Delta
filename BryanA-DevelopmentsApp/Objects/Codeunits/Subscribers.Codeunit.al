@@ -2634,7 +2634,7 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeInsertEvent', '', false, false)]
-    local procedure OnBeforeSalesHeaderInsert(var Rec: Record "Sales Header")
+    local procedure SalesHeaderOnBeforeSalesHeaderInsert(var Rec: Record "Sales Header")
     begin
         if (Rec."Document Type" = Rec."Document Type"::Order) and not Rec.IsTemporary() then begin
             CheckIfCanCreateOrder();
@@ -4893,7 +4893,7 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnBeforeInsertEvent', '', false, false)]
-    local procedure OnBeforeServiceHeaderInsert(var Rec: Record "Service Header")
+    local procedure ServiceHeaderOnBeforeServiceHeaderInsert(var Rec: Record "Service Header")
     begin
         if (Rec."Document Type" = Rec."Document Type"::Order) and not Rec.IsTemporary() then
             CheckIfCanCreateOrder();
@@ -5195,6 +5195,189 @@ codeunit 75010 "BA SEI Subscibers"
         Item.Validate("BA No. of Bins On Hand", BinContent.Count());
         Item.Modify(true);
     end;
+
+
+
+
+
+
+
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnBeforePostPurchaseDoc', '', false, false)]
+    local procedure PurchPostOnBeforePostPurchaseDoc()
+    begin
+        SingleInstance.ClearBuffer(false);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnBeforePostLines', '', false, false)]
+    local procedure PurchPostOnBeforePostLines(var PurchLine: Record "Purchase Line")
+    begin
+        SingleInstance.ClearBuffer(PurchLine."Document Type" in [PurchLine."Document Type"::Order, PurchLine."Document Type"::Invoice]);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales Tax Calculate", 'OnAfterInsertTempSalesTaxLine', '', false, false)]
+    local procedure SalesTaxCalculateOnAfterInsertTempSalesTaxLine(var TempSalesTaxLine: Record "Sales Tax Amount Line"; PurchLine: Record "Purchase Line")
+    begin
+        InsertUpdatePassThroughBuffer(TempSalesTaxLine, PurchLine)
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales Tax Calculate", 'OnAfterModifyTempSalesTaxLine', '', false, false)]
+    local procedure SalesTaxCalculateOnAfterModifyTempSalesTaxLine(var TempSalesTaxLine: Record "Sales Tax Amount Line"; PurchLine: Record "Purchase Line")
+    begin
+        InsertUpdatePassThroughBuffer(TempSalesTaxLine, PurchLine)
+    end;
+
+    local procedure InsertUpdatePassThroughBuffer(var TempSalesTaxLine: Record "Sales Tax Amount Line"; PurchLine: Record "Purchase Line")
+    var
+        PurchPaySetup: Record "Purchases & Payables Setup";
+        NameValueBuffer: Record "Name/Value Buffer" temporary;
+        AccountNo: Code[20];
+        ID: Integer;
+    begin
+        if not SingleInstance.GetIsPurchPosting() then
+            exit;
+        if TempSalesTaxLine."Tax Jurisdiction Code" = '' then
+            exit;
+        PurchPaySetup.Get();
+        if not PurchPaySetup."BA Enable Tax Pass Through" then
+            exit;
+        AccountNo := GetPassThroughAccountNo(TempSalesTaxLine."Tax Jurisdiction Code", PurchLine);
+        if AccountNo = '' then
+            exit;
+        SingleInstance.GetBuffer(NameValueBuffer);
+        NameValueBuffer.SetRange(Name, TempSalesTaxLine."Tax Jurisdiction Code");
+        NameValueBuffer.SetRange(Value, AccountNo);
+        if NameValueBuffer.FindFirst() then begin
+            NameValueBuffer."BA Amount" += PurchLine."Line Amount";
+            NameValueBuffer."BA Quantity" += PurchLine."Qty. to Invoice";
+            NameValueBuffer.Modify(false);
+            SingleInstance.UpdateBuffer(NameValueBuffer);
+            exit;
+        end;
+        NameValueBuffer.Reset();
+        if NameValueBuffer.FindLast() then
+            ID := NameValueBuffer.ID;
+        NameValueBuffer.Init();
+        NameValueBuffer.ID := ID + 1;
+        NameValueBuffer.Name := TempSalesTaxLine."Tax Jurisdiction Code";
+        NameValueBuffer.Value := AccountNo;
+        NameValueBuffer."BA Amount" := PurchLine."Line Amount";
+        NameValueBuffer."BA Quantity" := PurchLine."Qty. to Invoice";
+        NameValueBuffer.Insert(false);
+        SingleInstance.AddBuffer(NameValueBuffer);
+    end;
+
+    //debug functions
+    // local procedure PrintBuffer(var Name: Record "Name/Value Buffer")
+    // begin
+    //     PrintBuffer(Name, '');
+    // end;
+
+    // local procedure PrintBuffer(var Name: Record "Name/Value Buffer"; Title: Text)
+    // var
+    //     Temp: TextBuilder;
+    // begin
+    //     Name.Reset();
+    //     if Title <> '' then
+    //         Temp.AppendLine(Title);
+    //     Temp.AppendLine(StrSubstNo('Buffer count: %1', Name.Count));
+    //     if Name.FindSet() then
+    //         repeat
+    //             Temp.AppendLine(StrSubstNo('%1: %2, %3, %4, %5', Name.ID, Name.Name, Name.Value, Name."BA Amount", Name."BA Quantity"));
+    //         until Name.Next() = 0;
+    //     if not Confirm(Temp.ToText()) then
+    //         Error('');
+    // end;
+
+    local procedure GetPassThroughAccountNo(TaxJurisCode: Code[20]; var PurchaseLine: Record "Purchase Line"): Code[20]
+    var
+        TaxJurisdiction: Record "Tax Jurisdiction";
+        InventoryPostingSetup: Record "Inventory Posting Setup";
+    begin
+        if TaxJurisdiction.Get(TaxJurisCode) and TaxJurisdiction."BA Pass Through (Purchases)" then
+            case PurchaseLine.Type of
+                PurchaseLine.Type::"G/L Account":
+                    exit(PurchaseLine."No.");
+                PurchaseLine.Type::Item:
+                    if InventoryPostingSetup.Get(PurchaseLine."Location Code", PurchaseLine."Posting Group") then begin
+                        InventoryPostingSetup.TestField("Inventory Account");
+                        exit(InventoryPostingSetup."Inventory Account");
+                    end;
+            end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnBeforePostSalesTaxToGL', '', false, false)]
+    local procedure PurchPostOnBeforePostSalesTaxToGL(var TempSalesTaxAmtLine: Record "Sales Tax Amount Line")
+    var
+        SalesTaxAmountLine: Record "Sales Tax Amount Line";
+        NameValueBuffer: Record "Name/Value Buffer" temporary;
+        TaxJuris: List of [Code[20]];
+        TaxJurisCode: Code[20];
+        i: Integer;
+        First: Boolean;
+    begin
+        if not SingleInstance.GetIsPurchPosting() then
+            exit;
+        if not SingleInstance.GetBuffer(NameValueBuffer) then
+            exit;
+        repeat
+            TaxJurisCode := NameValueBuffer.Name;
+            if not TaxJuris.Contains(TaxJurisCode) then
+                TaxJuris.Add(TaxJurisCode);
+        until NameValueBuffer.Next() = 0;
+
+        TempSalesTaxAmtLine.Reset();
+        foreach TaxJurisCode in TaxJuris do begin
+            TempSalesTaxAmtLine.SetRange("Tax Jurisdiction Code", TaxJurisCode);
+            TempSalesTaxAmtLine.SetFilter("Tax %", '<>%1', 0);
+            if TempSalesTaxAmtLine.FindFirst() then begin
+                SalesTaxAmountLine := TempSalesTaxAmtLine;
+                TempSalesTaxAmtLine.Delete(false);
+                NameValueBuffer.SetRange(Name, TaxJurisCode);
+                NameValueBuffer.FindSet();
+                First := true;
+                repeat
+                    TempSalesTaxAmtLine := SalesTaxAmountLine;
+                    TempSalesTaxAmtLine."Tax Amount" := NameValueBuffer."BA Amount" * TempSalesTaxAmtLine."Tax %" / 100;
+                    TempSalesTaxAmtLine."Tax Base Amount" := NameValueBuffer."BA Amount";
+                    TempSalesTaxAmtLine."Tax Base Amount FCY" := TempSalesTaxAmtLine."Tax Base Amount";
+                    TempSalesTaxAmtLine."Line Amount" := NameValueBuffer."BA Amount";
+                    TempSalesTaxAmtLine."Amount Including Tax" := TempSalesTaxAmtLine."Tax Amount" + TempSalesTaxAmtLine."Tax Base Amount";
+                    TempSalesTaxAmtLine.Quantity := NameValueBuffer."BA Quantity";
+                    TempSalesTaxAmtLine."BA Account No." := NameValueBuffer.Value;
+                    if not First then begin
+                        i -= 1;
+                        TempSalesTaxAmtLine."BA Orignal Tax %" := SalesTaxAmountLine."Tax %";
+                        TempSalesTaxAmtLine."Tax %" := i;
+                    end else
+                        First := false;
+                    TempSalesTaxAmtLine.Insert(false);
+                until NameValueBuffer.Next() = 0;
+            end;
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnBeforeSetRemSalesTaxSrcAmt', '', false, false)]
+    local procedure PurchPostOnBeforeSetRemSalesTaxSrcAmt(var TempSalesTaxAmtLine: Record "Sales Tax Amount Line"; var RemSalesTaxSrcAmt: Decimal; var IsHandled: Boolean)
+    begin
+        if TempSalesTaxAmtLine."BA Orignal Tax %" <> 0 then begin
+            RemSalesTaxSrcAmt := RemSalesTaxSrcAmt + TempSalesTaxAmtLine."Tax Base Amount FCY" * TempSalesTaxAmtLine."BA Orignal Tax %" / 100;
+            IsHandled := true;
+        end else
+            RemSalesTaxSrcAmt := RemSalesTaxSrcAmt + TempSalesTaxAmtLine."Tax Base Amount FCY" * TempSalesTaxAmtLine."Tax %" / 100;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnPostSalesTaxToGLOnBeforeGenJnlPostLine', '', false, false)]
+    local procedure PurchPostOnPostSalesTaxToGLOnBeforeGenJnlPostLine(var GenJnlLine: Record "Gen. Journal Line"; PurchaseLine: Record "Purchase Line"; var TempSalesTaxAmtLine: Record "Sales Tax Amount Line")
+    begin
+        if TempSalesTaxAmtLine."BA Account No." <> '' then
+            GenJnlLine."Account No." := TempSalesTaxAmtLine."BA Account No.";
+    end;
+
+
+
 
 
 
