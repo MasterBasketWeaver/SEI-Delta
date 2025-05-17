@@ -40,6 +40,41 @@ tableextension 80036 "BA Sales & Rec. Setup" extends "Sales & Receivables Setup"
             DataClassification = CustomerContent;
             Caption = 'Restrict Order End Time';
         }
+        field(80013; "BA Restrict Monday"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Monday';
+        }
+        field(80014; "BA Restrict Tuesday"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Tuesday';
+        }
+        field(80015; "BA Restrict Wednesday"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Wednesday';
+        }
+        field(80016; "BA Restrict Thursday"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Thursday';
+        }
+        field(80017; "BA Restrict Friday"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Friday';
+        }
+        field(80018; "BA Restrict Saturday"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Saturday';
+        }
+        field(80019; "BA Restrict Sunday"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Restrict Sunday';
+        }
         field(80020; "BA Ledger Start Date"; Date)
         {
             DataClassification = CustomerContent;
