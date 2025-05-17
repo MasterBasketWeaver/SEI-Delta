@@ -4903,13 +4903,19 @@ codeunit 75010 "BA SEI Subscibers"
     var
         UserSetup: Record "User Setup";
         SalesRecSetup: Record "Sales & Receivables Setup";
+        DateRec: Record Date;
+        RecRef: RecordRef;
+        FldRef: FieldRef;
     begin
         if UserSetup.Get(UserId()) and UserSetup."BA Can Create Orders Anytime" then
             exit;
         if not SalesRecSetup.Get() or not SalesRecSetup."BA Restrict Order Creation" then
             exit;
-        if Date2DWY(Today(), 1) in [6, 7] then
-            Error(WeekendCreateErr);
+        RecRef.GetTable(SalesRecSetup);
+        if Format(RecRef.Field(SalesRecSetup.FieldNo("BA Restrict Order End Time") + Date2DWY(Today(), 1)).Value()) = format(true) then begin
+            DateRec.Get(DateRec."Period Type"::Date, Today());
+            Error(DisablesSalesOrderDayErr, DateRec."Period Name");
+        end;
         if SalesRecSetup."BA Restrict Order Start Time" <> 0T then
             if Time() < SalesRecSetup."BA Restrict Order Start Time" then
                 Error(EarlyCreateErr, SalesRecSetup."BA Restrict Order Start Time");
@@ -5266,7 +5272,7 @@ codeunit 75010 "BA SEI Subscibers"
         SingleRepairCodeErr: Label 'Repair Status must be set to %1 for all Service Item Lines before %2 can be posted';
         MultiRepairCodeErr: Label 'Repair Status must be set to one of the following for all Service Item Lines before %1 can be posted:\%2';
         NotVerifiedSalespersonErr: Label 'Salesperson must be verified before %1 %2 can be specified.';
-        WeekendCreateErr: Label 'Cannot created Sales Order on weekends';
+        DisablesSalesOrderDayErr: Label 'Sales Order creation is disabled on %1''s.';
         EarlyCreateErr: Label 'Cannot create Sales Orders before %1.';
         LateCreateErr: Label 'Cannot create Sales Orders after %1.';
         LateStartTimeErr: Label 'Restrict Start Time must be earlier than Restrict End Time: %1';

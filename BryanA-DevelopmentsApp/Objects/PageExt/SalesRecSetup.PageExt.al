@@ -28,6 +28,41 @@ pageextension 80075 "BA Sales & Rec. Setup" extends "Sales & Receivables Setup"
                 Enabled = "BA Restrict Order Creation";
                 Caption = 'Restrict Order End Time (PST)';
             }
+            group("BA Restrict Days")
+            {
+                Caption = 'Restrict Days';
+                Visible = "BA Restrict Order Creation";
+                Editable = "BA Restrict Order Creation";
+
+                field("BA Restrict Monday"; Rec."BA Restrict Monday")
+                {
+                    ApplicationArea = all;
+                }
+                field("BA Restrict Tuesday"; Rec."BA Restrict Tuesday")
+                {
+                    ApplicationArea = all;
+                }
+                field("BA Restrict Wednesday"; Rec."BA Restrict Wednesday")
+                {
+                    ApplicationArea = all;
+                }
+                field("BA Restrict Thursday"; Rec."BA Restrict Thursday")
+                {
+                    ApplicationArea = all;
+                }
+                field("BA Restrict Friday"; Rec."BA Restrict Friday")
+                {
+                    ApplicationArea = all;
+                }
+                field("BA Restrict Saturday"; Rec."BA Restrict Saturday")
+                {
+                    ApplicationArea = all;
+                }
+                field("BA Restrict Sunday"; Rec."BA Restrict Sunday")
+                {
+                    ApplicationArea = all;
+                }
+            }
             field("BA Ledger Start Date"; Rec."BA Ledger Start Date")
             {
                 ApplicationArea = all;
