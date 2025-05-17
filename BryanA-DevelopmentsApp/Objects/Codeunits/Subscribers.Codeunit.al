@@ -5233,6 +5233,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     local procedure InsertUpdatePassThroughBuffer(var TempSalesTaxLine: Record "Sales Tax Amount Line"; PurchLine: Record "Purchase Line")
     var
+        PurchHeader: Record "Purchase Header";
         PurchPaySetup: Record "Purchases & Payables Setup";
         NameValueBuffer: Record "Name/Value Buffer" temporary;
         AccountNo: Code[20];
@@ -5248,11 +5249,16 @@ codeunit 75010 "BA SEI Subscibers"
         AccountNo := GetPassThroughAccountNo(TempSalesTaxLine."Tax Jurisdiction Code", PurchLine);
         if AccountNo = '' then
             exit;
+        if PurchLine."Currency Code" <> '' then
+            PurchHeader.Get(PurchLine."Document Type", PurchLine."Document No.");
         SingleInstance.GetBuffer(NameValueBuffer);
         NameValueBuffer.SetRange(Name, TempSalesTaxLine."Tax Jurisdiction Code");
         NameValueBuffer.SetRange(Value, AccountNo);
         if NameValueBuffer.FindFirst() then begin
-            NameValueBuffer."BA Amount" += PurchLine."Line Amount";
+            if PurchHeader."Currency Factor" <> 0 then
+                NameValueBuffer."BA Amount" += (PurchLine."Line Amount" / PurchHeader."Currency Factor")
+            else
+                NameValueBuffer."BA Amount" += PurchLine."Line Amount";
             NameValueBuffer."BA Quantity" += PurchLine."Qty. to Invoice";
             NameValueBuffer.Modify(false);
             SingleInstance.UpdateBuffer(NameValueBuffer);
@@ -5265,7 +5271,10 @@ codeunit 75010 "BA SEI Subscibers"
         NameValueBuffer.ID := ID + 1;
         NameValueBuffer.Name := TempSalesTaxLine."Tax Jurisdiction Code";
         NameValueBuffer.Value := AccountNo;
-        NameValueBuffer."BA Amount" := PurchLine."Line Amount";
+        if PurchHeader."Currency Factor" <> 0 then
+            NameValueBuffer."BA Amount" := (PurchLine."Line Amount" / PurchHeader."Currency Factor")
+        else
+            NameValueBuffer."BA Amount" := PurchLine."Line Amount";
         NameValueBuffer."BA Quantity" := PurchLine."Qty. to Invoice";
         NameValueBuffer.Insert(false);
         SingleInstance.AddBuffer(NameValueBuffer);
