@@ -5252,6 +5252,7 @@ codeunit 75010 "BA SEI Subscibers"
         SingleInstance.GetBuffer(NameValueBuffer);
         NameValueBuffer.SetRange(Name, TempSalesTaxLine."Tax Jurisdiction Code");
         NameValueBuffer.SetRange(Value, AccountNo);
+        NameValueBuffer.SetRange("BA Dmension Set ID", PurchLine."Dimension Set ID");
         if NameValueBuffer.FindFirst() then begin
             if PurchHeader."Currency Factor" <> 0 then
                 NameValueBuffer."BA Amount" += (PurchLine."Line Amount" / PurchHeader."Currency Factor")
@@ -5274,6 +5275,7 @@ codeunit 75010 "BA SEI Subscibers"
         else
             NameValueBuffer."BA Amount" := PurchLine."Line Amount";
         NameValueBuffer."BA Quantity" := PurchLine."Qty. to Invoice";
+        NameValueBuffer."BA Dmension Set ID" := PurchLine."Dimension Set ID";
         NameValueBuffer.Insert(false);
         SingleInstance.AddBuffer(NameValueBuffer);
     end;
@@ -5383,6 +5385,8 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if TempSalesTaxAmtLine."BA Account No." <> '' then
             GenJnlLine."Account No." := TempSalesTaxAmtLine."BA Account No.";
+        if GenJnlLine."Dimension Set ID" <> TempSalesTaxAmtLine."BA Dmension Set ID" then
+            GenJnlLine.Validate("Dimension Set ID", TempSalesTaxAmtLine."BA Dmension Set ID");
     end;
 
 
