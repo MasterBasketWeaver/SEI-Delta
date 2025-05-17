@@ -16,5 +16,11 @@ tableextension 80142 "BA Sales Tax Amount Line" extends "Sales Tax Amount Line"
             Caption = 'Account No.';
             Editable = false;
         }
+        field(80002; "BA Dmension Set ID"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Dmension Set ID';
+            Editable = false;
+        }
     }
 }

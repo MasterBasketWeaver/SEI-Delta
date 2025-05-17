@@ -14,5 +14,11 @@ tableextension 80141 "BA Name/Value Buffer" extends "Name/Value Buffer"
             Caption = 'Quantity';
             Editable = false;
         }
+        field(80002; "BA Dmension Set ID"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Dmension Set ID';
+            Editable = false;
+        }
     }
 }
