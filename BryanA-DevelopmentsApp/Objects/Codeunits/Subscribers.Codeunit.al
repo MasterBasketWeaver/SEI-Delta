@@ -5198,6 +5198,19 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    //OnBeforeVerifyOnInventory
+    [EventSubscriber(ObjectType::Table, Database::"Item Ledger Entry", 'OnBeforeVerifyOnInventory', '', false, false)]
+    local procedure ItemLedgerEntryOnBeforeVerifyOnInventory(var ItemLedgerEntry: Record "Item Ledger Entry")
+    begin
+        if ItemLedgerEntry.Quantity >= 0 then
+            exit;
+        if (ItemLedgerEntry."Entry Type" <> ItemLedgerEntry."Entry Type"::Consumption) or (ItemLedgerEntry."Order Type" <> ItemLedgerEntry."Order Type"::Production)
+                or (ItemLedgerEntry."Order No." = '') or (ItemLedgerEntry."Prod. Order Comp. Line No." = 0) then
+            exit;
+        Error(InsufficientProdLineInventoryErr, ItemLedgerEntry."Item No.", ItemLedgerEntry."Prod. Order Comp. Line No.");
+    end;
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
@@ -5273,5 +5286,6 @@ codeunit 75010 "BA SEI Subscibers"
         EarlyStartTimeErr: Label 'Restrict End Time must be later than Restrict Start Time: %1';
         DeactivateItemErr: Label 'You do not have permission to change item visibility.';
         NoBookingDateErr: Label 'Booking Date on line %1 must be specified.';
+        InsufficientProdLineInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2, on inventory.';
 }
 
