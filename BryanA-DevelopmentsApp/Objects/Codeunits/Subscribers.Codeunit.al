@@ -5198,6 +5198,13 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post Prepayments", 'OnUpdateSalesDocumentOnBeforeModifyInvoiceSalesLine', '', false, false)]
+    local procedure SalesPostPrepaymentsOnUpdateSalesDocumentOnBeforeModifyInvoiceSalesLine(var SalesLine: Record "Sales Line")
+    begin
+        if not confirm('%1: %2, %3, %4, %5, %6', false, SalesLine."Line No.", SalesLine.Amount, SalesLine."Amount Including VAT", SalesLine."Prepayment Amount", SalesLine."Prepmt. Amt. Inv.", SalesLine."Prepmt. Amt. Incl. VAT") then
+            Error('');
+    end;
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
