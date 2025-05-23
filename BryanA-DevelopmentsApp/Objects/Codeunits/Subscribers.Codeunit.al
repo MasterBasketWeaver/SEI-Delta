@@ -5198,7 +5198,6 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    //OnBeforeVerifyOnInventory
     [EventSubscriber(ObjectType::Table, Database::"Item Ledger Entry", 'OnBeforeVerifyOnInventory', '', false, false)]
     local procedure ItemLedgerEntryOnBeforeVerifyOnInventory(var ItemLedgerEntry: Record "Item Ledger Entry")
     begin
