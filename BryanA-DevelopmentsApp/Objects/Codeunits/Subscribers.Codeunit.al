@@ -2000,6 +2000,7 @@ codeunit 75010 "BA SEI Subscibers"
         CheckIfLinesHaveValidLocationCode(SalesHeader);
         CheckCustomerCurrency(SalesHeader);
         CheckPromisedDeliveryDate(SalesHeader);
+        CheckForInvalidPrepayRounding(SalesHeader);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnBeforePostWithLines', '', false, false)]
@@ -5412,6 +5413,45 @@ codeunit 75010 "BA SEI Subscibers"
         Error(InsufficientProdLineInventoryErr, ItemLedgerEntry."Item No.", ItemLedgerEntry."Prod. Order Comp. Line No.");
     end;
 
+
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post Prepayments", 'OnUpdateSalesDocumentOnBeforeModifyInvoiceSalesLine', '', false, false)]
+    // local procedure SalesPostPrepaymentsOnUpdateSalesDocumentOnBeforeModifyInvoiceSalesLine(var SalesLine: Record "Sales Line")
+    // begin
+    //     if not confirm('%1: %2, %3, %4, %5, %6', false, SalesLine."Line No.", SalesLine.Amount, SalesLine."Amount Including VAT", SalesLine."Prepayment Amount", SalesLine."Prepmt. Amt. Inv.", SalesLine."Prepmt. Amt. Incl. VAT") then
+    //         Error('');
+    // end;
+
+
+    local procedure CheckForInvalidPrepayRounding(var SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
+        Update: Boolean;
+    begin
+        if SalesHeader."Prepayment %" = 0 then
+            exit;
+        if SalesHeader."Prepayment %" <> 100 then
+            Error('Cannot post %1 %2 with partial prepay amount.', SalesHeader."Document Type", SalesHeader."No.");
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        SalesLine.SetFilter("Prepayment Amount", '<>%1', 0);
+        if SalesLine.FindSet() then
+            repeat
+                Update := false;
+                if SalesLine."Amount Including VAT" <> SalesLine."Prepayment Amount" then begin
+                    SalesLine."Prepayment Amount" := SalesLine."Amount Including VAT";
+                    SalesLine."Prepmt. Amt. Incl. VAT" := SalesLine."Amount Including VAT";
+                    SalesLine."Prepmt. Amount Inv. (LCY)" := SalesLine."Amount Including VAT";
+                    SalesLine."Prepmt. Amount Inv. Incl. VAT" := SalesLine."Amount Including VAT";
+                    Update := true;
+                end;
+                if SalesLine.Amount <> SalesLine."Prepmt. Line Amount" then begin
+                    SalesLine."Prepmt. Line Amount" := SalesLine.Amount;
+                    Update := true;
+                end;
+                if Update then
+                    SalesLine.Modify(false);
+            until SalesLine.Next() = 0;
+    end;
 
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
