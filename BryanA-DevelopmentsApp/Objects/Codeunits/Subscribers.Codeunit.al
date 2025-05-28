@@ -5365,6 +5365,7 @@ codeunit 75010 "BA SEI Subscibers"
                     TempSalesTaxAmtLine."Amount Including Tax" := TempSalesTaxAmtLine."Tax Amount" + TempSalesTaxAmtLine."Tax Base Amount";
                     TempSalesTaxAmtLine.Quantity := NameValueBuffer."BA Quantity";
                     TempSalesTaxAmtLine."BA Account No." := NameValueBuffer.Value;
+                    TempSalesTaxAmtLine."BA Dmension Set ID" := NameValueBuffer."BA Dmension Set ID";
                     if not First then begin
                         i -= 1;
                         TempSalesTaxAmtLine."BA Orignal Tax %" := SalesTaxAmountLine."Tax %";
