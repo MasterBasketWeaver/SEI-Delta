@@ -5212,6 +5212,9 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnBeforePostPurchaseDoc', '', false, false)]
     local procedure PurchPostOnBeforePostPurchaseDoc()
     begin
@@ -5286,28 +5289,6 @@ codeunit 75010 "BA SEI Subscibers"
         NameValueBuffer.Insert(false);
         SingleInstance.AddBuffer(NameValueBuffer);
     end;
-
-    //debug functions
-    // local procedure PrintBuffer(var Name: Record "Name/Value Buffer")
-    // begin
-    //     PrintBuffer(Name, '');
-    // end;
-
-    // local procedure PrintBuffer(var Name: Record "Name/Value Buffer"; Title: Text)
-    // var
-    //     Temp: TextBuilder;
-    // begin
-    //     Name.Reset();
-    //     if Title <> '' then
-    //         Temp.AppendLine(Title);
-    //     Temp.AppendLine(StrSubstNo('Buffer count: %1', Name.Count));
-    //     if Name.FindSet() then
-    //         repeat
-    //             Temp.AppendLine(StrSubstNo('%1: %2, %3, %4, %5', Name.ID, Name.Name, Name.Value, Name."BA Amount", Name."BA Quantity"));
-    //         until Name.Next() = 0;
-    //     if not Confirm(Temp.ToText()) then
-    //         Error('');
-    // end;
 
     local procedure GetPassThroughAccountNo(TaxJurisCode: Code[20]; var PurchaseLine: Record "Purchase Line"): Code[20]
     var
@@ -5402,25 +5383,40 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    //OnBeforeVerifyOnInventory
     [EventSubscriber(ObjectType::Table, Database::"Item Ledger Entry", 'OnBeforeVerifyOnInventory', '', false, false)]
     local procedure ItemLedgerEntryOnBeforeVerifyOnInventory(var ItemLedgerEntry: Record "Item Ledger Entry")
+    var
+        ItemJnlTemplate: Record "Item Journal Template";
+        ItemJnlLine: Record "Item Journal Line";
+        LineNos: Text;
+        LastLineNo: Integer;
     begin
         if ItemLedgerEntry.Quantity >= 0 then
             exit;
         if (ItemLedgerEntry."Entry Type" <> ItemLedgerEntry."Entry Type"::Consumption) or (ItemLedgerEntry."Order Type" <> ItemLedgerEntry."Order Type"::Production)
                 or (ItemLedgerEntry."Order No." = '') or (ItemLedgerEntry."Prod. Order Comp. Line No." = 0) then
             exit;
-        Error(InsufficientProdLineInventoryErr, ItemLedgerEntry."Item No.", ItemLedgerEntry."Prod. Order Comp. Line No.");
+        ItemJnlTemplate.SetRange("Page ID", Page::"Production Journal");
+        ItemJnlTemplate.SetRange(Recurring, false);
+        ItemJnlTemplate.SetRange(Type, ItemJnlTemplate.Type::"Prod. Order");
+        ItemJnlTemplate.FindFirst();
+        ItemJnlLine.SetRange("Journal Template Name", ItemJnlTemplate.Name);
+        ItemJnlLine.SetRange("Journal Batch Name", CopyStr(UserId(), 1, MaxStrLen(ItemJnlLine."Journal Batch Name")));
+        ItemJnlLine.SetFilter("Line No.", '<>%1', ItemLedgerEntry."Prod. Order Comp. Line No.");
+        ItemJnlLine.SetRange("Item No.", ItemLedgerEntry."Item No.");
+        ItemJnlLine.SetFilter(Quantity, '<>%1', 0);
+        if not ItemJnlLine.FindLast() then
+            Error(InsufficientProdLineInventoryErr, ItemLedgerEntry."Item No.", ItemLedgerEntry."Prod. Order Comp. Line No.");
+        LastLineNo := ItemJnlLine."Line No.";
+        ItemJnlLine.SetFilter("Line No.", '<>%1&<>%2', ItemLedgerEntry."Prod. Order Comp. Line No.", LastLineNo);
+        if ItemJnlLine.FindSet() then
+            repeat
+                LineNos := StrSubstNo(', %1', ItemJnlLine."Line No.");
+            until ItemJnlLine.Next() = 0;
+        if LineNos <> '' then
+            LineNos += ',';
+        Error(InsufficientProdLinesInventoryErr, ItemLedgerEntry."Item No.", ItemLedgerEntry."Prod. Order Comp. Line No.", LineNos, LastLineNo);
     end;
-
-
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post Prepayments", 'OnUpdateSalesDocumentOnBeforeModifyInvoiceSalesLine', '', false, false)]
-    // local procedure SalesPostPrepaymentsOnUpdateSalesDocumentOnBeforeModifyInvoiceSalesLine(var SalesLine: Record "Sales Line")
-    // begin
-    //     if not confirm('%1: %2, %3, %4, %5, %6', false, SalesLine."Line No.", SalesLine.Amount, SalesLine."Amount Including VAT", SalesLine."Prepayment Amount", SalesLine."Prepmt. Amt. Inv.", SalesLine."Prepmt. Amt. Incl. VAT") then
-    //         Error('');
-    // end;
 
 
     local procedure CheckForInvalidPrepayRounding(var SalesHeader: Record "Sales Header")
@@ -5530,5 +5526,6 @@ codeunit 75010 "BA SEI Subscibers"
         DeactivateItemErr: Label 'You do not have permission to change item visibility.';
         NoBookingDateErr: Label 'Booking Date on line %1 must be specified.';
         InsufficientProdLineInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2, on inventory.';
+        InsufficientProdLinesInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2%3 and %4, on inventory.';
 }
 
