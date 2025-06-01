@@ -5206,13 +5206,37 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Table, Database::"Item Ledger Entry", 'OnBeforeVerifyOnInventory', '', false, false)]
     local procedure ItemLedgerEntryOnBeforeVerifyOnInventory(var ItemLedgerEntry: Record "Item Ledger Entry")
+    var
+        ItemJnlTemplate: Record "Item Journal Template";
+        ItemJnlLine: Record "Item Journal Line";
+        LineNos: Text;
+        LastLineNo: Integer;
     begin
         if ItemLedgerEntry.Quantity >= 0 then
             exit;
         if (ItemLedgerEntry."Entry Type" <> ItemLedgerEntry."Entry Type"::Consumption) or (ItemLedgerEntry."Order Type" <> ItemLedgerEntry."Order Type"::Production)
                 or (ItemLedgerEntry."Order No." = '') or (ItemLedgerEntry."Prod. Order Comp. Line No." = 0) then
             exit;
-        Error(InsufficientProdLineInventoryErr, ItemLedgerEntry."Item No.", ItemLedgerEntry."Prod. Order Comp. Line No.");
+        ItemJnlTemplate.SetRange("Page ID", Page::"Production Journal");
+        ItemJnlTemplate.SetRange(Recurring, false);
+        ItemJnlTemplate.SetRange(Type, ItemJnlTemplate.Type::"Prod. Order");
+        ItemJnlTemplate.FindFirst();
+        ItemJnlLine.SetRange("Journal Template Name", ItemJnlTemplate.Name);
+        ItemJnlLine.SetRange("Journal Batch Name", CopyStr(UserId(), 1, MaxStrLen(ItemJnlLine."Journal Batch Name")));
+        ItemJnlLine.SetFilter("Line No.", '<>%1', ItemLedgerEntry."Prod. Order Comp. Line No.");
+        ItemJnlLine.SetRange("Item No.", ItemLedgerEntry."Item No.");
+        ItemJnlLine.SetFilter(Quantity, '<>%1', 0);
+        if not ItemJnlLine.FindLast() then
+            Error(InsufficientProdLineInventoryErr, ItemLedgerEntry."Item No.", ItemLedgerEntry."Prod. Order Comp. Line No.");
+        LastLineNo := ItemJnlLine."Line No.";
+        ItemJnlLine.SetFilter("Line No.", '<>%1&<>%2', ItemLedgerEntry."Prod. Order Comp. Line No.", LastLineNo);
+        if ItemJnlLine.FindSet() then
+            repeat
+                LineNos := StrSubstNo(', %1', ItemJnlLine."Line No.");
+            until ItemJnlLine.Next() = 0;
+        if LineNos <> '' then
+            LineNos += ',';
+        Error(InsufficientProdLinesInventoryErr, ItemLedgerEntry."Item No.", ItemLedgerEntry."Prod. Order Comp. Line No.", LineNos, LastLineNo);
     end;
 
 
@@ -5467,5 +5491,6 @@ codeunit 75010 "BA SEI Subscibers"
         DeactivateItemErr: Label 'You do not have permission to change item visibility.';
         NoBookingDateErr: Label 'Booking Date on line %1 must be specified.';
         InsufficientProdLineInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2, on inventory.';
+        InsufficientProdLinesInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2%3 and %4, on inventory.';
 }
 
