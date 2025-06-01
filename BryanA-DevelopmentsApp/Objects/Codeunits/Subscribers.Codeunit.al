@@ -5298,28 +5298,6 @@ codeunit 75010 "BA SEI Subscibers"
         SingleInstance.AddBuffer(NameValueBuffer);
     end;
 
-    //debug functions
-    // local procedure PrintBuffer(var Name: Record "Name/Value Buffer")
-    // begin
-    //     PrintBuffer(Name, '');
-    // end;
-
-    // local procedure PrintBuffer(var Name: Record "Name/Value Buffer"; Title: Text)
-    // var
-    //     Temp: TextBuilder;
-    // begin
-    //     Name.Reset();
-    //     if Title <> '' then
-    //         Temp.AppendLine(Title);
-    //     Temp.AppendLine(StrSubstNo('Buffer count: %1', Name.Count));
-    //     if Name.FindSet() then
-    //         repeat
-    //             Temp.AppendLine(StrSubstNo('%1: %2, %3, %4, %5', Name.ID, Name.Name, Name.Value, Name."BA Amount", Name."BA Quantity"));
-    //         until Name.Next() = 0;
-    //     if not Confirm(Temp.ToText()) then
-    //         Error('');
-    // end;
-
     local procedure GetPassThroughAccountNo(TaxJurisCode: Code[20]; var PurchaseLine: Record "Purchase Line"): Code[20]
     var
         TaxJurisdiction: Record "Tax Jurisdiction";
