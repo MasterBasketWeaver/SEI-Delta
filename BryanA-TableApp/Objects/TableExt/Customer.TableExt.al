@@ -176,5 +176,15 @@ tableextension 80030 "BA Customer" extends Customer
             DataClassification = CustomerContent;
             Caption = 'Trusted Customer/Agent';
         }
+        field(80130; "BA New Business Qualified"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business Qualified';
+        }
+        field(80131; "BA New Business Expiry"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business Expiry';
+        }
     }
 }

@@ -298,11 +298,23 @@ tableextension 80105 "BA Sales Header Archive" extends "Sales Header Archive"
             DataClassification = CustomerContent;
             Caption = 'Sent for Invoice Request';
         }
-        
+
         field(80125; "BA Salesperson Verified"; Boolean)
         {
             DataClassification = CustomerContent;
             Caption = 'Salesperson Verified';
+            Editable = false;
+        }
+        field(80130; "BA New Business Qualified"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business Qualified';
+            Editable = false;
+        }
+        field(80131; "BA New Business Expiry"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business Expiry';
             Editable = false;
         }
     }
