@@ -4559,7 +4559,18 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    //OnBeforePostUpdateOrderLineModifyTempLine
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostUpdateOrderLineModifyTempLine', '', false, false)]
+    local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(true);
+    end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
+    local procedure SalesPostOnAfterPostUpdateOrderLineModifyTempLine()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(false);
+    end;
 
     local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
@@ -4624,6 +4635,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine2: Record "BA Order Line";
         EntryNo: Integer;
     begin
+        if SalesLine.IsTemporary() or SingleInstance.GetSkipLedgerLineSave() then
+            exit;
         if OrderLine2.FindLast() then
             EntryNo := OrderLine2."Entry No.";
         EntryNo += 1;
@@ -4646,19 +4659,35 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Gen. Prod. Posting Group" := SalesLine."Gen. Prod. Posting Group";
         OrderLine.Description := SalesLine.Description;
         OrderLine."Description 2" := SalesLine."Description 2";
-        OrderLine.Quantity := SalesLine.Quantity;
+
         OrderLine."Unit of Measure Code" := SalesLine."Unit of Measure Code";
         OrderLine."Unit Cost (LCY)" := SalesLine."Unit Cost (LCY)";
         OrderLine."Unit Price" := SalesLine."Unit Price";
-        OrderLine.Amount := SalesLine.Amount;
-        OrderLine."Line Amount" := SalesLine."Line Amount";
+
         OrderLine."Line Discount Amount" := SalesLine."Line Discount Amount";
         OrderLine."Line Discount %" := SalesLine."Line Discount %";
         OrderLine."Shipment Date" := SalesLine."Shipment Date";
         OrderLine."Booking Date" := SalesLine."BA Booking Date";
         OrderLine."New Business - TDG" := SalesLine."BA New Business - TDG";
-        if OrderLine."Posted Document No." = '' then
+        if OrderLine."Posted Document No." = '' then begin
             OrderLine.Deleted := Deleted;
+            OrderLine.Quantity := SalesLine.Quantity;
+            OrderLine.Amount := SalesLine.Amount;
+            OrderLine."Line Amount" := SalesLine."Line Amount";
+        end else begin
+            OrderLine.Deleted := false;
+            OrderLine.Quantity := SalesLine."Qty. to Invoice";
+            if SalesLine."Line Discount %" <> 0 then
+                OrderLine.Amount := SalesLine."Qty. to Invoice" * SalesLine."Unit Price" * (1 - SalesLine."Line Discount %" / 100)
+            else
+                OrderLine.Amount := SalesLine."Qty. to Invoice" * SalesLine."Unit Price";
+            OrderLine."Line Amount" := OrderLine.Amount;
+
+            if not Confirm('%1, %2, %3: %4, %5 -> %6', false, OrderLine."Entry No.", OrderLine."Line No.", OrderLine."Posted Line No.",
+                SalesLine.Quantity, SalesLine."Qty. to Invoice", OrderLine.Quantity
+            ) then
+                Error('');
+        end;
         OrderLine.Cancelled := Cancelled;
         OrderLine."Dimension Set ID" := SalesLine."Dimension Set ID";
         OrderLine.Modify(true);
@@ -4697,7 +4726,16 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Sales Invoice";
         OrderLine."Posted Document No." := SalesInvLine."Document No.";
         OrderLine."Posted Line No." := SalesInvLine."Line No.";
+        OrderLine.Quantity := SalesLine."Qty. to Invoice";
+        OrderLine."Line Amount" := SalesInvLine."Line Amount";
+        OrderLine.Amount := SalesInvLine.Amount;
         OrderLine.Deleted := false;
+
+        if not Confirm('%1, %2, %3: %4, %5, %6 -> %7 %8', false, OrderLine."Entry No.", OrderLine."Line No.", OrderLine."Posted Line No.",
+                      SalesLine.Quantity, SalesLine."Qty. to Invoice", SalesInvLine.Amount, OrderLine.Quantity, OrderLine.Amount
+                  ) then
+            Error('');
+
         OrderLine.Modify(true);
     end;
 
@@ -4720,6 +4758,8 @@ codeunit 75010 "BA SEI Subscibers"
         Customer: Record Customer;
         SalesRecSetup: Record "Sales & Receivables Setup";
     begin
+        if ServiceHeader.IsTemporary() then
+            exit;
         if OrderHeader.GetFilters() = '' then begin
             OrderHeader.SetRange("Document Type", DocType);
             OrderHeader.SetRange("Document No.", ServiceHeader."No.");
@@ -4770,6 +4810,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine2: Record "BA Order Line";
         EntryNo: Integer;
     begin
+        if ServiceLine.IsTemporary() or SingleInstance.GetSkipLedgerLineSave() then
+            exit;
         if OrderLine2.FindLast() then
             EntryNo := OrderLine2."Entry No.";
         EntryNo += 1;
@@ -4855,6 +4897,9 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Service Invoice";
         OrderLine."Posted Document No." := ServiceInvLine."Document No.";
         OrderLine."Posted Line No." := ServiceInvLine."Line No.";
+        OrderLine.Quantity := ServiceLine."Qty. to Invoice";
+        OrderLine."Line Amount" := ServiceInvLine."Line Amount";
+        OrderLine.Amount := ServiceInvLine.Amount;
         OrderLine.Deleted := false;
         OrderLine.Modify(true);
     end;
