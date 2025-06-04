@@ -4685,6 +4685,8 @@ codeunit 75010 "BA SEI Subscibers"
     var
         OrderLine: Record "BA Order Line";
     begin
+        if SalesLine."Qty. to Invoice" = 0 then
+            exit;
         OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Sales Order");
         OrderLine.SetRange("Document No.", SalesLine."Document No.");
         OrderLine.SetRange("Line No.", SalesLine."Line No.");
@@ -4841,6 +4843,8 @@ codeunit 75010 "BA SEI Subscibers"
     var
         OrderLine: Record "BA Order Line";
     begin
+        if ServiceLine."Qty. to Invoice" = 0 then
+            exit;
         OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Service Order");
         OrderLine.SetRange("Document No.", ServiceLine."Document No.");
         OrderLine.SetRange("Line No.", ServiceLine."Line No.");
