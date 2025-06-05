@@ -4560,7 +4560,7 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    //OnBeforePostUpdateOrderLineModifyTempLine
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostUpdateOrderLineModifyTempLine', '', false, false)]
     local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine()
     begin
@@ -4569,6 +4569,18 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
     local procedure SalesPostOnAfterPostUpdateOrderLineModifyTempLine()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(false);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeFinalizePosting', '', false, false)]
+    local procedure SalesPostOnBeforeFinalizePosting()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterFinalizePostingOnBeforeCommit', '', false, false)]
+    local procedure SalesPostOnAfterFinalizePostingOnBeforeCommit()
     begin
         SingleInstance.SetSkipLedgerLineSave(false);
     end;
@@ -4646,6 +4658,7 @@ codeunit 75010 "BA SEI Subscibers"
             OrderLine.SetRange("Document No.", SalesLine."Document No.");
             OrderLine.SetRange("Line No.", SalesLine."Line No.");
             OrderLine.SetRange(Cancelled, Cancelled);
+            OrderLine.SetRange("Posted Document No.", '');
         end;
         if not OrderLine.FindFirst() then begin
             OrderLine.Init();
