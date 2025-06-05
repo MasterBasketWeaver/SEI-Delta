@@ -4639,7 +4639,6 @@ codeunit 75010 "BA SEI Subscibers"
                     OrderLine.SetRange("Line No.", SalesLine."Line No.");
                     if OrderLine.IsEmpty() then
                         SaveOrderLine(SalesLine, Deleted, false);
-                    SaveOrderLine(SalesLine, Deleted, false);
                 until SalesLine.Next() = 0;
                 OrderLine.SetRange("Line No.");
                 OrderLine.SetRange("Posted Document No.", '');
@@ -4670,6 +4669,7 @@ codeunit 75010 "BA SEI Subscibers"
             EntryNo := OrderLine2."Entry No.";
         EntryNo += 1;
         if OrderLine.GetFilters() = '' then begin
+            OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
             OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Sales Order");
             OrderLine.SetRange("Document No.", SalesLine."Document No.");
             OrderLine.SetRange("Line No.", SalesLine."Line No.");
@@ -4774,6 +4774,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SaveOrderHeader(var ServiceHeader: Record "Service Header"; var OrderHeader: Record "BA Order Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
         ServiceLine: Record "Service Line";
+        OrderLine: Record "BA Order Line";
         Customer: Record Customer;
         SalesRecSetup: Record "Sales & Receivables Setup";
     begin
@@ -4812,9 +4813,23 @@ codeunit 75010 "BA SEI Subscibers"
         if SalesRecSetup."BA Ledger Start Date" <> 0D then
             ServiceLine.SetFilter("BA Booking Date", '>=%1', SalesRecSetup."BA Ledger Start Date");
         if ServiceLine.FindSet() then
-            repeat
-                SaveOrderLine(ServiceLine, Deleted, false);
-            until ServiceLine.Next() = 0;
+            if Deleted then begin
+                OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
+                OrderLine.SetRange("Document Type", DocType);
+                OrderLine.SetRange("Document No.", ServiceHeader."No.");
+                OrderLine.SetFilter("Posted Document No.", '<>%1', '');
+                repeat
+                    OrderLine.SetRange("Line No.", ServiceLine."Line No.");
+                    if OrderLine.IsEmpty() then
+                        SaveOrderLine(ServiceLine, Deleted, false);
+                until ServiceLine.Next() = 0;
+                OrderLine.SetRange("Line No.");
+                OrderLine.SetRange("Posted Document No.", '');
+                OrderLine.DeleteAll(true);
+            end else
+                repeat
+                    SaveOrderLine(ServiceLine, Deleted, false);
+                until ServiceLine.Next() = 0;
     end;
 
     local procedure SaveOrderLine(var ServiceLine: Record "Service Line"; Deleted: Boolean; Cancelled: Boolean)
@@ -4835,10 +4850,12 @@ codeunit 75010 "BA SEI Subscibers"
             EntryNo := OrderLine2."Entry No.";
         EntryNo += 1;
         if OrderLine.GetFilters = '' then begin
+            OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
             OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Service Order");
             OrderLine.SetRange("Document No.", ServiceLine."Document No.");
             OrderLine.SetRange("Line No.", ServiceLine."Line No.");
             OrderLine.SetRange(Cancelled, Cancelled);
+            OrderLine.SetRange("Posted Document No.", '');
         end;
         if not OrderLine.FindFirst() then begin
             OrderLine.Init();
@@ -4874,8 +4891,20 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Line Discount %" := ServiceLine."Line Discount %";
         OrderLine."Shipment Date" := ServiceLine.GetShipmentDate();
         OrderLine."Booking Date" := ServiceLine."BA Booking Date";
-        if OrderLine."Posted Document No." = '' then
+        if OrderLine."Posted Document No." = '' then begin
             OrderLine.Deleted := Deleted;
+            OrderLine.Quantity := ServiceLine.Quantity;
+            OrderLine.Amount := ServiceLine.Amount;
+            OrderLine."Line Amount" := ServiceLine."Line Amount";
+        end else begin
+            OrderLine.Deleted := false;
+            OrderLine.Quantity := ServiceLine."Qty. to Invoice";
+            if ServiceLine."Line Discount %" <> 0 then
+                OrderLine.Amount := ServiceLine."Qty. to Invoice" * ServiceLine."Unit Price" * (1 - ServiceLine."Line Discount %" / 100)
+            else
+                OrderLine.Amount := ServiceLine."Qty. to Invoice" * ServiceLine."Unit Price";
+            OrderLine."Line Amount" := OrderLine.Amount;
+        end;
         OrderLine.Cancelled := Cancelled;
         OrderLine."Dimension Set ID" := ServiceLine."Dimension Set ID";
         OrderLine.Modify(true);
