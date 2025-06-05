@@ -4560,29 +4560,29 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostUpdateOrderLineModifyTempLine', '', false, false)]
-    // local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine()
-    // begin
-    //     SingleInstance.SetSkipLedgerLineSave(true);
-    // end;
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostUpdateOrderLineModifyTempLine', '', false, false)]
+    local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(true);
+    end;
 
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
-    // local procedure SalesPostOnAfterPostUpdateOrderLineModifyTempLine()
-    // begin
-    //     SingleInstance.SetSkipLedgerLineSave(false);
-    // end;
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
+    local procedure SalesPostOnAfterPostUpdateOrderLineModifyTempLine()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(false);
+    end;
 
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeFinalizePosting', '', false, false)]
-    // local procedure SalesPostOnBeforeFinalizePosting()
-    // begin
-    //     SingleInstance.SetSkipLedgerLineSave(true);
-    // end;
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeFinalizePosting', '', false, false)]
+    local procedure SalesPostOnBeforeFinalizePosting()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(true);
+    end;
 
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterFinalizePostingOnBeforeCommit', '', false, false)]
-    // local procedure SalesPostOnAfterFinalizePostingOnBeforeCommit()
-    // begin
-    //     SingleInstance.SetSkipLedgerLineSave(false);
-    // end;
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterFinalizePostingOnBeforeCommit', '', false, false)]
+    local procedure SalesPostOnAfterFinalizePostingOnBeforeCommit()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(false);
+    end;
 
     local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
