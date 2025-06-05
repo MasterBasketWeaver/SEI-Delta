@@ -4560,29 +4560,29 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostUpdateOrderLineModifyTempLine', '', false, false)]
-    local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine()
-    begin
-        SingleInstance.SetSkipLedgerLineSave(true);
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostUpdateOrderLineModifyTempLine', '', false, false)]
+    // local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine()
+    // begin
+    //     SingleInstance.SetSkipLedgerLineSave(true);
+    // end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
-    local procedure SalesPostOnAfterPostUpdateOrderLineModifyTempLine()
-    begin
-        SingleInstance.SetSkipLedgerLineSave(false);
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
+    // local procedure SalesPostOnAfterPostUpdateOrderLineModifyTempLine()
+    // begin
+    //     SingleInstance.SetSkipLedgerLineSave(false);
+    // end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeFinalizePosting', '', false, false)]
-    local procedure SalesPostOnBeforeFinalizePosting()
-    begin
-        SingleInstance.SetSkipLedgerLineSave(true);
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeFinalizePosting', '', false, false)]
+    // local procedure SalesPostOnBeforeFinalizePosting()
+    // begin
+    //     SingleInstance.SetSkipLedgerLineSave(true);
+    // end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterFinalizePostingOnBeforeCommit', '', false, false)]
-    local procedure SalesPostOnAfterFinalizePostingOnBeforeCommit()
-    begin
-        SingleInstance.SetSkipLedgerLineSave(false);
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterFinalizePostingOnBeforeCommit', '', false, false)]
+    // local procedure SalesPostOnAfterFinalizePostingOnBeforeCommit()
+    // begin
+    //     SingleInstance.SetSkipLedgerLineSave(false);
+    // end;
 
     local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
@@ -4594,6 +4594,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; var OrderHeader: Record "BA Order Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
         SalesLine: Record "Sales Line";
+        OrderLine: Record "BA Order Line";
         SalesRecSetup: Record "Sales & Receivables Setup";
     begin
         if OrderHeader.GetFilters() = '' then begin
@@ -4627,10 +4628,26 @@ codeunit 75010 "BA SEI Subscibers"
         SalesLine.SetRange("Document No.", SalesHeader."No.");
         if SalesRecSetup."BA Ledger Start Date" <> 0D then
             SalesLine.SetFilter("BA Booking Date", '>=%1', SalesRecSetup."BA Ledger Start Date");
+
         if SalesLine.FindSet() then
-            repeat
-                SaveOrderLine(SalesLine, Deleted, false);
-            until SalesLine.Next() = 0;
+            if Deleted then begin
+                OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
+                OrderLine.SetRange("Document Type", DocType);
+                OrderLine.SetRange("Document No.", SalesHeader."No.");
+                OrderLine.SetFilter("Posted Document No.", '<>%1', '');
+                repeat
+                    OrderLine.SetRange("Line No.", SalesLine."Line No.");
+                    if OrderLine.IsEmpty() then
+                        SaveOrderLine(SalesLine, Deleted, false);
+                    SaveOrderLine(SalesLine, Deleted, false);
+                until SalesLine.Next() = 0;
+                OrderLine.SetRange("Line No.");
+                OrderLine.SetRange("Posted Document No.", '');
+                OrderLine.DeleteAll(true);
+            end else
+                repeat
+                    SaveOrderLine(SalesLine, Deleted, false);
+                until SalesLine.Next() = 0;
     end;
 
 
@@ -4695,11 +4712,6 @@ codeunit 75010 "BA SEI Subscibers"
             else
                 OrderLine.Amount := SalesLine."Qty. to Invoice" * SalesLine."Unit Price";
             OrderLine."Line Amount" := OrderLine.Amount;
-
-            if not Confirm('%1, %2, %3: %4, %5 -> %6', false, OrderLine."Entry No.", OrderLine."Line No.", OrderLine."Posted Line No.",
-                SalesLine.Quantity, SalesLine."Qty. to Invoice", OrderLine.Quantity
-            ) then
-                Error('');
         end;
         OrderLine.Cancelled := Cancelled;
         OrderLine."Dimension Set ID" := SalesLine."Dimension Set ID";
@@ -4743,12 +4755,6 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Line Amount" := SalesInvLine."Line Amount";
         OrderLine.Amount := SalesInvLine.Amount;
         OrderLine.Deleted := false;
-
-        if not Confirm('%1, %2, %3: %4, %5, %6 -> %7 %8', false, OrderLine."Entry No.", OrderLine."Line No.", OrderLine."Posted Line No.",
-                      SalesLine.Quantity, SalesLine."Qty. to Invoice", SalesInvLine.Amount, OrderLine.Quantity, OrderLine.Amount
-                  ) then
-            Error('');
-
         OrderLine.Modify(true);
     end;
 
