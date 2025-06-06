@@ -4598,6 +4598,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine: Record "BA Order Line";
         SalesRecSetup: Record "Sales & Receivables Setup";
     begin
+        if SalesHeader.IsTemporary() then
+            exit;
         if OrderHeader.GetFilters() = '' then begin
             OrderHeader.SetRange("Document Type", DocType);
             OrderHeader.SetRange("Document No.", SalesHeader."No.");
@@ -4741,12 +4743,14 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if SalesLine."Qty. to Invoice" = 0 then
             exit;
+        OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
         OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Sales Order");
         OrderLine.SetRange("Document No.", SalesLine."Document No.");
         OrderLine.SetRange("Line No.", SalesLine."Line No.");
         OrderLine.SetRange("Posted Document Type", OrderLine."Posted Document Type"::" ");
         OrderLine.SetRange("Posted Document No.", '');
         OrderLine.SetRange("Posted Line No.", 0);
+        OrderLine.SetRange(Quantity, SalesLine."Qty. to Invoice");
         if not OrderLine.FindFirst() then
             SaveOrderLine(SalesLine, OrderLine, false, false);
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Sales Invoice";
@@ -4935,12 +4939,14 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if ServiceLine."Qty. to Invoice" = 0 then
             exit;
+        OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
         OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Service Order");
         OrderLine.SetRange("Document No.", ServiceLine."Document No.");
         OrderLine.SetRange("Line No.", ServiceLine."Line No.");
         OrderLine.SetRange("Posted Document Type", OrderLine."Posted Document Type"::" ");
         OrderLine.SetRange("Posted Document No.", '');
         OrderLine.SetRange("Posted Line No.", 0);
+        OrderLine.SetRange(Quantity, ServiceLine."Qty. to Invoice");
         if not OrderLine.FindFirst() then
             SaveOrderLine(ServiceLine, OrderLine, false, false);
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Service Invoice";
