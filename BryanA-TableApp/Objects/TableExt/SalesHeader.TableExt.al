@@ -190,5 +190,15 @@ tableextension 80001 "BA Sales Header" extends "Sales Header"
             DataClassification = CustomerContent;
             Caption = 'Salesperson Verified';
         }
+        field(80130; "BA New Business Qualified"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business Qualified';
+        }
+        field(80131; "BA New Business Expiry"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business Expiry';
+        }
     }
 }

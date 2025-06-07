@@ -100,5 +100,17 @@ tableextension 80060 "BA Sales Shpt. Header" extends "Sales Shipment Header"
             Caption = 'Salesperson Verified';
             Editable = false;
         }
+        field(80130; "BA New Business Qualified"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business Qualified';
+            Editable = false;
+        }
+        field(80131; "BA New Business Expiry"; Date)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'New Business Expiry';
+            Editable = false;
+        }
     }
 }

@@ -353,6 +353,17 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
                 ApplicationArea = all;
             }
         }
+        addafter(AdjProfitPct)
+        {
+            field("BA New Business Qualified"; Rec."BA New Business Qualified")
+            {
+                ApplicationArea = all;
+            }
+            field("BA New Business Expiry"; Rec."BA New Business Expiry")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions

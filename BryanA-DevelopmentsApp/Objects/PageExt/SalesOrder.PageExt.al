@@ -228,6 +228,14 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
                 ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
                 Importance = Additional;
             }
+            field("BA New Business Qualified"; Rec."BA New Business Qualified")
+            {
+                ApplicationArea = all;
+            }
+            field("BA New Business Expiry"; Rec."BA New Business Expiry")
+            {
+                ApplicationArea = all;
+            }
         }
         modify("Campaign No.")
         {
