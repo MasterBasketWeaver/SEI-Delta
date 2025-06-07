@@ -3259,7 +3259,7 @@ codeunit 75010 "BA SEI Subscibers"
         Customer: Record Customer;
     begin
         if (xRec."Bill-to Customer No." <> Rec."Bill-to Customer No.") and Customer.Get(Rec."Bill-to Customer No.") then
-            Rec.Validate("BA EORI No.", Customer."BA EORI No.");
+            UpdateSalesHeaderCustomerFields(Rec, Customer);
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterValidateEvent', 'Sell-to Customer No.', false, false)]
@@ -3267,10 +3267,15 @@ codeunit 75010 "BA SEI Subscibers"
     var
         Customer: Record Customer;
     begin
-        if (xRec."Sell-to Customer No." <> Rec."Sell-to Customer No.") and Customer.Get(Rec."Sell-to Customer No.") then begin
-            Rec.Validate("BA EORI No.", Customer."BA EORI No.");
-            Rec.Validate("BA Ship-to Email", Customer."BA Ship-to Email");
-        end;
+        if (xRec."Sell-to Customer No." <> Rec."Sell-to Customer No.") and Customer.Get(Rec."Sell-to Customer No.") then
+            UpdateSalesHeaderCustomerFields(Rec, Customer);
+    end;
+
+    local procedure UpdateSalesHeaderCustomerFields(var SalesHeader: Record "Sales Header"; var Customer: Record Customer)
+    begin
+        SalesHeader.Validate("BA EORI No.", Customer."BA EORI No.");
+        SalesHeader.Validate("BA New Business Expiry", Customer."BA New Business Expiry");
+        SalesHeader.Validate("BA New Business Qualified", Customer."BA New Business Qualified");
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterValidateEvent', 'Customer No.', false, false)]
@@ -5388,6 +5393,57 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+
+
+
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterValidateEvent', 'BA New Business Expiry', false, false)]
+    local procedure SalesHeaderOnAfterValidateNewBusinessExpiry(var Rec: Record "Sales Header")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            UpdateSalesLinesBusinessDates(Rec);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterValidateEvent', 'Order Date', false, false)]
+    local procedure SalesHeaderOnAfterValidateOrderDate(var Rec: Record "Sales Header")
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            UpdateSalesLinesBusinessDates(Rec);
+    end;
+
+    local procedure UpdateSalesLinesBusinessDates(var SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
+        NewValue: Boolean;
+    begin
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        SalesLine.SetFilter(Type, '%1|%2', SalesLine.Type::Item, SalesLine.Type::Resource);
+        if not SalesLine.FindSet(true) then
+            exit;
+        NewValue := SalesHeader."Order Date" < SalesHeader."BA New Business Expiry";
+        repeat
+            SalesLine.Validate("BA New Business - TDG", NewValue);
+            SalesLine.Modify(true);
+        until SalesLine.Next() = 0;
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Type', false, false)]
+    local procedure SalesLineAfterValidateType(var Rec: Record "Sales Line")
+    var
+        SalesHeader: Record "Sales Header";
+    begin
+        if Rec."Document Type" = Rec."Document Type"::Order then
+            if not (Rec.Type in [Rec.Type::Item, Rec.Type::Resource]) then
+                Rec."BA New Business - TDG" := false
+            else
+                if SalesHeader.Get(Rec."Document Type", Rec."Document No.") then
+                    Rec."BA New Business - TDG" := SalesHeader."Order Date" < SalesHeader."BA New Business Expiry"
+                else
+                    Rec."BA New Business - TDG" := false;
+    end;
 
 
 

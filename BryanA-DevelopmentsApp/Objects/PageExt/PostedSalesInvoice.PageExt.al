@@ -255,6 +255,14 @@ pageextension 80052 "BA Posted Sales Invoice" extends "Posted Sales Invoice"
                 ApplicationArea = all;
                 ToolTip = 'Specifies if the Salesperson assigned has been confirmed to be correct.';
             }
+            field("BA New Business Qualified"; Rec."BA New Business Qualified")
+            {
+                ApplicationArea = all;
+            }
+            field("BA New Business Expiry"; Rec."BA New Business Expiry")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 
