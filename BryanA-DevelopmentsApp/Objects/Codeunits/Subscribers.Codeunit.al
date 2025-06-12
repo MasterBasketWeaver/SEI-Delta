@@ -1611,6 +1611,7 @@ codeunit 75010 "BA SEI Subscibers"
             Customer."BA Last Sales Activity" := Today();
             Customer.Modify(false);
         end;
+        SaveOrderHeader(SalesHeader, SalesHeader."Document Type", false);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnAfterPostServiceDoc', '', false, false)]
@@ -4703,9 +4704,11 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."New Business - TDG" := SalesLine."BA New Business - TDG";
         if OrderLine."Posted Document No." = '' then begin
             OrderLine.Deleted := Deleted;
-            OrderLine.Quantity := SalesLine.Quantity;
-            OrderLine.Amount := SalesLine.Amount;
-            OrderLine."Line Amount" := SalesLine."Line Amount";
+            OrderLine.Quantity := SalesLine.Quantity - SalesLine."Quantity Invoiced";
+            if SalesLine."Line Discount %" <> 0 then
+                OrderLine.Amount := SalesLine.Quantity * SalesLine."Unit Price" * (1 - SalesLine."Line Discount %" / 100)
+            else
+                OrderLine.Amount := SalesLine.Quantity * SalesLine."Unit Price";
         end else begin
             OrderLine.Deleted := false;
             OrderLine.Quantity := SalesLine."Qty. to Invoice";
@@ -4713,8 +4716,8 @@ codeunit 75010 "BA SEI Subscibers"
                 OrderLine.Amount := SalesLine."Qty. to Invoice" * SalesLine."Unit Price" * (1 - SalesLine."Line Discount %" / 100)
             else
                 OrderLine.Amount := SalesLine."Qty. to Invoice" * SalesLine."Unit Price";
-            OrderLine."Line Amount" := OrderLine.Amount;
         end;
+        OrderLine."Line Amount" := OrderLine.Amount;
         OrderLine.Cancelled := Cancelled;
         OrderLine."Dimension Set ID" := SalesLine."Dimension Set ID";
         OrderLine.Modify(true);
