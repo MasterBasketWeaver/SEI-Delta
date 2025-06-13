@@ -4712,9 +4712,9 @@ codeunit 75010 "BA SEI Subscibers"
             OrderLine.Deleted := Deleted;
             OrderLine.Quantity := SalesLine.Quantity - SalesLine."Quantity Invoiced";
             if SalesLine."Line Discount %" <> 0 then
-                OrderLine.Amount := SalesLine.Quantity * SalesLine."Unit Price" * (1 - SalesLine."Line Discount %" / 100)
+                OrderLine.Amount := OrderLine.Quantity * SalesLine."Unit Price" * (1 - SalesLine."Line Discount %" / 100)
             else
-                OrderLine.Amount := SalesLine.Quantity * SalesLine."Unit Price";
+                OrderLine.Amount := OrderLine.Quantity * SalesLine."Unit Price";
         end else begin
             OrderLine.Deleted := false;
             OrderLine.Quantity := SalesLine."Qty. to Invoice";
