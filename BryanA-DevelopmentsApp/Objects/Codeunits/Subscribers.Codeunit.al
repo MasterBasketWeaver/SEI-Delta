@@ -4713,7 +4713,6 @@ codeunit 75010 "BA SEI Subscibers"
             OrderLine.Amount := OrderLine.Quantity * SalesLine."Unit Price" * (1 - SalesLine."Line Discount %" / 100)
         else
             OrderLine.Amount := OrderLine.Quantity * SalesLine."Unit Price";
-        s
         OrderLine."Line Amount" := OrderLine.Amount;
         OrderLine.Cancelled := Cancelled;
         OrderLine."Dimension Set ID" := SalesLine."Dimension Set ID";
