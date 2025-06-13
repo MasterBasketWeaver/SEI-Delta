@@ -5611,7 +5611,6 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterCheckSalesDoc', '', false, false)]
     local procedure SalesPostOnAfterCheckSalesDoc(var SalesHeader: Record "Sales Header")
     var
@@ -5664,19 +5663,22 @@ codeunit 75010 "BA SEI Subscibers"
             exit;
         ProdOrderLine.SetRange(Status, ProductionOrder.Status);
         ProdOrderLine.SetRange("Prod. Order No.", ProductionOrder."No.");
-        if ProdOrderLine.FindSet() then
-            repeat
-                Item.Get(ProdOrderLine."Item No.");
-                if Item."Standard Cost" = 0 then
-                    Error(NoStandardCostErr, 'Production Oder', ProductionOrder."No.", Item."No.");
-                BOMComponent.SetRange("Parent Item No.", Item."No.");
-                if BOMComponent.FindSet() then
-                    repeat
-                        Item.Get(ProdOrderLine."Item No.");
-                        if Item."Standard Cost" = 0 then
-                            Error(ComponentNoStandardCostErr, 'Production Oder', ProductionOrder."No.", ProdOrderLine."Item No.", Item."No.");
-                    until BOMComponent.Next() = 0;
-            until ProdOrderLine.Next() = 0;
+        if not ProdOrderLine.FindSet() then
+            exit;
+        BOMComponent.SetRange(Type, BOMComponent.Type::Item);
+        BOMComponent.SetFilter("Quantity per", '>%1', 0);
+        repeat
+            Item.Get(ProdOrderLine."Item No.");
+            if Item."Standard Cost" = 0 then
+                Error(NoStandardCostErr, 'Production Oder', ProductionOrder."No.", Item."No.");
+            BOMComponent.SetRange("Parent Item No.", Item."No.");
+            if BOMComponent.FindSet() then
+                repeat
+                    Item.Get(BOMComponent."No.");
+                    if Item."Standard Cost" = 0 then
+                        Error(ComponentNoStandardCostErr, 'Production Oder', ProductionOrder."No.", ProdOrderLine."Item No.", Item."No.");
+                until BOMComponent.Next() = 0;
+        until ProdOrderLine.Next() = 0;
     end;
 
 
