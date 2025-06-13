@@ -38,7 +38,6 @@ codeunit 75014 "BA Single Instance"
         NameValueBuffer.Reset();
         NameValueBuffer.DeleteAll(false);
         IsPurchPosting := Start;
-        // FinalizedBuffer := false;
     end;
 
     procedure AddBuffer(var NewBuffer: Record "Name/Value Buffer")
@@ -86,20 +85,18 @@ codeunit 75014 "BA Single Instance"
         exit(IsPurchPosting);
     end;
 
-    procedure SetIsPurchPosting(NewValue: Boolean)
+
+
+
+    procedure SetSkipCreditLimitUpdate(NewValue: Boolean)
     begin
-        IsPurchPosting := NewValue;
+        SkipCreditLimitUpdate := NewValue;
     end;
 
-    // procedure GetFinalizedBuffer(): Boolean
-    // begin
-    //     exit(FinalizedBuffer);
-    // end;
-
-    // procedure SetFinalizedBuffer(NewValue: Boolean)
-    // begin
-    //     FinalizedBuffer := NewValue;
-    // end;
+    procedure GetSkipCreditLimitUpdate(): Boolean
+    begin
+        exit(SkipCreditLimitUpdate);
+    end;
 
 
     procedure SetSkipLedgerLineSave(NewValue: Boolean)
@@ -120,4 +117,5 @@ codeunit 75014 "BA Single Instance"
         SkipSalesPrepaymentApprovalCheck: Boolean;
         IsPurchPosting: Boolean;
         SkipLedgerLineSave: Boolean;
+        SkipCreditLimitUpdate: Boolean;
 }
