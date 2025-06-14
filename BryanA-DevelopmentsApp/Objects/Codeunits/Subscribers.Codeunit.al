@@ -961,17 +961,94 @@ codeunit 75010 "BA SEI Subscibers"
         Rec."BA Created At" := CurrentDateTime();
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Config. Package Management", 'OnApplyItemDimension', '', false, false)]
-    local procedure ConfigPackageMgtOnApplyItemDim(ItemNo: Code[20]; DimCode: Code[20]; DimValue: Code[20])
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Config. Package Management", 'OnAfterGetDefaultDimension', '', false, false)]
+    local procedure ConfigPackageMgtOnAfterGetDefaultDimension(var ConfigPackageRecord: Record "Config. Package Record")
+    var
+        Item: Record Item;
+        Customer: Record Customer;
+        ItemCard: Page "Item Card";
+        CustomerCard: Page "Customer Card";
+        DefaultDim: Record "Default Dimension";
+        GLSetup: Record "General Ledger Setup";
+        RecNo: Code[20];
+        DimCode: Code[20];
+        DimValue: Code[20];
+    begin
+        GetConfigPackDefaultDimensions(ConfigPackageRecord, Database::Item, RecNo, DimCode, DimValue);
+        if RecNo <> '' then
+            if Item.Get(RecNo) and ItemCard.CheckToUpdateDimValues(Item, DimValue) then begin
+                Item.Modify(true);
+                Commit();
+            end;
+
+        GetConfigPackDefaultDimensions(ConfigPackageRecord, Database::Customer, RecNo, DimCode, DimValue);
+        if RecNo <> '' then
+            if Customer.Get(RecNo) and DefaultDim.Get(Database::Customer, RecNo, DimCode) then begin
+                GLSetup.Get();
+                case DimCode of
+                    GLSetup."Shortcut Dimension 3 Code":
+                        Customer."ENC Shortcut Dimension 3 Code" := DimValue;
+                    GLSetup."Shortcut Dimension 4 Code":
+                        Customer."ENC Shortcut Dimension 4 Code" := DimValue;
+                    GLSetup."Shortcut Dimension 5 Code":
+                        Customer."ENC Shortcut Dimension 5 Code" := DimValue;
+                    GLSetup."Shortcut Dimension 6 Code":
+                        Customer."ENC Shortcut Dimension 6 Code" := DimValue;
+                    GLSetup."Shortcut Dimension 7 Code":
+                        Customer."ENC Shortcut Dimension 7 Code" := DimValue;
+                    GLSetup."Shortcut Dimension 8 Code":
+                        Customer."ENC Shortcut Dimension 8 Code" := DimValue;
+                    else
+                        exit;
+                end;
+                Customer.Modify(true);
+                Commit();
+            end;
+    end;
+
+
+    local procedure GetConfigPackDefaultDimensions(var ConfigPackageRecord: Record "Config. Package Record"; TableNo: Integer; var DimNo: Code[20]; var DimCode: Code[20]; var DimValue: Code[20])
     var
         Item: Record Item;
         ItemCard: Page "Item Card";
+        DefaultDimension: Record "Default Dimension";
+        ConfigPackageData: Record "Config. Package Data";
+        ConfigPackageField: Record "Config. Package Field";
     begin
-        if Item.Get(ItemNo) and ItemCard.CheckToUpdateDimValues(Item, DimValue) then begin
-            Item.Modify(true);
-            Commit();
-        end;
+        DimNo := '';
+        DimCode := '';
+        DimValue := '';
+        ConfigPackageData.SETRANGE("Package Code", ConfigPackageRecord."Package Code");
+        ConfigPackageData.SETRANGE("Table ID", ConfigPackageRecord."Table ID");
+        ConfigPackageData.SETRANGE("No.", ConfigPackageRecord."No.");
+        ConfigPackageData.SETRANGE("Field ID", 1);
+        ConfigPackageData.SETRANGE(Value, FORMAT(TableNo));
+        IF ConfigPackageData.FINDFIRST THEN BEGIN
+            ConfigPackageData.SETRANGE(Value);
+            ConfigPackageData.SETRANGE("No.", ConfigPackageData."No.");
+            ConfigPackageField.SETRANGE("Package Code", ConfigPackageData."Package Code");
+            ConfigPackageField.SETRANGE("Table ID", DATABASE::"Default Dimension");
+            ConfigPackageField.SETRANGE("Field Name", DefaultDimension.FIELDCAPTION("No."));
+            IF ConfigPackageField.FINDFIRST THEN BEGIN
+                ConfigPackageData.SETRANGE("Field ID", ConfigPackageField."Field ID");
+                IF ConfigPackageData.FINDFIRST THEN
+                    DimNo := ConfigPackageData.Value;
+            END;
+            ConfigPackageField.SETRANGE("Field Name", DefaultDimension.FIELDCAPTION("Dimension Code"));
+            IF ConfigPackageField.FINDFIRST THEN BEGIN
+                ConfigPackageData.SETRANGE("Field ID", ConfigPackageField."Field ID");
+                IF ConfigPackageData.FINDFIRST THEN
+                    DimCode := ConfigPackageData.Value;
+            END;
+            ConfigPackageField.SETRANGE("Field Name", DefaultDimension.FIELDCAPTION("Dimension Value Code"));
+            IF ConfigPackageField.FINDFIRST THEN BEGIN
+                ConfigPackageData.SETRANGE("Field ID", ConfigPackageField."Field ID");
+                IF ConfigPackageData.FINDFIRST THEN
+                    DimValue := ConfigPackageData.Value;
+            END;
+        END;
     end;
+
 
 
     procedure ReuseItemNo(ItemNo: Code[20])
@@ -5522,7 +5599,6 @@ codeunit 75010 "BA SEI Subscibers"
         UpdateItemManfDeptConf: Label 'Would you like to update the %1 listed on the Item Card?';
         PendingApprovalErr: Label 'Cannot set as Barbados Order as there is one or more pending approval requests.';
         SEIFuncAppName: Label 'BryanA - SEI Functionality by BryanA BC Developments Inc.';
-        ConfigPackageMgtCU: Label '"Config. Validate Management"(CodeUnit 8617).ValidateFieldRefRelationAgainstCompanyData';
         NoPromDelDateErr: Label '%1 must be assigned before invoicing.\Please have the sales staff fill in the %1.';
         UpdateReasonCodeMsg: Label 'Please update the %1 field to a new value.';
         SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';

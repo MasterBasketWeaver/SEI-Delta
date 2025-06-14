@@ -421,6 +421,7 @@ pageextension 80045 "BA Customer Card" extends "Customer Card"
         FieldsToCheck.Add(Rec.FieldNo(Rec."BA Sub-Segment Code"));
         FieldsToCheck.Add(Rec.FieldNo(Rec."Global Dimension 1 Code"));
         FieldsToCheck.Add(Rec.FieldNo(Rec."Global Dimension 2 Code"));
+        FieldsToCheck.Add(Rec.FieldNo(Rec."ENC Shortcut Dimension 4 Code"));
         RecVar := Rec;
         CheckMandatoryFields(RecVar, FieldsToCheck);
     end;
