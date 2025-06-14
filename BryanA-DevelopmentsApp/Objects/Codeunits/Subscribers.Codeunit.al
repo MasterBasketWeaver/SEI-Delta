@@ -962,7 +962,7 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Config. Package Management", 'OnAfterGetDefaultDimension', '', false, false)]
-    local procedure ConfigPackageMgtOnApplyItemDim(var ConfigPackageRecord: Record "Config. Package Record")
+    local procedure ConfigPackageMgtOnAfterGetDefaultDimension(var ConfigPackageRecord: Record "Config. Package Record")
     var
         Item: Record Item;
         Customer: Record Customer;
@@ -1006,16 +1006,11 @@ codeunit 75010 "BA SEI Subscibers"
             end;
     end;
 
-    local procedure CheckToUpdateDimValues(Customer: Record Customer; NewDimValue: Code[20]): Boolean
-    begin
-    end;
 
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Config. Package Management", 'OnApplyItemDimension', '', false, false)]
     local procedure GetConfigPackDefaultDimensions(var ConfigPackageRecord: Record "Config. Package Record"; TableNo: Integer; var DimNo: Code[20]; var DimCode: Code[20]; var DimValue: Code[20])
     var
         Item: Record Item;
         ItemCard: Page "Item Card";
-
         DefaultDimension: Record "Default Dimension";
         ConfigPackageData: Record "Config. Package Data";
         ConfigPackageField: Record "Config. Package Field";
@@ -1054,40 +1049,6 @@ codeunit 75010 "BA SEI Subscibers"
         END;
     end;
 
-    /*
-    IF ConfigPackageRecord."Table ID" = DATABASE::"Default Dimension" THEN BEGIN
-      ConfigPackageData.SETRANGE("Package Code", ConfigPackageRecord."Package Code");
-      ConfigPackageData.SETRANGE("Table ID", ConfigPackageRecord."Table ID"); 
-      ConfigPackageData.SETRANGE("No.", ConfigPackageRecord."No.");
-      ConfigPackageData.SETRANGE("Field ID", 1);
-      ConfigPackageData.SETRANGE(Value, FORMAT(DATABASE::Item));
-      IF ConfigPackageData.FINDFIRST THEN BEGIN
-        ConfigPackageData.SETRANGE(Value);
-        ConfigPackageData.SETRANGE("No.", ConfigPackageData."No.");
-        ConfigPackageField.SETRANGE("Package Code", ConfigPackageData."Package Code");
-        ConfigPackageField.SETRANGE("Table ID", DATABASE::"Default Dimension");
-        ConfigPackageField.SETRANGE("Field Name", DefaultDimension.FIELDCAPTION("No."));
-        IF ConfigPackageField.FINDFIRST THEN BEGIN
-          ConfigPackageData.SETRANGE("Field ID", ConfigPackageField."Field ID");
-          IF ConfigPackageData.FINDFIRST THEN
-            ItemNo := ConfigPackageData.Value;
-        END;
-        ConfigPackageField.SETRANGE("Field Name", DefaultDimension.FIELDCAPTION("Dimension Code"));
-         IF ConfigPackageField.FINDFIRST THEN BEGIN
-          ConfigPackageData.SETRANGE("Field ID", ConfigPackageField."Field ID");
-          IF ConfigPackageData.FINDFIRST THEN
-            DimCode := ConfigPackageData.Value;
-        END;
-        ConfigPackageField.SETRANGE("Field Name", DefaultDimension.FIELDCAPTION("Dimension Value Code"));
-         IF ConfigPackageField.FINDFIRST THEN BEGIN
-          ConfigPackageData.SETRANGE("Field ID", ConfigPackageField."Field ID");
-          IF ConfigPackageData.FINDFIRST THEN
-            DimValue := ConfigPackageData.Value;
-        END;
-        OnApplyItemDimension(ItemNo, DimCode, DimValue);
-      END;
-    END;
-    */
 
 
     procedure ReuseItemNo(ItemNo: Code[20])
