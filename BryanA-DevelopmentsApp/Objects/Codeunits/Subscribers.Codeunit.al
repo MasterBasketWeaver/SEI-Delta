@@ -1165,7 +1165,9 @@ codeunit 75010 "BA SEI Subscibers"
         repeat
             i += 1;
             Window.Update(1, StrSubstNo('%1 of %2', i, RecCount));
+            SingleInstance.SetSkipCreditLimitUpdate(true);
             Customer.Validate("Credit Limit (LCY)", Customer."BA Credit Limit" * Rec."Relational Exch. Rate Amount");
+            SingleInstance.SetSkipCreditLimitUpdate(false);
             Customer.Modify(true);
         until Customer.Next() = 0;
         Window.Close();
@@ -1189,6 +1191,8 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Table, Database::Customer, 'OnAfterValidateEvent', 'Credit Limit (LCY)', false, false)]
     local procedure CustomerNoAfterValidateCreditLimit(var Rec: Record Customer; var xRec: Record Customer)
     begin
+        if SingleInstance.GetSkipCreditLimitUpdate() then
+            exit;
         if Rec."Credit Limit (LCY)" = xRec."Credit Limit (LCY)" then
             exit;
         Rec."BA Credit Limit Last Updated" := CurrentDateTime();
