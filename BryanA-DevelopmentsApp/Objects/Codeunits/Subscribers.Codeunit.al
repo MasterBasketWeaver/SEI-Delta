@@ -2009,6 +2009,7 @@ codeunit 75010 "BA SEI Subscibers"
         Item: Record Item;
         BOMComponent: Record "BOM Component";
         ServiceLine: Record "Service Line";
+        ServiceItemLine: Record "Service Item Line";
     begin
         PassedServHeader.TestField("Customer No.");
         if PassedServHeader."Document Type" = PassedServHeader."Document Type"::Order then begin
@@ -2022,10 +2023,10 @@ codeunit 75010 "BA SEI Subscibers"
                     ServiceLine.TestField("BA Booking Date");
                 until ServiceLine.Next() = 0;
             ServiceLine.SetRange(Type, ServiceLine.Type::Item);
-            if ServiceLine.FindSet() then begin
-                BOMComponent.SetRange(Type, BOMComponent.Type::Item);
-                BOMComponent.SetFilter("No.", '<>%1', '');
-                BOMComponent.SetFilter("Quantity per", '>%1', 0);
+            BOMComponent.SetRange(Type, BOMComponent.Type::Item);
+            BOMComponent.SetFilter("No.", '<>%1', '');
+            BOMComponent.SetFilter("Quantity per", '>%1', 0);
+            if ServiceLine.FindSet() then
                 repeat
                     ServiceLine.TestField("BA Booking Date");
                     Item.Get(ServiceLine."No.");
@@ -2039,7 +2040,22 @@ codeunit 75010 "BA SEI Subscibers"
                                 Error(ComponentNoStandardCostErr, 'Service Oder', PassedServHeader."No.", ServiceLine."No.", Item."No.");
                         until BOMComponent.Next() = 0;
                 until ServiceLine.Next() = 0;
-            end;
+            ServiceItemLine.SetRange("Document Type", PassedServHeader."Document Type");
+            ServiceItemLine.SetRange("Document No.", PassedServHeader."No.");
+            ServiceItemLine.SetFilter("Item No.", '<>%1', '');
+            if ServiceItemLine.FindSet() then
+                repeat
+                    Item.Get(ServiceItemLine."Item No.");
+                    if Item."Standard Cost" = 0 then
+                        Error(NoStandardCostErr, 'Service Oder', PassedServHeader."No.", Item."No.");
+                    BOMComponent.SetRange("Parent Item No.", Item."No.");
+                    if BOMComponent.FindSet() then
+                        repeat
+                            Item.Get(BOMComponent."No.");
+                            if Item."Standard Cost" = 0 then
+                                Error(ComponentNoStandardCostErr, 'Service Oder', PassedServHeader."No.", ServiceItemLine."Item No.", Item."No.");
+                        until BOMComponent.Next() = 0;
+                until ServiceItemLine.Next() = 0;
         end;
         Customer.Get(PassedServHeader."Customer No.");
         CheckCustomerCurrency(PassedServHeader, Customer);
