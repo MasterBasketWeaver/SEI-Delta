@@ -5756,10 +5756,11 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Table, Database::"Item Journal Line", 'OnBeforePostingItemJnlFromProduction', '', false, false)]
-    local procedure ItemJournalLineOnBeforePostingItemJnlFromProduction(var ProductionOrder: Record "Production Order")
+    local procedure ItemJournalLineOnBeforePostingItemJnlFromProduction(var ProductionOrder: Record "Production Order"; var ItemJournalLine: Record "Item Journal Line")
     var
         ProdOrderLine: Record "Prod. Order Line";
         Item: Record Item;
+        ItemJnlLine: Record "Item Journal Line";
         BOMComponent: Record "BOM Component";
     begin
         if (ProductionOrder.Status <> ProductionOrder.Status::Released) or (ProductionOrder."No." = '') then
@@ -5782,6 +5783,22 @@ codeunit 75010 "BA SEI Subscibers"
                         Error(ComponentNoStandardCostErr, 'Production Oder', ProductionOrder."No.", ProdOrderLine."Item No.", Item."No.");
                 until BOMComponent.Next() = 0;
         until ProdOrderLine.Next() = 0;
+        ItemJnlLine.SetRange("Journal Template Name", ItemJournalLine."Journal Template Name");
+        ItemJnlLine.SetRange("Journal Batch Name", ItemJournalLine."Journal Batch Name");
+        ItemJnlLine.SetFilter(Quantity, '<>%1', 0);
+        if ItemJournalLine.FindSet() then
+            repeat
+                Item.Get(ItemJournalLine."Item No.");
+                if Item."Standard Cost" = 0 then
+                    Error(NoStandardCostErr, 'Production Oder', ProductionOrder."No.", Item."No.");
+                BOMComponent.SetRange("Parent Item No.", Item."No.");
+                if BOMComponent.FindSet() then
+                    repeat
+                        Item.Get(BOMComponent."No.");
+                        if Item."Standard Cost" = 0 then
+                            Error(ComponentNoStandardCostErr, 'Production Oder', ProductionOrder."No.", ItemJournalLine."Item No.", Item."No.");
+                    until BOMComponent.Next() = 0;
+            until ItemJournalLine.Next() = 0;
     end;
 
 
