@@ -2128,6 +2128,8 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ServicePostOnBeforePostWithLines(var PassedServHeader: Record "Service Header")
     var
         Customer: Record Customer;
+        Item: Record Item;
+        BOMComponent: Record "BOM Component";
         ServiceLine: Record "Service Line";
     begin
         PassedServHeader.TestField("Customer No.");
@@ -2135,11 +2137,31 @@ codeunit 75010 "BA SEI Subscibers"
             PassedServHeader.TestField("BA Salesperson Verified", true);
             ServiceLine.SetRange("Document Type", PassedServHeader."Document Type");
             ServiceLine.SetRange("Document No.", PassedServHeader."No.");
-            ServiceLine.SetFilter(Type, '%1|%2|%3', ServiceLine.Type::"G/L Account", ServiceLine.Type::Item, ServiceLine.Type::Resource);
+            ServiceLine.SetFilter(Type, '%1|%2', ServiceLine.Type::"G/L Account", ServiceLine.Type::Resource);
+            ServiceLine.SetFilter("No.", '<>%1', '');
             if ServiceLine.FindSet() then
                 repeat
                     ServiceLine.TestField("BA Booking Date");
                 until ServiceLine.Next() = 0;
+            ServiceLine.SetRange(Type, ServiceLine.Type::Item);
+            if ServiceLine.FindSet() then begin
+                BOMComponent.SetRange(Type, BOMComponent.Type::Item);
+                BOMComponent.SetFilter("No.", '<>%1', '');
+                BOMComponent.SetFilter("Quantity per", '>%1', 0);
+                repeat
+                    ServiceLine.TestField("BA Booking Date");
+                    Item.Get(ServiceLine."No.");
+                    if Item."Standard Cost" = 0 then
+                        Error(NoStandardCostErr, 'Service Oder', PassedServHeader."No.", Item."No.");
+                    BOMComponent.SetRange("Parent Item No.", Item."No.");
+                    if BOMComponent.FindSet() then
+                        repeat
+                            Item.Get(BOMComponent."No.");
+                            if Item."Standard Cost" = 0 then
+                                Error(ComponentNoStandardCostErr, 'Service Oder', PassedServHeader."No.", ServiceLine."No.", Item."No.");
+                        until BOMComponent.Next() = 0;
+                until ServiceLine.Next() = 0;
+            end;
         end;
         Customer.Get(PassedServHeader."Customer No.");
         CheckCustomerCurrency(PassedServHeader, Customer);
@@ -5772,14 +5794,14 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Prod. Order Status Management", 'OnBeforeChangeStatusOnProdOrder', '', false, false)]
-    local procedure ProdOrderStatusMgtOnBeforeChangeStatusOnProdOrder(var ProductionOrder: Record "Production Order"; NewStatus: Option)
+    [EventSubscriber(ObjectType::Table, Database::"Item Journal Line", 'OnBeforePostingItemJnlFromProduction', '', false, false)]
+    local procedure ItemJournalLineOnBeforePostingItemJnlFromProduction(var ProductionOrder: Record "Production Order")
     var
         ProdOrderLine: Record "Prod. Order Line";
         Item: Record Item;
         BOMComponent: Record "BOM Component";
     begin
-        if (ProductionOrder.Status <> ProductionOrder.Status::Released) or (NewStatus <> ProductionOrder.Status::Finished) then
+        if (ProductionOrder.Status <> ProductionOrder.Status::Released) or (ProductionOrder."No." = '') then
             exit;
         ProdOrderLine.SetRange(Status, ProductionOrder.Status);
         ProdOrderLine.SetRange("Prod. Order No.", ProductionOrder."No.");
