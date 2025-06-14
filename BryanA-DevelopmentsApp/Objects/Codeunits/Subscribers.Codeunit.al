@@ -5880,7 +5880,7 @@ codeunit 75010 "BA SEI Subscibers"
         NoBookingDateErr: Label 'Booking Date on line %1 must be specified.';
         InsufficientProdLineInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2, on inventory.';
         InsufficientProdLinesInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2%3 and %4, on inventory.';
-        NoStandardCostErr: Label '%1 %2 cannot be posted. Item "%3" does not have a standard cost setup. Please contact engineering staff.';
-        ComponentNoStandardCostErr: Label '%1 %2 cannot be posted. Component Item "%3" for Item "%4" does not have a standard cost setup. Please contact engineering staff.';
+        NoStandardCostErr: Label '%1 %2 cannot be posted.\Item "%3" does not have a standard cost setup.\Please contact engineering staff.';
+        ComponentNoStandardCostErr: Label '%1 %2 cannot be posted.\Component Item "%3" for Item "%4" does not have a standard cost setup.\Please contact engineering staff.';
 }
 
