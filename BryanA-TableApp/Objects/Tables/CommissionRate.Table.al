@@ -26,6 +26,12 @@ table 50003 "BA Commission Rate"
             DataClassification = CustomerContent;
             TableRelation = "Salesperson/Purchaser".Code;
         }
+        field(5; "Gen. Prod. Posting Group Code"; Code[20])
+        {
+            DataClassification = CustomerContent;
+            TableRelation = "Gen. Product Posting Group".Code;
+            Caption = 'Gen. Product Posting Group Code';
+        }
     }
 
     keys
@@ -38,7 +44,7 @@ table 50003 "BA Commission Rate"
 
     fieldgroups
     {
-        fieldgroup(Brick; Code, Rate, Description) { }
-        fieldgroup(DropDown; Code, Rate, Description) { }
+        fieldgroup(Brick; Code, Rate, "Salesperson Code", "Gen. Prod. Posting Group Code", Description) { }
+        fieldgroup(DropDown; Code, Rate, "Salesperson Code", "Gen. Prod. Posting Group Code", Description) { }
     }
 }

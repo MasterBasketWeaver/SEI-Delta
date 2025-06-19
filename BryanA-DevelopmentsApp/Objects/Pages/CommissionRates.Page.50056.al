@@ -29,6 +29,10 @@ page 50056 "BA Commission Rates"
                 {
                     ApplicationArea = all;
                 }
+                field("Gen. Prod. Posting Group Code"; Rec."Gen. Prod. Posting Group Code")
+                {
+                    ApplicationArea = all;
+                }
             }
         }
     }
