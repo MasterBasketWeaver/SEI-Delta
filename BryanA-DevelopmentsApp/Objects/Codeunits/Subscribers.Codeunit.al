@@ -2087,18 +2087,56 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ServicePostOnBeforePostWithLines(var PassedServHeader: Record "Service Header")
     var
         Customer: Record Customer;
+        Item: Record Item;
+        BOMComponent: Record "BOM Component";
         ServiceLine: Record "Service Line";
+        ServiceItemLine: Record "Service Item Line";
     begin
         PassedServHeader.TestField("Customer No.");
         if PassedServHeader."Document Type" = PassedServHeader."Document Type"::Order then begin
             PassedServHeader.TestField("BA Salesperson Verified", true);
             ServiceLine.SetRange("Document Type", PassedServHeader."Document Type");
             ServiceLine.SetRange("Document No.", PassedServHeader."No.");
-            ServiceLine.SetFilter(Type, '%1|%2|%3', ServiceLine.Type::"G/L Account", ServiceLine.Type::Item, ServiceLine.Type::Resource);
+            ServiceLine.SetFilter(Type, '%1|%2', ServiceLine.Type::"G/L Account", ServiceLine.Type::Resource);
+            ServiceLine.SetFilter("No.", '<>%1', '');
             if ServiceLine.FindSet() then
                 repeat
                     ServiceLine.TestField("BA Booking Date");
                 until ServiceLine.Next() = 0;
+            ServiceLine.SetRange(Type, ServiceLine.Type::Item);
+            BOMComponent.SetRange(Type, BOMComponent.Type::Item);
+            BOMComponent.SetFilter("No.", '<>%1', '');
+            BOMComponent.SetFilter("Quantity per", '>%1', 0);
+            if ServiceLine.FindSet() then
+                repeat
+                    ServiceLine.TestField("BA Booking Date");
+                    Item.Get(ServiceLine."No.");
+                    if Item."Standard Cost" = 0 then
+                        Error(NoStandardCostErr, 'Service Oder', PassedServHeader."No.", Item."No.");
+                    BOMComponent.SetRange("Parent Item No.", Item."No.");
+                    if BOMComponent.FindSet() then
+                        repeat
+                            Item.Get(BOMComponent."No.");
+                            if Item."Standard Cost" = 0 then
+                                Error(ComponentNoStandardCostErr, 'Service Oder', PassedServHeader."No.", ServiceLine."No.", Item."No.");
+                        until BOMComponent.Next() = 0;
+                until ServiceLine.Next() = 0;
+            ServiceItemLine.SetRange("Document Type", PassedServHeader."Document Type");
+            ServiceItemLine.SetRange("Document No.", PassedServHeader."No.");
+            ServiceItemLine.SetFilter("Item No.", '<>%1', '');
+            if ServiceItemLine.FindSet() then
+                repeat
+                    Item.Get(ServiceItemLine."Item No.");
+                    if Item."Standard Cost" = 0 then
+                        Error(NoStandardCostErr, 'Service Oder', PassedServHeader."No.", Item."No.");
+                    BOMComponent.SetRange("Parent Item No.", Item."No.");
+                    if BOMComponent.FindSet() then
+                        repeat
+                            Item.Get(BOMComponent."No.");
+                            if Item."Standard Cost" = 0 then
+                                Error(ComponentNoStandardCostErr, 'Service Oder', PassedServHeader."No.", ServiceItemLine."Item No.", Item."No.");
+                        until BOMComponent.Next() = 0;
+                until ServiceItemLine.Next() = 0;
         end;
         Customer.Get(PassedServHeader."Customer No.");
         CheckCustomerCurrency(PassedServHeader, Customer);
@@ -5552,6 +5590,99 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterCheckSalesDoc', '', false, false)]
+    local procedure SalesPostOnAfterCheckSalesDoc(var SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
+        AssemblyLine: Record "Assembly Line";
+        Item: Record Item;
+        ATOLink: Record "Assemble-to-Order Link";
+    begin
+        if SalesHeader."Document Type" <> SalesHeader."Document Type"::Order then
+            exit;
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        SalesLine.SetRange(Type, SalesLine.Type::Item);
+        SalesLine.SetFilter("Qty. to Invoice", '<>%1', 0);
+        if not SalesLine.FindSet() then
+            exit;
+        ATOLink.SetCurrentKey("Type", "Document Type", "Document No.", "Document Line No.");
+        ATOLink.SetRange(Type, ATOLink.Type::Sale);
+        ATOLink.SetRange("Document Type", SalesHeader."Document Type");
+        ATOLink.SetRange("Document No.", SalesHeader."No.");
+        AssemblyLine.SetRange(Type, AssemblyLine.Type::Item);
+        AssemblyLine.SetFilter("No.", '<>%1', '');
+        repeat
+            Item.Get(SalesLine."No.");
+            if Item."Standard Cost" = 0 then
+                Error(NoStandardCostErr, 'Sales Oder', SalesHeader."No.", Item."No.");
+            ATOLink.SetRange("Document Line No.", SalesLine."Line No.");
+            if ATOLink.FindFirst() then begin
+                AssemblyLine.SetRange("Document Type", ATOLink."Assembly Document Type");
+                AssemblyLine.SetRange("Document No.", ATOLink."Assembly Document No.");
+                if AssemblyLine.FindFirst() then
+                    repeat
+                        Item.Get(AssemblyLine."No.");
+                        if Item."Standard Cost" = 0 then
+                            Error(ComponentNoStandardCostErr, 'Sales Oder', SalesHeader."No.", SalesLine."No.", Item."No.");
+                    until AssemblyLine.Next() = 0;
+            end;
+        until SalesLine.Next() = 0;
+    end;
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Item Journal Line", 'OnBeforePostingItemJnlFromProduction', '', false, false)]
+    local procedure ItemJournalLineOnBeforePostingItemJnlFromProduction(var ProductionOrder: Record "Production Order"; var ItemJournalLine: Record "Item Journal Line")
+    var
+        ProdOrderLine: Record "Prod. Order Line";
+        Item: Record Item;
+        ItemJnlLine: Record "Item Journal Line";
+        BOMComponent: Record "BOM Component";
+    begin
+        if (ProductionOrder.Status <> ProductionOrder.Status::Released) or (ProductionOrder."No." = '') then
+            exit;
+        ProdOrderLine.SetRange(Status, ProductionOrder.Status);
+        ProdOrderLine.SetRange("Prod. Order No.", ProductionOrder."No.");
+        if not ProdOrderLine.FindSet() then
+            exit;
+        BOMComponent.SetRange(Type, BOMComponent.Type::Item);
+        BOMComponent.SetFilter("Quantity per", '>%1', 0);
+        repeat
+            Item.Get(ProdOrderLine."Item No.");
+            if Item."Standard Cost" = 0 then
+                Error(NoStandardCostErr, 'Production Oder', ProductionOrder."No.", Item."No.");
+            BOMComponent.SetRange("Parent Item No.", Item."No.");
+            if BOMComponent.FindSet() then
+                repeat
+                    Item.Get(BOMComponent."No.");
+                    if Item."Standard Cost" = 0 then
+                        Error(ComponentNoStandardCostErr, 'Production Oder', ProductionOrder."No.", ProdOrderLine."Item No.", Item."No.");
+                until BOMComponent.Next() = 0;
+        until ProdOrderLine.Next() = 0;
+        ItemJnlLine.SetRange("Journal Template Name", ItemJournalLine."Journal Template Name");
+        ItemJnlLine.SetRange("Journal Batch Name", ItemJournalLine."Journal Batch Name");
+        ItemJnlLine.SetFilter(Quantity, '<>%1', 0);
+        if ItemJournalLine.FindSet() then
+            repeat
+                Item.Get(ItemJournalLine."Item No.");
+                if Item."Standard Cost" = 0 then
+                    Error(NoStandardCostErr, 'Production Oder', ProductionOrder."No.", Item."No.");
+                BOMComponent.SetRange("Parent Item No.", Item."No.");
+                if BOMComponent.FindSet() then
+                    repeat
+                        Item.Get(BOMComponent."No.");
+                        if Item."Standard Cost" = 0 then
+                            Error(ComponentNoStandardCostErr, 'Production Oder', ProductionOrder."No.", ItemJournalLine."Item No.", Item."No.");
+                    until BOMComponent.Next() = 0;
+            until ItemJournalLine.Next() = 0;
+    end;
+
+
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
@@ -5628,5 +5759,7 @@ codeunit 75010 "BA SEI Subscibers"
         NoBookingDateErr: Label 'Booking Date on line %1 must be specified.';
         InsufficientProdLineInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2, on inventory.';
         InsufficientProdLinesInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2%3 and %4, on inventory.';
+        NoStandardCostErr: Label '%1 %2 cannot be posted.\Item "%3" does not have a standard cost setup.\Please contact engineering staff.';
+        ComponentNoStandardCostErr: Label '%1 %2 cannot be posted.\Component Item "%3" for Item "%4" does not have a standard cost setup.\Please contact engineering staff.';
 }
 
