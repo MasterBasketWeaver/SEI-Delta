@@ -99,6 +99,17 @@ codeunit 75014 "BA Single Instance"
     end;
 
 
+    procedure SetSkipLedgerLineSave(NewValue: Boolean)
+    begin
+        SkipLedgerLineSave := NewValue;
+    end;
+
+    procedure GetSkipLedgerLineSave(): Boolean
+    begin
+        exit(SkipLedgerLineSave);
+    end;
+
+
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
         SkipUSDCreditLimit: Boolean;
@@ -106,4 +117,5 @@ codeunit 75014 "BA Single Instance"
         SkipSalesPrepaymentApprovalCheck: Boolean;
         IsPurchPosting: Boolean;
         SkipCreditLimitUpdate: Boolean;
+        SkipLedgerLineSave: Boolean;
 }

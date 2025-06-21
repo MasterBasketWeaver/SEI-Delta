@@ -1692,6 +1692,7 @@ codeunit 75010 "BA SEI Subscibers"
             Customer."BA Last Sales Activity" := Today();
             Customer.Modify(false);
         end;
+        SaveOrderHeader(SalesHeader, SalesHeader."Document Type", false);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Service-Post", 'OnAfterPostServiceDoc', '', false, false)]
@@ -4684,6 +4685,29 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostUpdateOrderLineModifyTempLine', '', false, false)]
+    local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
+    local procedure SalesPostOnAfterPostUpdateOrderLineModifyTempLine()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(false);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeFinalizePosting', '', false, false)]
+    local procedure SalesPostOnBeforeFinalizePosting()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterFinalizePostingOnBeforeCommit', '', false, false)]
+    local procedure SalesPostOnAfterFinalizePostingOnBeforeCommit()
+    begin
+        SingleInstance.SetSkipLedgerLineSave(false);
+    end;
 
     local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
@@ -4695,8 +4719,11 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SaveOrderHeader(var SalesHeader: Record "Sales Header"; var OrderHeader: Record "BA Order Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
         SalesLine: Record "Sales Line";
+        OrderLine: Record "BA Order Line";
         SalesRecSetup: Record "Sales & Receivables Setup";
     begin
+        if SalesHeader.IsTemporary() then
+            exit;
         if OrderHeader.GetFilters() = '' then begin
             OrderHeader.SetRange("Document Type", DocType);
             OrderHeader.SetRange("Document No.", SalesHeader."No.");
@@ -4728,10 +4755,25 @@ codeunit 75010 "BA SEI Subscibers"
         SalesLine.SetRange("Document No.", SalesHeader."No.");
         if SalesRecSetup."BA Ledger Start Date" <> 0D then
             SalesLine.SetFilter("BA Booking Date", '>=%1', SalesRecSetup."BA Ledger Start Date");
+
         if SalesLine.FindSet() then
-            repeat
-                SaveOrderLine(SalesLine, Deleted, false);
-            until SalesLine.Next() = 0;
+            if Deleted then begin
+                OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
+                OrderLine.SetRange("Document Type", DocType);
+                OrderLine.SetRange("Document No.", SalesHeader."No.");
+                OrderLine.SetFilter("Posted Document No.", '<>%1', '');
+                repeat
+                    OrderLine.SetRange("Line No.", SalesLine."Line No.");
+                    if OrderLine.IsEmpty() then
+                        SaveOrderLine(SalesLine, Deleted, false);
+                until SalesLine.Next() = 0;
+                OrderLine.SetRange("Line No.");
+                OrderLine.SetRange("Posted Document No.", '');
+                OrderLine.DeleteAll(true);
+            end else
+                repeat
+                    SaveOrderLine(SalesLine, Deleted, false);
+                until SalesLine.Next() = 0;
     end;
 
 
@@ -4748,14 +4790,18 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine2: Record "BA Order Line";
         EntryNo: Integer;
     begin
+        if SalesLine.IsTemporary() or SingleInstance.GetSkipLedgerLineSave() then
+            exit;
         if OrderLine2.FindLast() then
             EntryNo := OrderLine2."Entry No.";
         EntryNo += 1;
         if OrderLine.GetFilters() = '' then begin
+            OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
             OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Sales Order");
             OrderLine.SetRange("Document No.", SalesLine."Document No.");
             OrderLine.SetRange("Line No.", SalesLine."Line No.");
             OrderLine.SetRange(Cancelled, Cancelled);
+            OrderLine.SetRange("Posted Document No.", '');
         end;
         if not OrderLine.FindFirst() then begin
             OrderLine.Init();
@@ -4770,19 +4816,28 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Gen. Prod. Posting Group" := SalesLine."Gen. Prod. Posting Group";
         OrderLine.Description := SalesLine.Description;
         OrderLine."Description 2" := SalesLine."Description 2";
-        OrderLine.Quantity := SalesLine.Quantity;
+
         OrderLine."Unit of Measure Code" := SalesLine."Unit of Measure Code";
         OrderLine."Unit Cost (LCY)" := SalesLine."Unit Cost (LCY)";
         OrderLine."Unit Price" := SalesLine."Unit Price";
-        OrderLine.Amount := SalesLine.Amount;
-        OrderLine."Line Amount" := SalesLine."Line Amount";
+
         OrderLine."Line Discount Amount" := SalesLine."Line Discount Amount";
         OrderLine."Line Discount %" := SalesLine."Line Discount %";
         OrderLine."Shipment Date" := SalesLine."Shipment Date";
         OrderLine."Booking Date" := SalesLine."BA Booking Date";
         OrderLine."New Business - TDG" := SalesLine."BA New Business - TDG";
-        if OrderLine."Posted Document No." = '' then
+        if OrderLine."Posted Document No." = '' then begin
             OrderLine.Deleted := Deleted;
+            OrderLine.Quantity := SalesLine.Quantity - SalesLine."Quantity Invoiced";
+        end else begin
+            OrderLine.Deleted := false;
+            OrderLine.Quantity := SalesLine."Qty. to Invoice";
+        end;
+        if SalesLine."Line Discount %" <> 0 then
+            OrderLine.Amount := OrderLine.Quantity * SalesLine."Unit Price" * (1 - SalesLine."Line Discount %" / 100)
+        else
+            OrderLine.Amount := OrderLine.Quantity * SalesLine."Unit Price";
+        OrderLine."Line Amount" := OrderLine.Amount;
         OrderLine.Cancelled := Cancelled;
         OrderLine."Dimension Set ID" := SalesLine."Dimension Set ID";
         OrderLine.Modify(true);
@@ -4808,17 +4863,24 @@ codeunit 75010 "BA SEI Subscibers"
     var
         OrderLine: Record "BA Order Line";
     begin
+        if SalesLine."Qty. to Invoice" = 0 then
+            exit;
+        OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
         OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Sales Order");
         OrderLine.SetRange("Document No.", SalesLine."Document No.");
         OrderLine.SetRange("Line No.", SalesLine."Line No.");
         OrderLine.SetRange("Posted Document Type", OrderLine."Posted Document Type"::" ");
         OrderLine.SetRange("Posted Document No.", '');
         OrderLine.SetRange("Posted Line No.", 0);
+        OrderLine.SetRange(Quantity, SalesLine."Qty. to Invoice");
         if not OrderLine.FindFirst() then
             SaveOrderLine(SalesLine, OrderLine, false, false);
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Sales Invoice";
         OrderLine."Posted Document No." := SalesInvLine."Document No.";
         OrderLine."Posted Line No." := SalesInvLine."Line No.";
+        OrderLine.Quantity := SalesLine."Qty. to Invoice";
+        OrderLine."Line Amount" := SalesInvLine."Line Amount";
+        OrderLine.Amount := SalesInvLine.Amount;
         OrderLine.Deleted := false;
         OrderLine.Modify(true);
     end;
@@ -4839,9 +4901,12 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SaveOrderHeader(var ServiceHeader: Record "Service Header"; var OrderHeader: Record "BA Order Header"; DocType: Enum "BA Order Document Type"; Deleted: Boolean)
     var
         ServiceLine: Record "Service Line";
+        OrderLine: Record "BA Order Line";
         Customer: Record Customer;
         SalesRecSetup: Record "Sales & Receivables Setup";
     begin
+        if ServiceHeader.IsTemporary() then
+            exit;
         if OrderHeader.GetFilters() = '' then begin
             OrderHeader.SetRange("Document Type", DocType);
             OrderHeader.SetRange("Document No.", ServiceHeader."No.");
@@ -4875,9 +4940,23 @@ codeunit 75010 "BA SEI Subscibers"
         if SalesRecSetup."BA Ledger Start Date" <> 0D then
             ServiceLine.SetFilter("BA Booking Date", '>=%1', SalesRecSetup."BA Ledger Start Date");
         if ServiceLine.FindSet() then
-            repeat
-                SaveOrderLine(ServiceLine, Deleted, false);
-            until ServiceLine.Next() = 0;
+            if Deleted then begin
+                OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
+                OrderLine.SetRange("Document Type", DocType);
+                OrderLine.SetRange("Document No.", ServiceHeader."No.");
+                OrderLine.SetFilter("Posted Document No.", '<>%1', '');
+                repeat
+                    OrderLine.SetRange("Line No.", ServiceLine."Line No.");
+                    if OrderLine.IsEmpty() then
+                        SaveOrderLine(ServiceLine, Deleted, false);
+                until ServiceLine.Next() = 0;
+                OrderLine.SetRange("Line No.");
+                OrderLine.SetRange("Posted Document No.", '');
+                OrderLine.DeleteAll(true);
+            end else
+                repeat
+                    SaveOrderLine(ServiceLine, Deleted, false);
+                until ServiceLine.Next() = 0;
     end;
 
     local procedure SaveOrderLine(var ServiceLine: Record "Service Line"; Deleted: Boolean; Cancelled: Boolean)
@@ -4892,14 +4971,18 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine2: Record "BA Order Line";
         EntryNo: Integer;
     begin
+        if ServiceLine.IsTemporary() or SingleInstance.GetSkipLedgerLineSave() then
+            exit;
         if OrderLine2.FindLast() then
             EntryNo := OrderLine2."Entry No.";
         EntryNo += 1;
         if OrderLine.GetFilters = '' then begin
+            OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
             OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Service Order");
             OrderLine.SetRange("Document No.", ServiceLine."Document No.");
             OrderLine.SetRange("Line No.", ServiceLine."Line No.");
             OrderLine.SetRange(Cancelled, Cancelled);
+            OrderLine.SetRange("Posted Document No.", '');
         end;
         if not OrderLine.FindFirst() then begin
             OrderLine.Init();
@@ -4935,8 +5018,20 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Line Discount %" := ServiceLine."Line Discount %";
         OrderLine."Shipment Date" := ServiceLine.GetShipmentDate();
         OrderLine."Booking Date" := ServiceLine."BA Booking Date";
-        if OrderLine."Posted Document No." = '' then
+        if OrderLine."Posted Document No." = '' then begin
             OrderLine.Deleted := Deleted;
+            OrderLine.Quantity := ServiceLine.Quantity;
+            OrderLine.Amount := ServiceLine.Amount;
+            OrderLine."Line Amount" := ServiceLine."Line Amount";
+        end else begin
+            OrderLine.Deleted := false;
+            OrderLine.Quantity := ServiceLine."Qty. to Invoice";
+            if ServiceLine."Line Discount %" <> 0 then
+                OrderLine.Amount := ServiceLine."Qty. to Invoice" * ServiceLine."Unit Price" * (1 - ServiceLine."Line Discount %" / 100)
+            else
+                OrderLine.Amount := ServiceLine."Qty. to Invoice" * ServiceLine."Unit Price";
+            OrderLine."Line Amount" := OrderLine.Amount;
+        end;
         OrderLine.Cancelled := Cancelled;
         OrderLine."Dimension Set ID" := ServiceLine."Dimension Set ID";
         OrderLine.Modify(true);
@@ -4964,17 +5059,24 @@ codeunit 75010 "BA SEI Subscibers"
     var
         OrderLine: Record "BA Order Line";
     begin
+        if ServiceLine."Qty. to Invoice" = 0 then
+            exit;
+        OrderLine.SetCurrentKey("Document Type", "Document No.", "Line No.", "Posted Document Type", "Posted Document No.", "Posted Line No.");
         OrderLine.SetRange("Document Type", OrderLine."Document Type"::"Service Order");
         OrderLine.SetRange("Document No.", ServiceLine."Document No.");
         OrderLine.SetRange("Line No.", ServiceLine."Line No.");
         OrderLine.SetRange("Posted Document Type", OrderLine."Posted Document Type"::" ");
         OrderLine.SetRange("Posted Document No.", '');
         OrderLine.SetRange("Posted Line No.", 0);
+        OrderLine.SetRange(Quantity, ServiceLine."Qty. to Invoice");
         if not OrderLine.FindFirst() then
             SaveOrderLine(ServiceLine, OrderLine, false, false);
         OrderLine."Posted Document Type" := OrderLine."Posted Document Type"::"Posted Service Invoice";
         OrderLine."Posted Document No." := ServiceInvLine."Document No.";
         OrderLine."Posted Line No." := ServiceInvLine."Line No.";
+        OrderLine.Quantity := ServiceLine."Qty. to Invoice";
+        OrderLine."Line Amount" := ServiceInvLine."Line Amount";
+        OrderLine.Amount := ServiceInvLine.Amount;
         OrderLine.Deleted := false;
         OrderLine.Modify(true);
     end;
