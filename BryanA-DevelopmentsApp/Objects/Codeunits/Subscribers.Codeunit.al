@@ -5431,7 +5431,6 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-<<<<<<< HEAD
     [EventSubscriber(ObjectType::Table, Database::"Item Ledger Entry", 'OnBeforeVerifyOnInventory', '', false, false)]
     local procedure ItemLedgerEntryOnBeforeVerifyOnInventory(var ItemLedgerEntry: Record "Item Ledger Entry")
     var
@@ -5787,13 +5786,6 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-=======
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post Prepayments", 'OnUpdateSalesDocumentOnBeforeModifyInvoiceSalesLine', '', false, false)]
-    local procedure SalesPostPrepaymentsOnUpdateSalesDocumentOnBeforeModifyInvoiceSalesLine(var SalesLine: Record "Sales Line")
-    begin
-        if not confirm('%1: %2, %3, %4, %5, %6', false, SalesLine."Line No.", SalesLine.Amount, SalesLine."Amount Including VAT", SalesLine."Prepayment Amount", SalesLine."Prepmt. Amt. Inv.", SalesLine."Prepmt. Amt. Incl. VAT") then
-            Error('');
-    end;
 
 
     local procedure CheckForInvalidPrepayRounding(var SalesHeader: Record "Sales Header")
@@ -5804,7 +5796,7 @@ codeunit 75010 "BA SEI Subscibers"
         if SalesHeader."Prepayment %" = 0 then
             exit;
         if SalesHeader."Prepayment %" <> 100 then
-            Error('Cannot post %1 %2 with partial prepay amount.', SalesHeader."Document Type", SalesHeader."No.");
+            Error(PartialPrepayAmtErr, SalesHeader."Document Type", SalesHeader."No.");
         SalesLine.SetRange("Document Type", SalesHeader."Document Type");
         SalesLine.SetRange("Document No.", SalesHeader."No.");
         SalesLine.SetFilter("Prepayment Amount", '<>%1', 0);
@@ -5827,7 +5819,6 @@ codeunit 75010 "BA SEI Subscibers"
             until SalesLine.Next() = 0;
     end;
 
->>>>>>> prepayrounding
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
@@ -5906,5 +5897,6 @@ codeunit 75010 "BA SEI Subscibers"
         InsufficientProdLinesInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2%3 and %4, on inventory.';
         NoStandardCostErr: Label '%1 %2 cannot be posted.\Item "%3" does not have a standard cost setup.\Please contact engineering staff.';
         ComponentNoStandardCostErr: Label '%1 %2 cannot be posted.\Component Item "%3" for Item "%4" does not have a standard cost setup.\Please contact engineering staff.';
+        PartialPrepayAmtErr: Label 'Cannot post %1 %2 with partial prepay amount.';
 }
 
