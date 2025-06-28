@@ -8,6 +8,14 @@ pageextension 80192 "BA Vendor List" extends "Vendor List"
             {
                 ApplicationArea = all;
             }
+            field("BA Address"; Address)
+            {
+                ApplicationArea = all;
+            }
+            field("BA Address 2"; "Address 2")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 }
