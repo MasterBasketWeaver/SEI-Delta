@@ -5440,7 +5440,6 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Purch.-Post", 'OnBeforePostPurchaseDoc', '', false, false)]
     local procedure PurchPostOnBeforePostPurchaseDoc()
     begin
@@ -5898,5 +5897,6 @@ codeunit 75010 "BA SEI Subscibers"
         InsufficientProdLinesInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2%3 and %4, on inventory.';
         NoStandardCostErr: Label '%1 %2 cannot be posted.\Item "%3" does not have a standard cost setup.\Please contact engineering staff.';
         ComponentNoStandardCostErr: Label '%1 %2 cannot be posted.\Component Item "%3" for Item "%4" does not have a standard cost setup.\Please contact engineering staff.';
+        PartialPrepayAmtErr: Label 'Cannot post %1 %2 with partial prepay amount.';
 }
 

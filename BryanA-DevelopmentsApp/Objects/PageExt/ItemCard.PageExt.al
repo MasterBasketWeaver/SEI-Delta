@@ -529,6 +529,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         RecRef: RecordRef;
         FldRef: FieldRef;
         FldNo: Integer;
+        TrackingCodeText: TextBuilder;
     begin
         FieldNos.Add(Rec.FieldNo("Base Unit of Measure"));
         FieldNos.Add(Rec.FieldNo("Gen. Prod. Posting Group"));
@@ -549,6 +550,42 @@ pageextension 80009 "BA Item Card" extends "Item Card"
 
         if ErrorMessages.Length() > 0 then
             Error(RequiredFieldsErr, ErrorMessages.ToText());
+
+        if Rec."Item Tracking Code" = '' then begin
+            TrackingCodeText.AppendLine(StrSubstNo('Does item %1 %2 require a serial number?', Rec."No.", Rec.Description));
+            TrackingCodeText.AppendLine('');
+            TrackingCodeText.AppendLine('SERIALIZED PRODUCT LIST');
+            TrackingCodeText.AppendLine('');
+            TrackingCodeText.AppendLine('AIREAL DIVIDSION:');
+            TrackingCodeText.AppendLine('All Bambi Buckets');
+            TrackingCodeText.AppendLine('Green Dragon Dispenser');
+            TrackingCodeText.AppendLine('Powerfill Controls');
+            TrackingCodeText.AppendLine('Premo Dispenser');
+            TrackingCodeText.AppendLine('Red Dragon Dispenser');
+            TrackingCodeText.AppendLine('Sling Dragon');
+            TrackingCodeText.AppendLine('Torrentula Controller');
+            TrackingCodeText.AppendLine('');
+            TrackingCodeText.AppendLine('REMOTE SITE DIVDSION:');
+            TrackingCodeText.AppendLine('BATT Tank Assy           Onion Tank');
+            TrackingCodeText.AppendLine('BATT Tank Inner          Pumpkin/Forestry Tank');
+            TrackingCodeText.AppendLine('BATT Tank Outer          Snow-Pillow Tank');
+            TrackingCodeText.AppendLine('Double Drum Tank Assy    TCM');
+            TrackingCodeText.AppendLine('Double Drum Tank Inner   Terra Tank - Aquashield');
+            TrackingCodeText.AppendLine('Double Drum Tank Outer   Terra Tank - Chemshield');
+            TrackingCodeText.AppendLine('Fuel Easy Tank           Terra Tank - Petroshield');
+            TrackingCodeText.AppendLine('Hazmat Fextank           Terra Tank - Arctic King');
+            TrackingCodeText.AppendLine('Helipump                 Terra Tank - Desert King');
+            TrackingCodeText.AppendLine('Low Profile Tank         Terra Tank - Jungle King');
+            TrackingCodeText.AppendLine('');
+            TrackingCodeText.AppendLine('NOTE:');
+            TrackingCodeText.AppendLine('DO NOT SERIALIZE KITS');
+            if confirm('Does item %1 %2 require a serial number?', false, TrackingCodeText.ToText()) then
+                Error('');
+        end else begin
+            Rec.CalcFields("Assembly BOM");
+            if Rec."Assembly BOM" then
+                Error('Kit items cannot have a serial number assigned.\Please clear the Item Tracking Code field.');
+        end;
     end;
 
 
