@@ -655,6 +655,31 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
 
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnBeforeCreateApprovalEntryNotification', '', false, false)]
+    local procedure ApprovalMgtOnBeforeCreateApprovalEntryNotification(var ApprovalEntry: Record "Approval Entry")
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if (ApprovalEntry."Table ID" <> Database::"Purchase Header") or (ApprovalEntry.Status <> ApprovalEntry.Status::Open) then
+            exit;
+        UserSetup.SetRange("Approval Administrator");
+        UserSetup.FindFirst();
+        if UserSetup."User ID" <> ApprovalEntry."Approver ID" then
+            exit;
+
+        UserSetup.SetRange("Approval Administrator");
+        UserSetup.SetRange("BA Purch. Approval Admin", true);
+        if not UserSetup.FindFirst() then
+            Error('Purchaser Approval Admin must be configured before Purchase documents can be sent for approval.');
+        ApprovalEntry."Approver ID" := UserSetup."User ID";
+        ApprovalEntry.Modify(true);
+    end;
+
+
+
+
+
     var
         ApprovalMgt: Codeunit "Approvals Mgmt.";
         ReleaseSalesDocument: Codeunit "Release Sales Document";
