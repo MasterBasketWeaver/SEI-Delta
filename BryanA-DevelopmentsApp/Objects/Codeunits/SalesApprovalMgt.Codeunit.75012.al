@@ -1,6 +1,7 @@
 codeunit 75012 "BA Sales Approval Mgt."
 {
-    Permissions = tabledata "Sales Invoice Header" = m;
+    Permissions = tabledata "Sales Invoice Header" = M,
+    tabledata "Approval Entry" = M;
 
     procedure UpdateCustomerApprovalGroup(var Customer: Record Customer)
     begin
@@ -663,11 +664,10 @@ codeunit 75012 "BA Sales Approval Mgt."
     begin
         if (ApprovalEntry."Table ID" <> Database::"Purchase Header") or (ApprovalEntry.Status <> ApprovalEntry.Status::Open) then
             exit;
-        UserSetup.SetRange("Approval Administrator");
+        UserSetup.SetRange("Approval Administrator", true);
         UserSetup.FindFirst();
         if UserSetup."User ID" <> ApprovalEntry."Approver ID" then
             exit;
-
         UserSetup.SetRange("Approval Administrator");
         UserSetup.SetRange("BA Purch. Approval Admin", true);
         if not UserSetup.FindFirst() then
