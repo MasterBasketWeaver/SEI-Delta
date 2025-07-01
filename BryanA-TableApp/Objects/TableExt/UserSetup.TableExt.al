@@ -108,5 +108,25 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             DataClassification = CustomerContent;
             Caption = 'Can Deactivate Items';
         }
+        field(80140; "BA Purch. Approval Admin"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Purchase Approval Admin';
+
+            trigger OnValidate()
+            var
+                UserSetup: Record "User Setup";
+            begin
+                if not Rec."BA Purch. Approval Admin" then
+                    exit;
+                UserSetup.SetFilter("User ID", '<>%1', Rec."User ID");
+                UserSetup.SetRange("BA Purch. Approval Admin", true);
+                if UserSetup.FindFirst() then
+                    Error(ExistingPurchAdminErr, Rec.FieldCaption("BA Purch. Approval Admin"), UserSetup."User ID");
+            end;
+        }
     }
+
+    var
+        ExistingPurchAdminErr: Label '%1 has already been specified as User %2.';
 }

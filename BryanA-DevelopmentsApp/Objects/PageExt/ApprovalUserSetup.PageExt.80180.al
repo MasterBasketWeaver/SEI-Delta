@@ -9,6 +9,13 @@ pageextension 80176 "BA Approval User Setup" extends "Approval User Setup"
                 ApplicationArea = all;
             }
         }
+        addafter("Approval Administrator")
+        {
+            field("BA Purch. Approval Admin"; Rec."BA Purch. Approval Admin")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions
