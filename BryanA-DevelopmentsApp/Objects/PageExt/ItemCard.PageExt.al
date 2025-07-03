@@ -524,6 +524,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
 
     local procedure CheckRequiredFields()
     var
+        ItemSerialNoLabel: Record "BA Item Serial No. Label";
         FieldNos: List of [Integer];
         ErrorMessages: TextBuilder;
         RecRef: RecordRef;
@@ -553,40 +554,21 @@ pageextension 80009 "BA Item Card" extends "Item Card"
             Error(RequiredFieldsErr, ErrorMessages.ToText());
 
         if Rec."Item Tracking Code" = '' then begin
-            Tab[1] := 10;
-            TrackingCodeText.AppendLine(StrSubstNo('Does item %1 %2 require a serial number?', Rec."No.", Rec.Description));
-            TrackingCodeText.AppendLine('');
-            TrackingCodeText.AppendLine('SERIALIZED PRODUCT LIST');
-            TrackingCodeText.AppendLine('');
-            TrackingCodeText.AppendLine('AIREAL DIVIDSION:');
-            TrackingCodeText.AppendLine('All Bambi Buckets');
-            TrackingCodeText.AppendLine('Green Dragon Dispenser');
-            TrackingCodeText.AppendLine('Powerfill Controls');
-            TrackingCodeText.AppendLine('Premo Dispenser');
-            TrackingCodeText.AppendLine('Red Dragon Dispenser');
-            TrackingCodeText.AppendLine('Sling Dragon');
-            TrackingCodeText.AppendLine('Torrentula Controller');
-            TrackingCodeText.AppendLine('');
-            TrackingCodeText.AppendLine('REMOTE SITE DIVDSION:');
-            TrackingCodeText.AppendLine(StrSubstNo('BATT Tank Assy                    Onion Tank', Tab, Tab, Tab));
-            TrackingCodeText.AppendLine(StrSubstNo('BATT Tank Inner                   Pumpkin/Forestry Tank', Tab, Tab, Tab));
-            TrackingCodeText.AppendLine(StrSubstNo('BATT Tank Outer                  Snow-Pillow Tank', Tab, Tab, Tab));
-            TrackingCodeText.AppendLine(StrSubstNo('Double Drum Tank Assy       TCM', Tab, Tab, Tab));
-            TrackingCodeText.AppendLine(StrSubstNo('Double Drum Tank Inner      Terra Tank - Aquashield', Tab, Tab, Tab));
-            TrackingCodeText.AppendLine(StrSubstNo('Double Drum Tank Outer      Terra Tank - Chemshield', Tab, Tab, Tab));
-            TrackingCodeText.AppendLine(StrSubstNo('Fuel Easy Tank                    Terra Tank - Petroshield', Tab, Tab, Tab));
-            TrackingCodeText.AppendLine(StrSubstNo('Hazmat Fextank                  Terra Tank - Arctic King', Tab, Tab, Tab));
-            TrackingCodeText.AppendLine(StrSubstNo('Helipump                           Terra Tank - Desert King', Tab, Tab, Tab, Tab));
-            TrackingCodeText.AppendLine(StrSubstNo('Low Profile Tank                Terra Tank - Jungle King', Tab, Tab, Tab));
-            TrackingCodeText.AppendLine('');
-            TrackingCodeText.AppendLine('NOTE:');
-            TrackingCodeText.AppendLine('DO NOT SERIALIZE KITS');
+            ItemSerialNoLabel.SetCurrentKey("Label Order");
+            ItemSerialNoLabel.SetAscending("Label Order", true);
+            if not ItemSerialNoLabel.FindSet() then
+                exit;
+            repeat
+                TrackingCodeText.AppendLine(ItemSerialNoLabel."Label Text");
+                if ItemSerialNoLabel.Header then
+                    TrackingCodeText.AppendLine('');
+            until ItemSerialNoLabel.Next() = 0;
             if confirm(TrackingCodeText.ToText()) then
                 Error('');
         end else begin
             Rec.CalcFields("Assembly BOM");
             if Rec."Assembly BOM" then
-                Error('Kit items cannot have a serial number assigned.\Please clear the Item Tracking Code field.');
+                Error(AssemblySerialErr);
         end;
     end;
 
@@ -601,6 +583,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         CancelMsg: Label 'Cancel item?';
         InvalidDimFieldErr: Label 'Invalid Dimension field: %1.';
         RequiredFieldsErr: Label 'The following fields must be assigned:\%1';
+        AssemblySerialErr: Label 'Kit items cannot have a serial number assigned.\Please clear the Item Tracking Code field.';
 
     var
         GLSetup: Record "General Ledger Setup";
