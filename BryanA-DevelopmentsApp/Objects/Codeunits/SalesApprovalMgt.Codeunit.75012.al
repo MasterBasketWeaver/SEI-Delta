@@ -308,73 +308,21 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         ApprovalEntry: Record "Approval Entry";
         SalesHeader: Record "Sales Header";
+        UserSetup: Record "User Setup";
+        NotificationMgt: Codeunit "Notification Management";
+        EmailBody: Text;
+        Subject: Text;
+        ReportID: Integer;
     begin
-
-
         if not ApprovalEntry.Get(NotificationEntry."Triggered By Record") or (NotificationEntry."Recipient User ID" = '') then
             exit;
-        case true of
-            SalesHeader.Get(ApprovalEntry."Record ID to Approve"):
-                if SendSalesApprovalEmail(NotificationEntry, ApprovalEntry, SalesHeader) then begin
-                    IsHandled := true;
-                    Result := false;
-                end;
-
-        end;
-    end;
-
-
-    local procedure SendPurchaseApprovalEmail(var PurchaseHeader: Record "Purchase Header"): Boolean
-    var
-        UserSetup: Record "User Setup";
-        NotificationEntry: Record "Notification Entry";
-        NotificationMgt: Codeunit "Notification Management";
-        EmailBody: Text;
-        Subject: Text;
-        URL: Text;
-        ReportID: Integer;
-        NotificationID: Integer;
-    begin
-        if PurchaseHeader."Document Type" <> PurchaseHeader."Document Type"::Order then
-            exit(false);
-        if not UserSetup.Get(PurchaseHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
-            exit(false);
-        if NotificationEntry.FindLast() then
-            NotificationID := NotificationEntry.ID;
-        Clear(NotificationEntry);
-        NotificationEntry.ID := NotificationID + 1;
-        NotificationEntry.Type := NotificationEntry.Type::Approval;
-        NotificationEntry."Recipient User ID" := UserSetup."User ID";
-        NotificationEntry."Triggered By Record" := PurchaseHeader.RecordId();
-        NotificationEntry."Link Target Page" := Page::"Purchase Order";
-        NotificationEntry."Custom Link" := GetUrl(ClientType::Windows, CompanyName(), ObjectType::Page, Page::"Purchase Order", PurchaseHeader);
-        NotificationEntry."Sender User ID" := UserId();
-        NotificationEntry.Insert(true);
-
-        Subject := StrSubstNo(RejectionEmailSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
-        ReportID := Report::"BA Prod. Order Approval";
-        if not TryToSendEmail(PurchaseHeader, UserSetup."E-Mail", Subject, ReportID, EmailBody) then begin
-            NotificationEntry.SetErrorMessage(GetLastErrorText());
-            ClearLastError();
-            NotificationEntry.Modify(true);
-        end else
-            NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
-        exit(true);
-    end;
-
-    local procedure SendSalesApprovalEmail(var NotificationEntry: Record "Notification Entry"; var ApprovalEntry: Record "Approval Entry"; var SalesHeader: Record "Sales Header"): Boolean
-    var
-        UserSetup: Record "User Setup";
-        NotificationMgt: Codeunit "Notification Management";
-        EmailBody: Text;
-        Subject: Text;
-        ReportID: Integer;
-    begin
+        if not SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
+            exit;
         if SalesHeader."Document Type" <> SalesHeader."Document Type"::Order then
-            exit(false);
+            exit;
         if (SalesHeader."Assigned User ID" = NotificationEntry."Recipient User ID") and (ApprovalEntry.Status = ApprovalEntry.Status::Rejected) then begin
             if not UserSetup.Get(SalesHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
-                exit(false);
+                exit;
             Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
             ReportID := Report::"BA Prod. Order Approval";
         end else begin
@@ -382,7 +330,7 @@ codeunit 75012 "BA Sales Approval Mgt."
             UserSetup.SetRange("Approval Administrator", true);
             UserSetup.SetFilter("E-Mail", '<>%1', '');
             if not UserSetup.FindFirst() then
-                exit(false);
+                exit;
             Subject := StrSubstNo(ApprovalRequestSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
             ReportID := Report::"BA Sales Order Approval Note.";
         end;
@@ -393,8 +341,11 @@ codeunit 75012 "BA Sales Approval Mgt."
             NotificationEntry.Modify(true);
         end else
             NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
-        exit(true);
+        IsHandled := true;
+        Result := false;
     end;
+
+
 
 
 
@@ -765,6 +716,43 @@ codeunit 75012 "BA Sales Approval Mgt."
         ApprovalEntry.Modify(true);
     end;
 
+    local procedure SendPurchaseApprovalEmail(var PurchaseHeader: Record "Purchase Header"): Boolean
+    var
+        UserSetup: Record "User Setup";
+        NotificationEntry: Record "Notification Entry";
+        NotificationMgt: Codeunit "Notification Management";
+        EmailBody: Text;
+        Subject: Text;
+        URL: Text;
+        ReportID: Integer;
+        NotificationID: Integer;
+    begin
+        if PurchaseHeader."Document Type" <> PurchaseHeader."Document Type"::Order then
+            exit(false);
+        if not UserSetup.Get(PurchaseHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
+            exit(false);
+        if NotificationEntry.FindLast() then
+            NotificationID := NotificationEntry.ID;
+        Clear(NotificationEntry);
+        NotificationEntry.ID := NotificationID + 1;
+        NotificationEntry.Type := NotificationEntry.Type::Approval;
+        NotificationEntry."Recipient User ID" := UserSetup."User ID";
+        NotificationEntry."Triggered By Record" := PurchaseHeader.RecordId();
+        NotificationEntry."Link Target Page" := Page::"Purchase Order";
+        NotificationEntry."Custom Link" := GetUrl(ClientType::Windows, CompanyName(), ObjectType::Page, Page::"Purchase Order", PurchaseHeader);
+        NotificationEntry."Sender User ID" := UserId();
+        NotificationEntry.Insert(true);
+
+        Subject := StrSubstNo(RejectionEmailSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
+        ReportID := Report::"BA Prod. Order Approval";
+        if not TryToSendEmail(PurchaseHeader, UserSetup."E-Mail", Subject, ReportID, EmailBody) then begin
+            NotificationEntry.SetErrorMessage(GetLastErrorText());
+            ClearLastError();
+            NotificationEntry.Modify(true);
+        end else
+            NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
+        exit(true);
+    end;
 
 
 
