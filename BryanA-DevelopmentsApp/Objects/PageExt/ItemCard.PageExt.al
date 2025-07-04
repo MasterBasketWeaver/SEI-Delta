@@ -553,7 +553,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
             Error(RequiredFieldsErr, ErrorMessages.ToText());
     end;
 
-    local procedure kwCheckItemTrackingCode()
+    local procedure CheckItemTrackingCode()
     var
         ItemSerialNoLabel: Record "BA Item Serial No. Label";
         TrackingCodeText: TextBuilder;
