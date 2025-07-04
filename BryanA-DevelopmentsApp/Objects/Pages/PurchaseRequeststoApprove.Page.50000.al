@@ -176,6 +176,30 @@ page 50010 "BA Purch. Requests to Approve"
         }
         area(processing)
         {
+            action(Test)
+            {
+                ApplicationArea = All;
+                Image = TestDatabase;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                Scope = Repeater;
+
+                trigger OnAction()
+                var
+                    SalesHeader: Record "Sales Header";
+                    PurchaseHeader: Record "Purchase Header";
+                begin
+                    SalesHeader.SetRange("Document Type", SalesHeader."Document Type"::Order);
+                    SalesHeader.FindFirst();
+                    SalesHeader.SetRange("No.", SalesHeader."No.");
+                    PurchaseHeader.Get(Rec."Record ID to Approve");
+                    PurchaseHeader.SetRange("Document Type", PurchaseHeader."Document Type");
+                    PurchaseHeader.SetRange("No.", PurchaseHeader."No.");
+                    Report.Run(Report::"BA Prod. Order Approval", false, false, SalesHeader);
+                    Report.Run(Report::"BA Prod. Order Approval", false, false, PurchaseHeader);
+                end;
+            }
             action(Approve)
             {
                 ApplicationArea = Suite;
