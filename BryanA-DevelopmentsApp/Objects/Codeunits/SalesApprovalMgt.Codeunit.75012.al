@@ -743,7 +743,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         NotificationEntry."Sender User ID" := UserId();
         NotificationEntry.Insert(true);
 
-        Subject := StrSubstNo(RejectionEmailSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
+        Subject := StrSubstNo(ApprovalEmailSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
         ReportID := Report::"BA Prod. Order Approval";
         if not TryToSendEmail(PurchaseHeader, UserSetup."E-Mail", Subject, ReportID, EmailBody) then begin
             NotificationEntry.SetErrorMessage(GetLastErrorText());
