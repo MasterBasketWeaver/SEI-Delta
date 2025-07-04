@@ -99,15 +99,33 @@ codeunit 75012 "BA Sales Approval Mgt."
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Workflow Management", 'OnBeforeHandleEventWithxRec', '', false, false)]
     local procedure WorkflowMgtOnBeforeHandleEventWithxRec(FunctionName: Code[128]; Variant: Variant; var IsHandled: Boolean)
     var
+        RecRef: RecordRef;
+    begin
+        if TryToGetRecord(RecRef, Variant) then
+            case RecRef.Number() of
+                Database::"Sales Header":
+                    HandleSalesApprovalEvents(RecRef, IsHandled, Variant, FunctionName);
+                Database::"Purchase Header":
+                    HandlePurchaseApprovalEvent(RecRef, FunctionName);
+            end;
+    end;
+
+    local procedure HandlePurchaseApprovalEvent(var RecRef: RecordRef; FunctionName: Code[128])
+    var
+        PurchaseHeader: Record "Purchase Header";
+    begin
+        if FunctionName <> WorkflowEventHandling.RunWorkflowOnAfterReleasePurchaseDocCode() then
+            exit;
+        RecRef.SetTable(PurchaseHeader);
+        SendPurchaseApprovalEmail(PurchaseHeader);
+    end;
+
+    local procedure HandleSalesApprovalEvents(var RecRef: RecordRef; var IsHandled: Boolean; var RecVariant: Variant; FunctionName: Code[128])
+    var
         SalesHeader: Record "Sales Header";
         WorkflowStepInstance: Record "Workflow Step Instance";
         WorkflowMgt: Codeunit "Workflow Management";
-        RecRef: RecordRef;
     begin
-        if not TryToGetRecord(RecRef, Variant) then
-            exit;
-        if RecRef.Number <> Database::"Sales Header" then
-            exit;
         RecRef.SetTable(SalesHeader);
         if SalesHeader."BA Use Default Workflow" then begin
             SalesHeader."BA Use Default Workflow" := false;
@@ -117,7 +135,7 @@ codeunit 75012 "BA Sales Approval Mgt."
 
         case FunctionName of
             WorkflowEventHandling.RunWorkflowOnSendSalesDocForApprovalCode():
-                if WorkflowMgt.FindWorkflowStepInstance(Variant, Variant, WorkflowStepInstance, FunctionName) then
+                if WorkflowMgt.FindWorkflowStepInstance(RecVariant, RecVariant, WorkflowStepInstance, FunctionName) then
                     SendSalesApproval(IsHandled, SalesHeader, FunctionName);
             WorkflowEventHandling.RunWorkflowOnAfterReleaseSalesDocCode():
                 begin
@@ -290,84 +308,21 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         ApprovalEntry: Record "Approval Entry";
         SalesHeader: Record "Sales Header";
-        PurchaseHeader: Record "Purchase Header";
+        UserSetup: Record "User Setup";
+        NotificationMgt: Codeunit "Notification Management";
+        EmailBody: Text;
+        Subject: Text;
+        ReportID: Integer;
     begin
-
-
         if not ApprovalEntry.Get(NotificationEntry."Triggered By Record") or (NotificationEntry."Recipient User ID" = '') then
             exit;
-
-        // if not Confirm('%1', false, ApprovalEntry."Record ID to Approve") then
-        //     Erase('');
-
-        case true of
-            SalesHeader.Get(ApprovalEntry."Record ID to Approve"):
-                if SendSalesApprovalEmail(NotificationEntry, ApprovalEntry, SalesHeader) then begin
-                    IsHandled := true;
-                    Result := false;
-                end;
-            PurchaseHeader.Get(ApprovalEntry."Record ID to Approve"):
-                if SendPurchaseApprovalEmail(NotificationEntry, ApprovalEntry, PurchaseHeader) then begin
-                    IsHandled := true;
-                    Result := false;
-                end;
-        end;
-    end;
-
-
-    local procedure SendPurchaseApprovalEmail(var NotificationEntry: Record "Notification Entry"; var ApprovalEntry: Record "Approval Entry"; var PurchaseHeader: Record "Purchase Header"): Boolean
-    var
-        UserSetup: Record "User Setup";
-        NotificationMgt: Codeunit "Notification Management";
-        EmailBody: Text;
-        Subject: Text;
-        ReportID: Integer;
-    begin
-        // if not Confirm('%1: %2', false, PurchaseHeader.RecordId, ApprovalEntry.Status) then
-        //     Error('');
-
-        if PurchaseHeader."Document Type" <> PurchaseHeader."Document Type"::Order then
-            exit(false);
-        // if (PurchaseHeader."Assigned User ID" = NotificationEntry."Recipient User ID") then begin
-        if ApprovalEntry.Status <> ApprovalEntry.Status::Approved then
-            exit(false);
-        if not UserSetup.Get(PurchaseHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
-            exit(false);
-        Subject := StrSubstNo(RejectionEmailSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
-        ReportID := Report::"BA Prod. Order Approval";
-        // end
-        //  else begin
-        //     UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
-        //     UserSetup.SetRange("BA Purch. Approval Admin", true);
-        //     UserSetup.SetFilter("E-Mail", '<>%1', '');
-        //     if not UserSetup.FindFirst() then
-        //         exit(false);
-        //     Subject := StrSubstNo(ApprovalRequestSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
-        //     ReportID := Report::"BA Sales Order Approval Note.";
-        // end;
-
-        if not TryToSendEmail(PurchaseHeader, UserSetup."E-Mail", Subject, ReportID, EmailBody) then begin
-            NotificationEntry.SetErrorMessage(GetLastErrorText());
-            ClearLastError();
-            NotificationEntry.Modify(true);
-        end else
-            NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
-        exit(true);
-    end;
-
-    local procedure SendSalesApprovalEmail(var NotificationEntry: Record "Notification Entry"; var ApprovalEntry: Record "Approval Entry"; var SalesHeader: Record "Sales Header"): Boolean
-    var
-        UserSetup: Record "User Setup";
-        NotificationMgt: Codeunit "Notification Management";
-        EmailBody: Text;
-        Subject: Text;
-        ReportID: Integer;
-    begin
+        if not SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
+            exit;
         if SalesHeader."Document Type" <> SalesHeader."Document Type"::Order then
-            exit(false);
+            exit;
         if (SalesHeader."Assigned User ID" = NotificationEntry."Recipient User ID") and (ApprovalEntry.Status = ApprovalEntry.Status::Rejected) then begin
             if not UserSetup.Get(SalesHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
-                exit(false);
+                exit;
             Subject := StrSubstNo(RejectionEmailSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
             ReportID := Report::"BA Prod. Order Approval";
         end else begin
@@ -375,7 +330,7 @@ codeunit 75012 "BA Sales Approval Mgt."
             UserSetup.SetRange("Approval Administrator", true);
             UserSetup.SetFilter("E-Mail", '<>%1', '');
             if not UserSetup.FindFirst() then
-                exit(false);
+                exit;
             Subject := StrSubstNo(ApprovalRequestSubject, SalesHeader."No.", SalesHeader."Sell-to Customer No.", SalesHeader."Sell-to Customer Name");
             ReportID := Report::"BA Sales Order Approval Note.";
         end;
@@ -386,8 +341,11 @@ codeunit 75012 "BA Sales Approval Mgt."
             NotificationEntry.Modify(true);
         end else
             NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
-        exit(true);
+        IsHandled := true;
+        Result := false;
     end;
+
+
 
 
 
@@ -758,6 +716,43 @@ codeunit 75012 "BA Sales Approval Mgt."
         ApprovalEntry.Modify(true);
     end;
 
+    local procedure SendPurchaseApprovalEmail(var PurchaseHeader: Record "Purchase Header"): Boolean
+    var
+        UserSetup: Record "User Setup";
+        NotificationEntry: Record "Notification Entry";
+        NotificationMgt: Codeunit "Notification Management";
+        EmailBody: Text;
+        Subject: Text;
+        URL: Text;
+        ReportID: Integer;
+        NotificationID: Integer;
+    begin
+        if PurchaseHeader."Document Type" <> PurchaseHeader."Document Type"::Order then
+            exit(false);
+        if not UserSetup.Get(PurchaseHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
+            exit(false);
+        if NotificationEntry.FindLast() then
+            NotificationID := NotificationEntry.ID;
+        Clear(NotificationEntry);
+        NotificationEntry.ID := NotificationID + 1;
+        NotificationEntry.Type := NotificationEntry.Type::Approval;
+        NotificationEntry."Recipient User ID" := UserSetup."User ID";
+        NotificationEntry."Triggered By Record" := PurchaseHeader.RecordId();
+        NotificationEntry."Link Target Page" := Page::"Purchase Order";
+        NotificationEntry."Custom Link" := GetUrl(ClientType::Windows, CompanyName(), ObjectType::Page, Page::"Purchase Order", PurchaseHeader);
+        NotificationEntry."Sender User ID" := UserId();
+        NotificationEntry.Insert(true);
+
+        Subject := StrSubstNo(ApprovalEmailSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
+        ReportID := Report::"BA Prod. Order Approval";
+        if not TryToSendEmail(PurchaseHeader, UserSetup."E-Mail", Subject, ReportID, EmailBody) then begin
+            NotificationEntry.SetErrorMessage(GetLastErrorText());
+            ClearLastError();
+            NotificationEntry.Modify(true);
+        end else
+            NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
+        exit(true);
+    end;
 
 
 
