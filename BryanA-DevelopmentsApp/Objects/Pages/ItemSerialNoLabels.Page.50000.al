@@ -1,6 +1,6 @@
 page 50000 "BA Item Seral No. Labels"
 {
-    Caption = 'Item Serial No. Labels';
+    Caption = 'Item Creation - Serial No. Prompt Labels';
     SourceTable = "BA Item Serial No. Label";
     PageType = List;
     ApplicationArea = all;
