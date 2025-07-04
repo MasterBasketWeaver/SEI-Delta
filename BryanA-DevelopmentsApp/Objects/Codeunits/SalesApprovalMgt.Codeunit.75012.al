@@ -297,8 +297,8 @@ codeunit 75012 "BA Sales Approval Mgt."
         if not ApprovalEntry.Get(NotificationEntry."Triggered By Record") or (NotificationEntry."Recipient User ID" = '') then
             exit;
 
-        if not Confirm('%1', false, ApprovalEntry."Record ID to Approve") then
-            Erase('');
+        // if not Confirm('%1', false, ApprovalEntry."Record ID to Approve") then
+        //     Erase('');
 
         case true of
             SalesHeader.Get(ApprovalEntry."Record ID to Approve"):
@@ -323,8 +323,8 @@ codeunit 75012 "BA Sales Approval Mgt."
         Subject: Text;
         ReportID: Integer;
     begin
-        if not Confirm('%1: %2', false, PurchaseHeader.RecordId, ApprovalEntry.Status) then
-            Error('');
+        // if not Confirm('%1: %2', false, PurchaseHeader.RecordId, ApprovalEntry.Status) then
+        //     Error('');
 
         if PurchaseHeader."Document Type" <> PurchaseHeader."Document Type"::Order then
             exit(false);
