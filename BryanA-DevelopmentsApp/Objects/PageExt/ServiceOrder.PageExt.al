@@ -173,6 +173,31 @@ pageextension 80050 "BA Service Order" extends "Service Order"
     }
 
 
+    actions
+    {
+        addlast(Reporting)
+        {
+            action("BA Create Packing Slip")
+            {
+                ApplicationArea = all;
+                Image = Report;
+                Promoted = true;
+                PromotedCategory = Report;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Create Packing Slip';
+
+                trigger OnAction()
+                var
+                    ServiceHeader: Record "Service Header";
+                begin
+                    ServiceHeader.SetRange("No.", Rec."No.");
+                    Report.Run(Report::"BA Service Packing Slip", true, false, ServiceHeader);
+                end;
+            }
+        }
+    }
+
     var
         [InDataSet]
         MandatoryDeliveryDate: Boolean;
