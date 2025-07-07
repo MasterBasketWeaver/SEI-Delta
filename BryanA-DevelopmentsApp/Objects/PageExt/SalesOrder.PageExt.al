@@ -269,38 +269,16 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
             action("BA Create Packing Slip")
             {
                 ApplicationArea = all;
-                Image = SendEmailPDFNoAttach;
+                Image = Report;
                 Promoted = true;
-                PromotedCategory = Category9;
+                PromotedCategory = Report;
                 PromotedIsBig = true;
                 PromotedOnly = true;
                 Caption = 'Create Packing Slip';
 
                 trigger OnAction()
-                var
-                    SalesShptHeader: Record "Sales Shipment Header";
-                    SalesLine: Record "Sales Line";
-                    ShipmentNos: TextBuilder;
                 begin
-                    SalesLine.SetRange("Document Type", Rec."Document Type");
-                    SalesLine.SetRange("Document No.", Rec."No.");
-                    SalesLine.SetFilter("Qty. Shipped (Base)", '>%1', 0);
-                    if not SalesLine.IsEmpty() then begin
-                        SalesShptHeader.SetCurrentKey("Order No.");
-                        SalesShptHeader.SetRange("Order No.", Rec."No.");
-                        if SalesShptHeader.FindSet() then begin
-                            if SalesShptHeader.Count() = 1 then
-                                Error('Cannot create Packing Slip as one or more lines have already been shipped.\Please refer to shipment %1 for details.', SalesShptHeader."No.");
-                            ShipmentNos.AppendLine('');
-                            repeat
-                                ShipmentNos.AppendLine(SalesShptHeader."No.");
-                            until SalesShptHeader.Next() = 0;
-                            Error('Cannot create Packing Slip as one or more lines have already been shipped.\Please refer to the following shipments for details:\%1', ShipmentNos.ToText());
-                        end else
-                            Error('Cannot create Packing Slip as one or more lines have already been shipped.');
-                    end;
-
-                    Report.Run(Report::"BA Sales Packing Slip", true, false, Rec);
+                    PrintPackingSlip(Rec);
                 end;
             }
         }
@@ -312,6 +290,9 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
         MandatoryDeliveryDate: Boolean;
         // [InDataSet]
         // ShowApprovalRejection: Boolean;
+
+
+
 
 
 
@@ -352,4 +333,33 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
         Rec.Modify(true);
     end;
 
+
+    procedure PrintPackingSlip(var SalesHeader: Record "Sales Header")
+    var
+        SalesHeader2: Record "Sales Header";
+        SalesShptHeader: Record "Sales Shipment Header";
+        SalesLine: Record "Sales Line";
+        ShipmentNos: TextBuilder;
+    begin
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        SalesLine.SetFilter("Qty. Shipped (Base)", '>%1', 0);
+        if not SalesLine.IsEmpty() then begin
+            SalesShptHeader.SetCurrentKey("Order No.");
+            SalesShptHeader.SetRange("Order No.", SalesHeader."No.");
+            if SalesShptHeader.FindSet() then begin
+                if SalesShptHeader.Count() = 1 then
+                    Error('Cannot create Packing Slip as one or more lines have already been shipped.\Please refer to shipment %1 for details.', SalesShptHeader."No.");
+                ShipmentNos.AppendLine('');
+                repeat
+                    ShipmentNos.AppendLine(SalesShptHeader."No.");
+                until SalesShptHeader.Next() = 0;
+                Error('Cannot create Packing Slip as one or more lines have already been shipped.\Please refer to the following shipments for details:\%1', ShipmentNos.ToText());
+            end else
+                Error('Cannot create Packing Slip as one or more lines have already been shipped.');
+        end;
+
+        SalesHeader2.SetRange("No.", SalesHeader."No.");
+        Report.Run(Report::"BA Sales Packing Slip", true, false, SalesHeader2);
+    end;
 }

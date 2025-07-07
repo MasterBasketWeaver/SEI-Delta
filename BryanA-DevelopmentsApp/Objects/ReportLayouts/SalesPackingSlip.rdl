@@ -19,22 +19,22 @@
             <TablixBody>
               <TablixColumns>
                 <TablixColumn>
-                  <Width>1.1605in</Width>
+                  <Width>0.85296in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>2.64917in</Width>
+                  <Width>3.13042in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>0.76933in</Width>
+                  <Width>1.07687in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>0.4in</Width>
+                  <Width>0.45in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>0.97079in</Width>
+                  <Width>0.74162in</Width>
                 </TablixColumn>
                 <TablixColumn>
-                  <Width>0.91247in</Width>
+                  <Width>0.61039in</Width>
                 </TablixColumn>
                 <TablixColumn>
                   <Width>1.10997in</Width>
@@ -469,7 +469,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                           <rd:DefaultName>Textbox8</rd:DefaultName>
                           <Style>
                             <VerticalAlign>Bottom</VerticalAlign>
-                            <PaddingLeft>5pt</PaddingLeft>
+                            <PaddingLeft>2pt</PaddingLeft>
                             <PaddingRight>5pt</PaddingRight>
                           </Style>
                         </Textbox>
@@ -1120,9 +1120,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                               <TextRuns>
                                 <TextRun>
                                   <Value>=Code.BlankZero(Fields!TempSalesLineQtyToShip.Value)</Value>
-                                  <Style>
-                                    <Format>=Fields!UnitPriceToPrintFormat.Value</Format>
-                                  </Style>
+                                  <Style />
                                 </TextRun>
                               </TextRuns>
                               <Style>
@@ -1174,9 +1172,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                               <TextRuns>
                                 <TextRun>
                                   <Value>=Code.BlankZero(Fields!TempSalesLineOutstandingsQuantity.Value)</Value>
-                                  <Style>
-                                    <Format>=Fields!AmountExclInvDiscFormat.Value</Format>
-                                  </Style>
+                                  <Style />
                                 </TextRun>
                               </TextRuns>
                               <Style>
@@ -1316,7 +1312,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
       <Width>7.97223in</Width>
       <Page>
         <PageHeader>
-          <Height>3.51338in</Height>
+          <Height>4.24477in</Height>
           <PrintOnFirstPage>true</PrintOnFirstPage>
           <PrintOnLastPage>true</PrintOnLastPage>
           <ReportItems>
@@ -1326,7 +1322,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
               <MIMEType>image/bmp</MIMEType>
               <Sizing>FitProportional</Sizing>
               <Top>0.02116in</Top>
-              <Left>3.121in</Left>
+              <Left>3.50642in</Left>
               <Height>3.384cm</Height>
               <Width>3.60499cm</Width>
               <Visibility>
@@ -1532,7 +1528,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                 <Paragraph>
                   <TextRuns>
                     <TextRun>
-                      <Value>=code.GetData(8,1)</Value>
+                      <Value>=code.GetData(7,1)</Value>
                       <Style>
                         <FontSize>8pt</FontSize>
                         <FontWeight>Bold</FontWeight>
@@ -1547,7 +1543,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
               <Top>2.55579cm</Top>
               <Left>0.13887cm</Left>
               <Height>0.423cm</Height>
-              <Width>7.10699cm</Width>
+              <Width>8.76743cm</Width>
               <ZIndex>9</ZIndex>
               <Style />
             </Textbox>
@@ -1557,7 +1553,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                 <Paragraph>
                   <TextRuns>
                     <TextRun>
-                      <Value>=code.GetData(7,1)</Value>
+                      <Value>=code.GetData(6,1)</Value>
                       <Style>
                         <FontSize>8pt</FontSize>
                         <FontWeight>Bold</FontWeight>
@@ -1572,7 +1568,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
               <Top>2.13279cm</Top>
               <Left>0.13887cm</Left>
               <Height>0.423cm</Height>
-              <Width>7.10699cm</Width>
+              <Width>8.76743cm</Width>
               <ZIndex>10</ZIndex>
               <Style />
             </Textbox>
@@ -1918,7 +1914,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                 <Paragraph>
                   <TextRuns>
                     <TextRun>
-                      <Value>=code.GetData(6,1)</Value>
+                      <Value>=code.GetData(5,1)</Value>
                       <Style>
                         <FontSize>8pt</FontSize>
                         <FontWeight>Bold</FontWeight>
@@ -1933,36 +1929,11 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
               <Top>1.70979cm</Top>
               <Left>0.13887cm</Left>
               <Height>0.423cm</Height>
-              <Width>7.10699cm</Width>
+              <Width>8.76743cm</Width>
               <ZIndex>25</ZIndex>
               <Style />
             </Textbox>
             <Textbox Name="CompanyAddress51">
-              <KeepTogether>true</KeepTogether>
-              <Paragraphs>
-                <Paragraph>
-                  <TextRuns>
-                    <TextRun>
-                      <Value>=code.GetData(5,1)</Value>
-                      <Style>
-                        <FontSize>8pt</FontSize>
-                        <FontWeight>Bold</FontWeight>
-                      </Style>
-                    </TextRun>
-                  </TextRuns>
-                  <Style>
-                    <TextAlign>Left</TextAlign>
-                  </Style>
-                </Paragraph>
-              </Paragraphs>
-              <Top>1.28679cm</Top>
-              <Left>0.13887cm</Left>
-              <Height>0.423cm</Height>
-              <Width>7.10699cm</Width>
-              <ZIndex>26</ZIndex>
-              <Style />
-            </Textbox>
-            <Textbox Name="CompanyAddress41">
               <KeepTogether>true</KeepTogether>
               <Paragraphs>
                 <Paragraph>
@@ -1980,14 +1951,14 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                   </Style>
                 </Paragraph>
               </Paragraphs>
-              <Top>0.86379cm</Top>
+              <Top>1.28679cm</Top>
               <Left>0.13887cm</Left>
               <Height>0.423cm</Height>
-              <Width>7.10699cm</Width>
-              <ZIndex>27</ZIndex>
+              <Width>8.76743cm</Width>
+              <ZIndex>26</ZIndex>
               <Style />
             </Textbox>
-            <Textbox Name="CompanyAddress31">
+            <Textbox Name="CompanyAddress41">
               <KeepTogether>true</KeepTogether>
               <Paragraphs>
                 <Paragraph>
@@ -2005,14 +1976,14 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                   </Style>
                 </Paragraph>
               </Paragraphs>
-              <Top>0.44079cm</Top>
+              <Top>0.86379cm</Top>
               <Left>0.13887cm</Left>
               <Height>0.423cm</Height>
-              <Width>7.10699cm</Width>
-              <ZIndex>28</ZIndex>
+              <Width>8.76743cm</Width>
+              <ZIndex>27</ZIndex>
               <Style />
             </Textbox>
-            <Textbox Name="CompanyAddress21">
+            <Textbox Name="CompanyAddress31">
               <KeepTogether>true</KeepTogether>
               <Paragraphs>
                 <Paragraph>
@@ -2030,10 +2001,35 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                   </Style>
                 </Paragraph>
               </Paragraphs>
+              <Top>0.44079cm</Top>
+              <Left>0.13887cm</Left>
+              <Height>0.423cm</Height>
+              <Width>8.76743cm</Width>
+              <ZIndex>28</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="CompanyAddress21">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=code.GetData(1,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                        <FontWeight>Bold</FontWeight>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
               <Top>0.01779cm</Top>
               <Left>0.13887cm</Left>
               <Height>0.423cm</Height>
-              <Width>7.10699cm</Width>
+              <Width>8.76743cm</Width>
               <ZIndex>29</ZIndex>
               <Style />
             </Textbox>
@@ -2091,7 +2087,7 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
                 <Paragraph>
                   <TextRuns>
                     <TextRun>
-                      <Value>=Code.GetData(13,1)</Value>
+                      <Value>=Code.GetData(31,1)</Value>
                       <Style>
                         <FontSize>8pt</FontSize>
                       </Style>
@@ -2251,6 +2247,452 @@ CStr(Fields!TempSalesLineLineAmtTaxAmtInvDiscAmt.Value) + Chr(177)+
               <Height>11pt</Height>
               <Width>0.74756in</Width>
               <ZIndex>38</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="OurOrderNoCaption1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>Our Order No.:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.92532in</Top>
+              <Left>5.76872in</Left>
+              <Height>11pt</Height>
+              <Width>0.786in</Width>
+              <ZIndex>39</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="PODateCaption1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>P.O. Date:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.76198in</Top>
+              <Left>5.76872in</Left>
+              <Height>11pt</Height>
+              <Width>0.786in</Width>
+              <ZIndex>40</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="SalesPersonCaption1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>SalesPerson:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>4.08768in</Top>
+              <Left>5.76872in</Left>
+              <Height>11pt</Height>
+              <Width>0.786in</Width>
+              <ZIndex>41</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="PONumberCaption1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>P.O. Number:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.60475in</Top>
+              <Left>5.76872in</Left>
+              <Height>11pt</Height>
+              <Width>0.786in</Width>
+              <ZIndex>42</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="CustomerIDCaption1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>Customer ID:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.45071in</Top>
+              <Left>5.76872in</Left>
+              <Height>11pt</Height>
+              <Width>0.786in</Width>
+              <ZIndex>43</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="SalesShptHdrOrderNo1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(11,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.92532in</Top>
+              <Left>6.59638in</Left>
+              <Height>11pt</Height>
+              <Width>1.31334in</Width>
+              <ZIndex>44</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="SalesShptHdrOrderDate1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(13,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                        <Format>d</Format>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.76198in</Top>
+              <Left>6.59638in</Left>
+              <Height>11pt</Height>
+              <Width>1.31334in</Width>
+              <ZIndex>45</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="SalesPurchPersonName1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(53,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>4.08768in</Top>
+              <Left>6.59638in</Left>
+              <Height>11pt</Height>
+              <Width>1.31334in</Width>
+              <ZIndex>46</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="SalesShptHdrYourRef1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(49,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.60475in</Top>
+              <Left>6.59638in</Left>
+              <Height>11pt</Height>
+              <Width>1.31334in</Width>
+              <ZIndex>47</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="SalesShptHdrBilltoCustNo1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(47,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style>
+                    <TextAlign>Left</TextAlign>
+                  </Style>
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.45071in</Top>
+              <Left>6.59638in</Left>
+              <Height>11pt</Height>
+              <Width>1.31334in</Width>
+              <ZIndex>48</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="ShipViaCaption1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>Service:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.60475in</Top>
+              <Height>11pt</Height>
+              <Width>1.1605in</Width>
+              <ZIndex>49</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="TaxRegLabel1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>Carrier:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.45071in</Top>
+              <Height>11pt</Height>
+              <Width>1.1605in</Width>
+              <ZIndex>50</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="TaxRegNo1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(79,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.45071in</Top>
+              <Left>1.21606in</Left>
+              <Height>11pt</Height>
+              <Width>3.6997in</Width>
+              <ZIndex>51</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="PackageTrackingNoLabel1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>Freight Quote No.:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.92532in</Top>
+              <Height>11pt</Height>
+              <Width>1.1605in</Width>
+              <ZIndex>52</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="ShippingAgentCodeLabel1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>Freight Terms:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.76198in</Top>
+              <Height>11pt</Height>
+              <Width>1.1605in</Width>
+              <ZIndex>53</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="ShippingAgentCodeText1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(78,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.76198in</Top>
+              <Left>1.21606in</Left>
+              <Height>11pt</Height>
+              <Width>3.6997in</Width>
+              <ZIndex>54</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="PackageTrackingNoText1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(82,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.92532in</Top>
+              <Left>1.21606in</Left>
+              <Height>11pt</Height>
+              <Width>3.6997in</Width>
+              <ZIndex>55</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="ShipmentMethodDescription1">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(80,1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>3.60475in</Top>
+              <Left>1.21606in</Left>
+              <Height>11pt</Height>
+              <Width>3.6997in</Width>
+              <ZIndex>56</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="PackageTrackingNoLabel2">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>Freight Account No.:</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>4.09199in</Top>
+              <Height>11pt</Height>
+              <Width>1.1605in</Width>
+              <ZIndex>57</ZIndex>
+              <Style />
+            </Textbox>
+            <Textbox Name="PackageTrackingNoText2">
+              <KeepTogether>true</KeepTogether>
+              <Paragraphs>
+                <Paragraph>
+                  <TextRuns>
+                    <TextRun>
+                      <Value>=Code.GetData(83, 1)</Value>
+                      <Style>
+                        <FontSize>8pt</FontSize>
+                      </Style>
+                    </TextRun>
+                  </TextRuns>
+                  <Style />
+                </Paragraph>
+              </Paragraphs>
+              <Top>4.09199in</Top>
+              <Left>1.21606in</Left>
+              <Height>11pt</Height>
+              <Width>3.6997in</Width>
+              <ZIndex>58</ZIndex>
               <Style />
             </Textbox>
           </ReportItems>
