@@ -1348,7 +1348,7 @@ Fields!Service_Header___Contract_No__.Value
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!ServiceLine_OutstandingQty.Value</Value>
+                                  <Value />
                                   <Style />
                                 </TextRun>
                               </TextRuns>
