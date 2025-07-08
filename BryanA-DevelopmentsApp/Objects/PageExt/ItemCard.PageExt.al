@@ -394,6 +394,11 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         NewRec := false;
     end;
 
+    trigger OnOpenPage()
+    begin
+        ShowSerialNoMsg := Rec."No." = '';
+    end;
+
 
     procedure CheckToUpdateDimValues(var Item: Record Item): Boolean
     begin
@@ -502,7 +507,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
     var
         ItemNo: Code[20];
     begin
-        if NewRec and (Rec."No." <> '') then
+        if ShowSerialNoMsg then
             CheckItemTrackingCode();
         if (Rec.Description <> '') then begin
             CheckRequiredFields();
@@ -597,6 +602,8 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         IsEditable: Boolean;
         [InDataSet]
         NewRec: Boolean;
+        [InDataSet]
+        ShowSerialNoMsg: Boolean;
 
 
     local procedure SetValueFromProductProfile(var RecRef: RecordRef; FldNo: Integer; FldValue: Variant)
