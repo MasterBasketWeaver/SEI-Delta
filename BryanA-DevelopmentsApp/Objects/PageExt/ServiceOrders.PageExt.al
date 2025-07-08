@@ -36,6 +36,32 @@ pageextension 80092 "BA Service Orders" extends "Service Orders"
         }
     }
 
+
+    actions
+    {
+        addlast(Reporting)
+        {
+            action("BA Create Packing Slip")
+            {
+                ApplicationArea = all;
+                Image = Report;
+                Promoted = true;
+                PromotedCategory = Report;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Create Packing Slip';
+
+                trigger OnAction()
+                var
+                    ServiceOrder: Page "Service Order";
+                begin
+                    ServiceOrder.PrintPackingSlip(Rec);
+                end;
+            }
+        }
+    }
+
+
     trigger OnAfterGetRecord()
     begin
         Rec.CalcFields("BA Amount", "BA Amount Including Tax", "BA Amount Including Tax (LCY)");
