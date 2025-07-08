@@ -5649,14 +5649,10 @@ codeunit 75010 "BA SEI Subscibers"
         SalesLine: Record "Sales Line";
         Update: Boolean;
     begin
-        if SalesHeader."Prepayment %" = 0 then
-            exit;
-        if SalesHeader."Prepayment %" <> 100 then
-            Error('Cannot post %1 %2 with partial prepay amount.', SalesHeader."Document Type", SalesHeader."No.");
         SalesLine.SetRange("Document Type", SalesHeader."Document Type");
         SalesLine.SetRange("Document No.", SalesHeader."No.");
         SalesLine.SetFilter("Prepayment Amount", '<>%1', 0);
-        if SalesLine.FindSet() then
+        if SalesLine.FindSet(true) then
             repeat
                 Update := false;
                 if SalesLine."Amount Including VAT" <> SalesLine."Prepayment Amount" then begin
@@ -5815,6 +5811,10 @@ codeunit 75010 "BA SEI Subscibers"
                     until BOMComponent.Next() = 0;
             until ItemJournalLine.Next() = 0;
     end;
+
+
+
+
 
 
 
