@@ -188,11 +188,8 @@ pageextension 80050 "BA Service Order" extends "Service Order"
                 Caption = 'Create Packing Slip';
 
                 trigger OnAction()
-                var
-                    ServiceHeader: Record "Service Header";
                 begin
-                    ServiceHeader.SetRange("No.", Rec."No.");
-                    Report.Run(Report::"BA Service Packing Slip", true, false, ServiceHeader);
+                    PrintPackingSlip(Rec);
                 end;
             }
         }
@@ -271,6 +268,23 @@ pageextension 80050 "BA Service Order" extends "Service Order"
         end;
     end;
 
+
+    procedure PrintPackingSlip(var ServiceHeader: Record "Service Header")
+    var
+        ServiceHeader2: Record "Service Header";
+        ServiceLine: Record "Service Line";
+    begin
+        ServiceLine.SetRange("Document Type", ServiceHeader."Document Type");
+        ServiceLine.SetRange("Document No.", ServiceHeader."No.");
+        ServiceLine.SetFilter("Quantity Shipped", '>%1', 0);
+        if not ServiceLine.IsEmpty() then
+            Error(ShippedLinesErr);
+        ServiceHeader2.SetRange("No.", ServiceHeader."No.");
+        Report.Run(Report::"BA Service Packing Slip", true, false, ServiceHeader2);
+    end;
+
     var
         UserSetup: Record "User Setup";
+
+        ShippedLinesErr: Label 'Cannot created Packing Slip as one or more lines have already been shipped.';
 }
