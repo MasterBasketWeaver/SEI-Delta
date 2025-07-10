@@ -132,6 +132,7 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         ApprovalEntry: Record "Approval Entry";
         SalesHeader: Record "Sales Header";
+        RecordRestrictMgt: Codeunit "Record Restriction Mgt.";
         SelectRejectionReason: Page "BA Select Rejection Reason";
         FldRef: FieldRef;
         RejectionCode: Code[20];
@@ -149,6 +150,7 @@ codeunit 75012 "BA Sales Approval Mgt."
             Error(NoReasonCodeErr);
         SalesHeader.Validate("BA Appr. Reject. Reason Code", RejectionCode);
         SalesHeader.Modify(true);
+        RecordRestrictMgt.AllowRecordUsage(SalesHeader);
         SendProductionNotificationEmails(SalesHeader, false);
     end;
 
