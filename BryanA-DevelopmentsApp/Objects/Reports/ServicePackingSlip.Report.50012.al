@@ -278,13 +278,13 @@ report 50012 "BA Service Packing Slip"
                                        "Document No." = FIELD ("No.");
                         DataItemLinkReference = "Service Header";
                         DataItemTableView = SORTING ("Document Type", "Document No.", "Line No.");
-                        column(Service_Item_Line___Line_No__; "Service Item Line"."Line No.")
+                        column(ServiceItemLine_LineNo; "Service Item Line"."Line No.")
                         {
                         }
                         column(SerialNo_ServItemLine; "Serial No.")
                         {
                         }
-                        column(Service_Item_Line_Description; Description)
+                        column(ServiceItemLine_Description; Description)
                         {
                         }
                         column(Service_Item_Line__Service_Item_No__; "Service Item No.")
@@ -350,10 +350,10 @@ report 50012 "BA Service Packing Slip"
                         column(Service_Item_Line__Response_Time_Caption; Service_Item_Line__Response_Time_CaptionLbl)
                         {
                         }
-                        column(ServiceItemLineDescription2; "Service Item Line"."Description 2") { }
-                        column(ServiceItemLineItemNo; "Service Item Line"."Item No.") { }
-                        column(SIL_UoM; ServiceItemLine_UoM) { }
-
+                        column(ServiceItemLine_Description2; "Service Item Line"."Description 2") { }
+                        column(ServiceItemLine_ItemNo; "Service Item Line"."Item No.") { }
+                        column(ServiceItemLine_UoM; ServiceItemLine_UoM) { }
+                        column(TariffNo; TariffNo) { }
 
                         dataitem("Fault Comment"; "Service Comment Line")
                         {
@@ -427,10 +427,18 @@ report 50012 "BA Service Packing Slip"
                         var
                             Item: Record Item;
                         begin
-                            if Item.Get("Service Item Line"."Item No.") then
-                                ServiceItemLine_UoM := Item."Base Unit of Measure"
-                            else
+                            if Item.Get("Service Item Line"."Item No.") then begin
+                                ServiceItemLine_UoM := Item."Base Unit of Measure";
+                                if (Item."Tariff No." <> '') then begin
+                                    TariffNo := Item."Tariff No.";
+                                    TariffNo := INSSTR(TariffNo, '.', 9);
+                                    TariffNo := INSSTR(TariffNo, '.', 7);
+                                    TariffNo := INSSTR(TariffNo, '.', 5);
+                                end;
+                            end else begin
                                 ServiceItemLine_UoM := '';
+                                TariffNo := '';
+                            end;
                         end;
                     }
                     dataitem("Service Line"; "Service Line")
@@ -538,7 +546,7 @@ report 50012 "BA Service Packing Slip"
                         column(ServiceLine_QtyToShip; "Service Line"."Qty. to Ship") { }
                         column(ServiceLine_OutstandingQty; "Service Line"."Outstanding Quantity") { }
                         column(ServiceLine_UOM; "Service Line"."Unit of Measure Code") { }
-                        column(TariffNo; TariffNo) { }
+
 
 
 
@@ -657,15 +665,7 @@ report 50012 "BA Service Packing Slip"
                                 HideDiscount := False;
 
 
-                            TariffNo := '';
-                            if Type = Type::Item then
-                                if Item.Get("No.") then
-                                    if (Item."Tariff No." <> '') then begin
-                                        TariffNo := Item."Tariff No.";
-                                        TariffNo := INSSTR(TariffNo, '.', 9);
-                                        TariffNo := INSSTR(TariffNo, '.', 7);
-                                        TariffNo := INSSTR(TariffNo, '.', 5);
-                                    end;
+
                         end;
                     }
                     dataitem(Totals; Integer)

@@ -291,14 +291,14 @@
         <Field Name="ShowOrderComment">
           <DataField>ShowOrderComment</DataField>
         </Field>
-        <Field Name="Service_Item_Line___Line_No__">
-          <DataField>Service_Item_Line___Line_No__</DataField>
+        <Field Name="ServiceItemLine_LineNo">
+          <DataField>ServiceItemLine_LineNo</DataField>
         </Field>
         <Field Name="SerialNo_ServItemLine">
           <DataField>SerialNo_ServItemLine</DataField>
         </Field>
-        <Field Name="Service_Item_Line_Description">
-          <DataField>Service_Item_Line_Description</DataField>
+        <Field Name="ServiceItemLine_Description">
+          <DataField>ServiceItemLine_Description</DataField>
         </Field>
         <Field Name="Service_Item_Line__Service_Item_No__">
           <DataField>Service_Item_Line__Service_Item_No__</DataField>
@@ -363,11 +363,11 @@
         <Field Name="Service_Item_Line__Response_Time_Caption">
           <DataField>Service_Item_Line__Response_Time_Caption</DataField>
         </Field>
-        <Field Name="ServiceItemLineDescription2">
-          <DataField>ServiceItemLineDescription2</DataField>
+        <Field Name="ServiceItemLine_Description2">
+          <DataField>ServiceItemLine_Description2</DataField>
         </Field>
-        <Field Name="ServiceItemLineItemNo">
-          <DataField>ServiceItemLineItemNo</DataField>
+        <Field Name="ServiceItemLine_ItemNo">
+          <DataField>ServiceItemLine_ItemNo</DataField>
         </Field>
         <Field Name="SIL_UoM">
           <DataField>SIL_UoM</DataField>
@@ -1198,7 +1198,7 @@ Fields!Service_Header___Contract_No__.Value
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Service_Line__No__.Value</Value>
+                                  <Value>=Fields!ServiceItemLine_ItemNo.Value</Value>
                                   <Style />
                                 </TextRun>
                               </TextRuns>
@@ -1223,7 +1223,7 @@ Fields!Service_Header___Contract_No__.Value
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Service_Line_Description.Value</Value>
+                                  <Value>=Fields!ServiceItemLine_Description.Value</Value>
                                   <Style />
                                 </TextRun>
                               </TextRuns>
@@ -1273,7 +1273,7 @@ Fields!Service_Header___Contract_No__.Value
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!ServiceLine_UOM.Value</Value>
+                                  <Value>=Fields!ServiceItemLine_UOM.Value</Value>
                                   <Style />
                                 </TextRun>
                               </TextRuns>
@@ -1291,14 +1291,14 @@ Fields!Service_Header___Contract_No__.Value
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox60">
+                        <Textbox Name="Textbox2">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!ServiceLine_QtyToShip.Value</Value>
+                                  <Value />
                                   <Style />
                                 </TextRun>
                               </TextRuns>
@@ -1307,7 +1307,7 @@ Fields!Service_Header___Contract_No__.Value
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox60</rd:DefaultName>
+                          <rd:DefaultName>Textbox2</rd:DefaultName>
                           <Style>
                             <PaddingRight>5pt</PaddingRight>
                           </Style>
@@ -1316,14 +1316,14 @@ Fields!Service_Header___Contract_No__.Value
                     </TablixCell>
                     <TablixCell>
                       <CellContents>
-                        <Textbox Name="Textbox61">
+                        <Textbox Name="Textbox3">
                           <CanGrow>true</CanGrow>
                           <KeepTogether>true</KeepTogether>
                           <Paragraphs>
                             <Paragraph>
                               <TextRuns>
                                 <TextRun>
-                                  <Value>=Fields!Qty.Value</Value>
+                                  <Value />
                                   <Style />
                                 </TextRun>
                               </TextRuns>
@@ -1332,7 +1332,7 @@ Fields!Service_Header___Contract_No__.Value
                               </Style>
                             </Paragraph>
                           </Paragraphs>
-                          <rd:DefaultName>Textbox61</rd:DefaultName>
+                          <rd:DefaultName>Textbox3</rd:DefaultName>
                           <Style>
                             <PaddingRight>5pt</PaddingRight>
                           </Style>
@@ -1387,7 +1387,7 @@ Fields!Service_Header___Contract_No__.Value
                 <TablixMember>
                   <Group Name="table5_Group1">
                     <GroupExpressions>
-                      <GroupExpression>=Fields!Service_Line___Line_No__.Value</GroupExpression>
+                      <GroupExpression>=Fields!ServiceItemLine_LineNo.Value</GroupExpression>
                     </GroupExpressions>
                   </Group>
                   <TablixMembers>
