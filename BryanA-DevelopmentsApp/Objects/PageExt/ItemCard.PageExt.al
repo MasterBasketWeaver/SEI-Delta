@@ -2,6 +2,13 @@ pageextension 80009 "BA Item Card" extends "Item Card"
 {
     layout
     {
+        modify("No.")
+        {
+            trigger OnAfterValidate()
+            begin
+                UpdateCMCRecord();
+            end;
+        }
         modify(GTIN)
         {
             ApplicationArea = all;
@@ -385,7 +392,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         CheckToUpdateDimValues(Rec);
         IsEditable := CurrPage.Editable();
         BlankDescription := Description = '';
-        CMCRecord := Format(Rec."No.").StartsWith('CMC');
+        UpdateCMCRecord();
     end;
 
     trigger OnNewRecord(BelowxRec: Boolean)
@@ -404,6 +411,10 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         NewRecord := Rec."No." = '';
     end;
 
+    local procedure UpdateCMCRecord()
+    begin
+        CMCRecord := Format(Rec."No.").StartsWith('CMC');
+    end;
 
     procedure CheckToUpdateDimValues(var Item: Record Item): Boolean
     begin
@@ -512,8 +523,9 @@ pageextension 80009 "BA Item Card" extends "Item Card"
     var
         ItemNo: Code[20];
     begin
-        if NewRecord then
-            CheckItemTrackingCode();
+        if not Cancelled then
+            if NewRecord then
+                CheckItemTrackingCode();
         if (Rec.Description <> '') then begin
             CheckRequiredFields();
             exit;
