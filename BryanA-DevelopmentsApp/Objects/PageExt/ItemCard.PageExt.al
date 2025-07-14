@@ -37,6 +37,10 @@ pageextension 80009 "BA Item Card" extends "Item Card"
             ApplicationArea = all;
             ShowMandatory = true;
         }
+        modify("Standard Cost")
+        {
+            Enabled = NewRecord;
+        }
 
         addafter("Qty. on Sales Order")
         {
@@ -195,7 +199,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
             field("BA Product Profile Code"; Rec."BA Product Profile Code")
             {
                 ApplicationArea = all;
-                Editable = NewRec;
+                Editable = BlankDescription;
 
                 trigger OnValidate()
                 var
@@ -310,7 +314,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
 
             trigger OnAfterValidate()
             begin
-                NewRec := Description = '';
+                BlankDescription := Description = '';
             end;
         }
         modify("Unit Price")
@@ -380,23 +384,24 @@ pageextension 80009 "BA Item Card" extends "Item Card"
     begin
         CheckToUpdateDimValues(Rec);
         IsEditable := CurrPage.Editable();
-        NewRec := Description = '';
+        BlankDescription := Description = '';
+        CMCRecord := Format(Rec."No.").StartsWith('CMC');
     end;
 
     trigger OnNewRecord(BelowxRec: Boolean)
     begin
-        NewRec := true;
+        BlankDescription := true;
     end;
 
 
     trigger OnInsertRecord(BelowxRec: Boolean): Boolean
     begin
-        NewRec := false;
+        BlankDescription := false;
     end;
 
     trigger OnOpenPage()
     begin
-        ShowSerialNoMsg := Rec."No." = '';
+        NewRecord := Rec."No." = '';
     end;
 
 
@@ -507,7 +512,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
     var
         ItemNo: Code[20];
     begin
-        if ShowSerialNoMsg then
+        if NewRecord then
             CheckItemTrackingCode();
         if (Rec.Description <> '') then begin
             CheckRequiredFields();
@@ -525,7 +530,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
     trigger OnDeleteRecord(): Boolean
     begin
         Deleted := true;
-        NewRec := false;
+        BlankDescription := false;
     end;
 
 
@@ -542,10 +547,12 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         FieldNos.Add(Rec.FieldNo("Tax Group Code"));
         if Rec.Type = Rec.Type::Inventory then begin
             FieldNos.Add(Rec.FieldNo("Inventory Posting Group"));
-            Rec.TestField("Costing Method", Rec."Costing Method"::Standard);
+            if not CMCRecord then
+                Rec.TestField("Costing Method", Rec."Costing Method"::Standard);
         end;
-        if Rec."Replenishment System" = Rec."Replenishment System"::"Prod. Order" then
-            FieldNos.Add(Rec.FieldNo("ENC Manufacturing Dept."));
+        if NewRecord then
+            if Rec."Replenishment System" = Rec."Replenishment System"::"Prod. Order" then
+                FieldNos.Add(Rec.FieldNo("ENC Manufacturing Dept."));
 
         RecRef.GetTable(Rec);
         foreach FldNo in FieldNos do begin
@@ -584,26 +591,30 @@ pageextension 80009 "BA Item Card" extends "Item Card"
 
 
     var
+        GLSetup: Record "General Ledger Setup";
         DimMgt: Codeunit DimensionManagement;
         DimMgt2: Codeunit "ENC Dimension Mangement";
         Subscribers: Codeunit "BA SEI Subscibers";
+        DimValue: array[9] of Code[20];
+        [InDataSet]
+        IsEditable: Boolean;
+        [InDataSet]
+        BlankDescription: Boolean;
+        [InDataSet]
+        NewRecord: Boolean;
         Deleted: Boolean;
         Cancelled: Boolean;
+        CMCRecord: Boolean;
         CancelItemMsg: Label 'Do you want to cancel creating Item No. %1?';
         CancelMsg: Label 'Cancel item?';
         InvalidDimFieldErr: Label 'Invalid Dimension field: %1.';
         RequiredFieldsErr: Label 'The following fields must be assigned:\%1';
         AssemblySerialErr: Label 'Kit items cannot have a serial number assigned.\Please clear the Item Tracking Code field.';
 
-    var
-        GLSetup: Record "General Ledger Setup";
-        DimValue: array[9] of Code[20];
-        [InDataSet]
-        IsEditable: Boolean;
-        [InDataSet]
-        NewRec: Boolean;
-        [InDataSet]
-        ShowSerialNoMsg: Boolean;
+
+
+
+
 
 
     local procedure SetValueFromProductProfile(var RecRef: RecordRef; FldNo: Integer; FldValue: Variant)
