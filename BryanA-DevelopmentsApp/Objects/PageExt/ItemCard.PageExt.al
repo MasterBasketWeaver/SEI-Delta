@@ -523,14 +523,15 @@ pageextension 80009 "BA Item Card" extends "Item Card"
     var
         ItemNo: Code[20];
     begin
-        if not Cancelled then
-            if NewRecord then
-                CheckItemTrackingCode();
+        if Cancelled then
+            exit;
+        if NewRecord then
+            CheckItemTrackingCode();
         if (Rec.Description <> '') then begin
             CheckRequiredFields();
             exit;
         end;
-        if (Rec."No." = '') or Deleted or Cancelled or (Rec."ENC Created Date" <> Today()) then
+        if (Rec."No." = '') or Deleted or (Rec."ENC Created Date" <> Today()) then
             exit;
         if not Confirm(StrSubstNo(CancelItemMsg, Rec."No.")) then
             Error('');
@@ -538,6 +539,7 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         Rec.Delete(true);
         Subscribers.ReuseItemNo(ItemNo);
     end;
+
 
     trigger OnDeleteRecord(): Boolean
     begin
