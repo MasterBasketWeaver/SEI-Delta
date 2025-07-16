@@ -151,27 +151,53 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         ApprovalEntry: Record "Approval Entry";
         SalesHeader: Record "Sales Header";
-        SelectRejectionReason: Page "BA Select Rejection Reason";
-        FldRef: FieldRef;
-        RejectionCode: Code[20];
+        PurchHeader: Record "Purchase Header";
     begin
         if (FunctionName <> WorkflowEventHandling.RunWorkflowOnRejectApprovalRequestCode()) or (RecordRef.Number() <> Database::"Approval Entry") then
             exit;
         RecordRef.SetTable(ApprovalEntry);
-        if not SalesHeader.Get(ApprovalEntry."Record ID to Approve") then
-            exit;
+        case true of
+            SalesHeader.Get(ApprovalEntry."Record ID to Approve"):
+                HandleSalesRejectionEvents(SalesHeader);
+            PurchHeader.Get(ApprovalEntry."Record ID to Approve"):
+                HandlePurchaseRejectionEvents(PurchHeader);
+        end;
+    end;
+
+    local procedure HandleSalesRejectionEvents(var SalesHeader: Record "Sales Header")
+    var
+        RejectionCode: Code[20];
+    begin
+        RejectionCode := GetRejectionReason();
+        SalesHeader.Validate("BA Appr. Reject. Reason Code", RejectionCode);
+        SalesHeader.Modify(true);
+        SendProductionNotificationEmails(SalesHeader, false);
+    end;
+
+    local procedure HandlePurchaseRejectionEvents(var PurchaseHeader: Record "Purchase Header")
+    var
+        RejectionCode: Code[20];
+    begin
+        RejectionCode := GetRejectionReason();
+        PurchaseHeader.Validate("BA Appr. Reject. Reason Code", RejectionCode);
+        PurchaseHeader.Modify(true);
+        SendPurchaseNotificationEmails(PurchaseHeader, false);
+    end;
+
+
+    local procedure GetRejectionReason(): Code[20]
+    var
+        SelectRejectionReason: Page "BA Select Rejection Reason";
+        RejectionCode: Code[20];
+    begin
         Commit();
         if SelectRejectionReason.RunModal() <> Action::OK then
             Error('');
         RejectionCode := SelectRejectionReason.GetReasonCode();
         if RejectionCode = '' then
             Error(NoReasonCodeErr);
-        SalesHeader.Validate("BA Appr. Reject. Reason Code", RejectionCode);
-        SalesHeader.Modify(true);
-        SendProductionNotificationEmails(SalesHeader, false);
+        exit(RejectionCode);
     end;
-
-
 
 
 
@@ -438,6 +464,48 @@ codeunit 75012 "BA Sales Approval Mgt."
         end;
     end;
 
+    local procedure SendPurchaseNotificationEmails(var PurchaseHeader: Record "Purchase Header"; Approved: Boolean)
+    var
+        UserSetup: Record "User Setup";
+        Addresses: List of [Text];
+        AddressText: TextBuilder;
+        Address: Text;
+        Subject: Text;
+        EmailBody: Text;
+        AssignedUserID: Code[50];
+    begin
+        if not Approved then
+            if PurchaseHeader."Assigned User ID" <> '' then
+                UserSetup.SetFilter("User ID", '<>%1', PurchaseHeader."Assigned User ID");
+        UserSetup.SetRange("BA Receive Prod. Approvals", true);
+        UserSetup.SetFilter("E-Mail", '<>%1', '');
+        if not UserSetup.FindSet() then
+            exit;
+        if not Approved then
+            Subject := StrSubstNo(RejectionEmailSubject, PurchaseHeader."No.", PurchaseHeader."Sell-to Customer No.", PurchaseHeader."Buy-from Vendor Name")
+        else
+            Subject := StrSubstNo(ApprovalEmailSubject, PurchaseHeader."No.", PurchaseHeader."Sell-to Customer No.", PurchaseHeader."Buy-from Vendor Name");
+        repeat
+            if not TryToSendEmail(PurchaseHeader, UserSetup."E-Mail", Subject, UserSetup."User ID", Report::"BA Prod. Order Approval", EmailBody) then
+                if not Addresses.Contains(UserSetup."E-Mail") then
+                    Addresses.Add(UserSetup."E-Mail");
+        until UserSetup.Next() = 0;
+        PurchaseHeader."BA Approval Email User ID" := '';
+        PurchaseHeader.Modify(false);
+        case Addresses.Count() of
+            0:
+                exit;
+            1:
+                if Addresses.Get(1, Address) then
+                    Message(SingleFailedToSendErr, Address);
+            else begin
+                    foreach Address in Addresses do
+                        AddressText.AppendLine(Address);
+                    Message(MultiFailedToSendErr, AddressText.ToText());
+                end;
+        end;
+    end;
+
 
     [TryFunction]
     local procedure TryToSendEmail(var SalesHeader: Record "Sales Header"; EmailAddr: Text; Subject: Text; ReportID: Integer)
@@ -469,6 +537,23 @@ codeunit 75012 "BA Sales Approval Mgt."
         SalesHeader2.SetRange("Document Type", SalesHeader."Document Type");
         SalesHeader2.SetRange("No.", SalesHeader."No.");
         RecVar := SalesHeader2;
+
+        TryToSendEmail(EmailAddr, Subject, ReportID, EmailBody, RecVar);
+    end;
+
+    [TryFunction]
+    local procedure TryToSendEmail(var PurchaseHeader: Record "Purchase Header"; EmailAddr: Text; Subject: Text; UserIDCode: Code[50]; ReportID: Integer; var EmailBody: Text)
+    var
+        PurchaseHeader2: Record "Purchase Header";
+        RecVar: Variant;
+    begin
+        if UserIDCode <> '' then begin
+            PurchaseHeader."BA Approval Email User ID" := UserIDCode;
+            PurchaseHeader.Modify(false);
+        end;
+        PurchaseHeader2.SetRange("Document Type", PurchaseHeader."Document Type");
+        PurchaseHeader2.SetRange("No.", PurchaseHeader."No.");
+        RecVar := PurchaseHeader2;
 
         TryToSendEmail(EmailAddr, Subject, ReportID, EmailBody, RecVar);
     end;
