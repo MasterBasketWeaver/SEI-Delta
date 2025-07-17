@@ -44,11 +44,10 @@ pageextension 80009 "BA Item Card" extends "Item Card"
             ApplicationArea = all;
             ShowMandatory = true;
         }
-        modify("Standard Cost")
+        modify("Costing Method")
         {
             Enabled = NewRecord;
         }
-
         addafter("Qty. on Sales Order")
         {
             field("BA Qty. on Sales Quote"; Rec."BA Qty. on Sales Quote")
