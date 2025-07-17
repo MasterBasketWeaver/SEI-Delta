@@ -459,7 +459,7 @@ codeunit 75012 "BA Sales Approval Mgt."
             else begin
                     foreach Address in Addresses do
                         AddressText.AppendLine(Address);
-                    Message(MultiFailedToSendErr, AddressText.ToText());
+                    Message(MultifailedToSendErr, AddressText.ToText());
                 end;
         end;
     end;
@@ -501,7 +501,7 @@ codeunit 75012 "BA Sales Approval Mgt."
             else begin
                     foreach Address in Addresses do
                         AddressText.AppendLine(Address);
-                    Message(MultiFailedToSendErr, AddressText.ToText());
+                    Message(MultifailedToSendErr, AddressText.ToText());
                 end;
         end;
     end;
@@ -789,11 +789,11 @@ codeunit 75012 "BA Sales Approval Mgt."
     begin
         if (ApprovalEntry."Table ID" <> Database::"Purchase Header") or (ApprovalEntry.Status <> ApprovalEntry.Status::Open) then
             exit;
+        UserSetup.SetRange("User ID", ApprovalEntry."Approver ID");
         UserSetup.SetRange("Approval Administrator", true);
-        UserSetup.FindFirst();
-        if UserSetup."User ID" <> ApprovalEntry."Approver ID" then
+        if UserSetup.IsEmpty() then
             exit;
-        UserSetup.SetRange("Approval Administrator");
+        UserSetup.Reset();
         UserSetup.SetRange("BA Purch. Approval Admin", true);
         if not UserSetup.FindFirst() then
             Error(NoPurchApprovalAdminErr);
@@ -841,6 +841,62 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnBeforeCheckUserAsApprovalAdministrator', '', false, false)]
+    local procedure ApprovalMgtOnBeforeCheckUserAsApprovalAdministrator(ApprovalEntry: Record "Approval Entry"; var IsHandled: Boolean)
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if (ApprovalEntry."Table ID" <> Database::"Purchase Header") then
+            exit;
+        IsHandled := true;
+        UserSetup.Get(UserId());
+        UserSetup.TestField("BA Purch. Approval Admin");
+    end;
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnBeforeSubstituteUserIdForApprovalEntry', '', false, false)]
+    local procedure ApprovalMgtOnBeforeSubstituteUserIdForApprovalEntry(ApprovalEntry: Record "Approval Entry"; var IsHandled: Boolean)
+    var
+        UserSetup: Record "User Setup";
+        ApprovalAdminUserSetup: Record "User Setup";
+        Substitute: Code[50];
+    begin
+        if (ApprovalEntry."Table ID" <> Database::"Purchase Header") then
+            exit;
+        IsHandled := true;
+        if NOT UserSetup.GET(ApprovalEntry."Approver ID") then
+            ERROR(ApproverUserIdNotInSetupErr, ApprovalEntry."Sender ID");
+
+        Substitute := '';
+        ApprovalMgt.OnSubstituteUserIdForApprovalEntry(ApprovalEntry, Substitute);
+        if Substitute <> '' then begin
+            ApprovalEntry."Approver ID" := Substitute;
+            ApprovalEntry.MODifY(TRUE);
+            ApprovalMgt.OnDelegateApprovalRequest(ApprovalEntry);
+            EXIT;
+        end;
+
+        if UserSetup.Substitute = '' then
+            if UserSetup."BA Purch. Approver ID" = '' then begin
+                ApprovalAdminUserSetup.SETRANGE("Approval Administrator", TRUE);
+                if ApprovalAdminUserSetup.FINDFIRST then
+                    UserSetup.GET(ApprovalAdminUserSetup."User ID")
+                else
+                    ERROR(SubstituteNotFoundErr, UserSetup."User ID");
+            end else
+                UserSetup.GET(UserSetup."BA Purch. Approver ID")
+        else
+            UserSetup.GET(UserSetup.Substitute);
+
+        ApprovalEntry."Approver ID" := UserSetup."User ID";
+        ApprovalEntry.MODifY(TRUE);
+        ApprovalMgt.OnDelegateApprovalRequest(ApprovalEntry);
+    end;
+
+
+
+
+
 
     var
         ApprovalMgt: Codeunit "Approvals Mgmt.";
@@ -856,7 +912,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         MissingCredLimitErr: Label 'Customer %1 must have a Payment Terms assigned before it any related sales documents can be sent for approval.';
         InvalidApprovalGroupErr: Label 'Invalid Approval Group %1 for Customer %2.';
         SingleFailedToSendErr: Label 'Unable to send production order approval email to the following address: %1';
-        MultiFailedToSendErr: Label 'Unable to send production order approval email to the following addresses:\%1';
+        MultifailedToSendErr: Label 'Unable to send production order approval email to the following addresses:\%1';
         ApprovalEmailSubject: Label '%1 Has Been Approved - %2 - %3';
         RejectionEmailSubject: Label '%1 Has Been Rejected - %2 - %3';
         InvRequestSubject: Label 'Invoice Request: %1 - %2 - %3';
@@ -880,6 +936,8 @@ codeunit 75012 "BA Sales Approval Mgt."
         InvalidAppGroupErr: Label 'Cannot send an approval request for Customer %1 as it has not been assigned a valid approval group: %2.';
         ApprovalRequestSubject: Label 'Order Approval Request %1 - %2 - %3';
         NoPurchApprovalAdminErr: Label 'Purchaser Approval Admin must be configured before Purchase documents can be sent for approval.';
+        SubstituteNotFoundErr: Label 'There is no substitute, direct approver, or approval administrator for user ID %1 in the Approval User Setup window.';
+        ApproverUserIdNotInSetupErr: Label 'You must set up an approver for user ID %1 in the Approval User Setup window.';
 
 }
 
