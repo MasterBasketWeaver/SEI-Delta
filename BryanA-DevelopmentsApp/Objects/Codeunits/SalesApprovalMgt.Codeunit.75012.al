@@ -171,6 +171,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         RejectionCode := GetRejectionReason();
         SalesHeader.Validate("BA Appr. Reject. Reason Code", RejectionCode);
         SalesHeader.Modify(true);
+        RecordRestrictMgt.AllowRecordUsage(SalesHeader);
         SendProductionNotificationEmails(SalesHeader, false);
     end;
 
@@ -181,6 +182,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         RejectionCode := GetRejectionReason();
         PurchaseHeader.Validate("BA Appr. Reject. Reason Code", RejectionCode);
         PurchaseHeader.Modify(true);
+        RecordRestrictMgt.AllowRecordUsage(PurchaseHeader);
         SendPurchaseNotificationEmails(PurchaseHeader, false);
     end;
 
@@ -904,6 +906,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         Subscribers: Codeunit "BA SEI Subscibers";
         WorkflowEventHandling: Codeunit "Workflow Event Handling";
         FileMgt: Codeunit "File Management";
+        RecordRestrictMgt: Codeunit "Record Restriction Mgt.";
         SenderEmail: Text;
 
 
