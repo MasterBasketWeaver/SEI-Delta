@@ -8,7 +8,7 @@ tableextension 80024 "BA User Setup" extends "User Setup"
         }
         modify("Approver ID")
         {
-            Caption = 'Sales Approval ID';
+            Caption = 'Sales Approver ID';
         }
         field(80000; "BA Job Title"; Text[50])
         {
