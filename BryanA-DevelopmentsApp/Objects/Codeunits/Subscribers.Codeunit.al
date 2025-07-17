@@ -5815,6 +5815,17 @@ codeunit 75010 "BA SEI Subscibers"
             until SalesLine.Next() = 0;
     end;
 
+
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeSalesLineInsert', '', false, false)]
+    local procedure SalesHeaderOnBeforeSalesLineInsert(var SalesLine: Record "Sales Line"; var TempSalesLine: Record "Sales Line")
+    begin
+        SalesLine.Validate("Dimension Set ID", TempSalesLine."Dimension Set ID");
+    end;
+
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
