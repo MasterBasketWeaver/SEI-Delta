@@ -59,48 +59,6 @@ report 50011 "BA Sales Packing Slip"
                     IF ("Sales Header"."Tax Area Code" <> '') AND NOT UseExternalTaxEngine THEN
                         SalesTaxCalc.AddSalesLine(TempSalesLine);
                 end;
-
-                // trigger OnPostDataItem()
-                // begin
-                //     IF "Sales Header"."Tax Area Code" <> '' THEN BEGIN
-                //         IF UseExternalTaxEngine THEN
-                //             SalesTaxCalc.CallExternalTaxEngineForSales("Sales Header", TRUE)
-                //         ELSE
-                //             SalesTaxCalc.EndSalesTaxCalculation(UseDate);
-                //         SalesTaxCalc.DistTaxOverSalesLines(TempSalesLine);
-                //         SalesTaxCalc.GetSummarizedSalesTaxTable(TempSalesTaxAmtLine);
-                //         BrkIdx := 0;
-                //         PrevPrintOrder := 0;
-                //         PrevTaxPercent := 0;
-                //         WITH TempSalesTaxAmtLine DO BEGIN
-                //             RESET;
-                //             SETCURRENTKEY("Print Order", "Tax Area Code for Key", "Tax Jurisdiction Code");
-                //             IF FIND('-') THEN
-                //                 REPEAT
-                //                     IF ("Print Order" = 0) OR
-                //                        ("Print Order" <> PrevPrintOrder) OR
-                //                        ("Tax %" <> PrevTaxPercent)
-                //                     THEN BEGIN
-                //                         BrkIdx := BrkIdx + 1;
-                //                         IF BrkIdx > 1 THEN BEGIN
-                //                             IF TaxArea."Country/Region" = TaxArea."Country/Region"::CA THEN
-                //                                 BreakdownTitle := Text006
-                //                             ELSE
-                //                                 BreakdownTitle := Text003;
-                //                         END;
-                //                         IF BrkIdx > ARRAYLEN(BreakdownAmt) THEN BEGIN
-                //                             BrkIdx := BrkIdx - 1;
-                //                             BreakdownLabel[BrkIdx] := Text004;
-                //                         END ELSE
-                //                             BreakdownLabel[BrkIdx] := STRSUBSTNO("Print Description", "Tax %");
-                //                     END;
-                //                     BreakdownAmt[BrkIdx] := BreakdownAmt[BrkIdx] + "Tax Amount";
-                //                 UNTIL NEXT = 0;
-                //         END;
-                //     END;
-                // end;
-
-
             }
             dataitem("Sales Comment Line"; "Sales Comment Line")
             {
