@@ -5823,11 +5823,43 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeSalesLineInsert', '', false, false)]
-    local procedure SalesHeaderOnBeforeSalesLineInsert(var SalesLine: Record "Sales Line"; var TempSalesLine: Record "Sales Line")
+    local procedure SalesHeaderOnBeforeSalesLineInsert(var SalesLine: Record "Sales Line")
+    var
+        Item: Record Item;
     begin
-        SalesLine.Validate("Dimension Set ID", TempSalesLine."Dimension Set ID");
+        if SalesLine.Type = SalesLine.Type::Item then
+            if (SalesLine."No." <> '') and Item.Get(SalesLine."No.") then
+                TransferOldDimensions(Item, SalesLine);
     end;
 
+    local procedure TransferOldDimensions(var Item: Record Item; var SalesLine: Record "Sales Line")
+    var
+        DefaultDim: Record "Default Dimension";
+        TempDimSetEntry: Record "Dimension Set Entry" temporary;
+        DimMgt: Codeunit DimensionManagement;
+    begin
+        DefaultDim.SetRange("Table ID", Database::Item);
+        DefaultDim.SetRange("No.", SalesLine."No.");
+        if not DefaultDim.FindSet() then
+            exit;
+        DimMgt.GetDimensionSet(TempDimSetEntry, SalesLine."Dimension Set ID");
+        TempDimSetEntry.Reset();
+        repeat
+            TempDimSetEntry.SetRange("Dimension Code", DefaultDim."Dimension Code");
+            if TempDimSetEntry.FindFirst() then begin
+                TempDimSetEntry.Validate("Dimension Code", DefaultDim."Dimension Code");
+                TempDimSetEntry.Validate("Dimension Value Code", DefaultDim."Dimension Value Code");
+                TempDimSetEntry.Modify(false);
+            end else begin
+                TempDimSetEntry.Init();
+                TempDimSetEntry.Validate("Dimension Code", DefaultDim."Dimension Code");
+                TempDimSetEntry.Validate("Dimension Value Code", DefaultDim."Dimension Value Code");
+                TempDimSetEntry.Insert(false);
+            end;
+        until DefaultDim.Next() = 0;
+
+        SalesLine.Validate("Dimension Set ID", DimMgt.GetDimensionSetID(TempDimSetEntry));
+    end;
 
 
     var
