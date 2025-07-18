@@ -48,4 +48,28 @@ pageextension 80121 "BA Sales Order List" extends "Sales Order List"
             }
         }
     }
+
+    actions
+    {
+        addlast(Reporting)
+        {
+            action("BA Create Packing Slip")
+            {
+                ApplicationArea = all;
+                Image = Report;
+                Promoted = true;
+                PromotedCategory = Report;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Create Packing Slip';
+
+                trigger OnAction()
+                var
+                    SalesOrder: Page "Sales Order";
+                begin
+                    SalesOrder.PrintPackingSlip(Rec);
+                end;
+            }
+        }
+    }
 }
