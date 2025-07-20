@@ -5901,11 +5901,19 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ItemOnBeforeDeleteEvent(var Rec: Record Item)
     var
         ItemLedgerEntry: Record "Item Ledger Entry";
+        WarehouseEntry: Record "Warehouse Entry";
+        ValueEntry: Record "Value Entry";
     begin
         if not Rec.IsTemporary() and (Rec."No." <> '') then begin
             ItemLedgerEntry.SetCurrentKey("Item No.");
             ItemLedgerEntry.SetRange("Item No.", Rec."No.");
             if not ItemLedgerEntry.IsEmpty() then
+                Error(ExistingItemLedgerEntriesErr, Rec.TableCaption, Rec."No.");
+            WarehouseEntry.SetRange("Item No.", Rec."No.");
+            if not WarehouseEntry.IsEmpty() then
+                Error(ExistingItemLedgerEntriesErr, Rec.TableCaption, Rec."No.");
+            ValueEntry.SetRange("Item No.", Rec."No.");
+            if not ValueEntry.IsEmpty then
                 Error(ExistingItemLedgerEntriesErr, Rec.TableCaption, Rec."No.");
         end;
     end;
