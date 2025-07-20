@@ -5822,6 +5822,7 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeSalesLineInsert', '', false, false)]
     local procedure SalesHeaderOnBeforeSalesLineInsert(var SalesLine: Record "Sales Line")
     var
@@ -5832,11 +5833,33 @@ codeunit 75010 "BA SEI Subscibers"
                 TransferOldDimensions(Item, SalesLine);
     end;
 
-    local procedure TransferOldDimensions(var Item: Record Item; var SalesLine: Record "Sales Line")
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterUpdateCurrencyFactor', '', false, false)]
+    local procedure SalesHeaderOnAfterUpdateCurrencyFactor(var SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
+        Item: Record Item;
+        CurrExchRate: Record "Currency Exchange Rate";
+    begin
+        if (SalesHeader."Currency Code" <> '') and (SalesHeader."Currency Factor" = 0) then
+            SalesHeader."Currency Factor" := CurrExchRate.ExchangeRate(SalesHeader."Posting Date", SalesHeader."Currency Code");
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        SalesLine.SetRange(Type, SalesLine.Type::Item);
+        SalesLine.SetFilter("No.", '<>%1', '');
+        if SalesLine.FindSet(true) then
+            repeat
+                if Item.Get(SalesLine."No.") then
+                    if TransferOldDimensions(Item, SalesLine) then
+                        SalesLine.Modify(true);
+            until SalesLine.Next() = 0;
+    end;
+
+    local procedure TransferOldDimensions(var Item: Record Item; var SalesLine: Record "Sales Line"): Boolean
     var
         DefaultDim: Record "Default Dimension";
         TempDimSetEntry: Record "Dimension Set Entry" temporary;
         DimMgt: Codeunit DimensionManagement;
+        NewDimSetID: Integer;
     begin
         DefaultDim.SetRange("Table ID", Database::Item);
         DefaultDim.SetRange("No.", SalesLine."No.");
@@ -5857,8 +5880,10 @@ codeunit 75010 "BA SEI Subscibers"
                 TempDimSetEntry.Insert(false);
             end;
         until DefaultDim.Next() = 0;
-
-        SalesLine.Validate("Dimension Set ID", DimMgt.GetDimensionSetID(TempDimSetEntry));
+        NewDimSetID := DimMgt.GetDimensionSetID(TempDimSetEntry);
+        if NewDimSetID = SalesLine."Dimension Set ID" then
+            exit(false);
+        SalesLine.Validate("Dimension Set ID", NewDimSetID);
     end;
 
 
