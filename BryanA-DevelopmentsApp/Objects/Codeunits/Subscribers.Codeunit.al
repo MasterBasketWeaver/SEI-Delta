@@ -5902,7 +5902,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         ItemLedgerEntry: Record "Item Ledger Entry";
     begin
-        if not Rec.IsTemporary() or (Rec."No." <> '') then begin
+        if not Rec.IsTemporary() and (Rec."No." <> '') then begin
             ItemLedgerEntry.SetCurrentKey("Item No.");
             ItemLedgerEntry.SetRange("Item No.", Rec."No.");
             if not ItemLedgerEntry.IsEmpty() then
