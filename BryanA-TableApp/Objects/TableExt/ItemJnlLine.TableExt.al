@@ -60,6 +60,12 @@ tableextension 80049 "BA Item Jnl. Line" extends "Item Journal Line"
             Caption = 'Approval GUID';
             Editable = false;
         }
+        field(80020; "BA Cycle Count"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Cycle Count';
+            Editable = false;
+        }
         field(80100; "BA Product ID Code"; Code[20])
         {
             DataClassification = CustomerContent;

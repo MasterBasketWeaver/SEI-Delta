@@ -25,12 +25,14 @@ report 50080 "BA Physical Inventory Import"
                         ApplicationArea = all;
                         Caption = 'Location Code';
                         TableRelation = Location.Code;
+                        ShowMandatory = true;
                     }
                     field("Select Excel File"; FilePath)
                     {
                         ApplicationArea = all;
                         Editable = false;
                         ToolTip = 'Use the Assist Edit function to select an excel file containing the inventory information to be imported.';
+                        ShowMandatory = true;
 
                         trigger OnAssistEdit()
                         begin
@@ -55,36 +57,44 @@ report 50080 "BA Physical Inventory Import"
         begin
             FilePath := '';
         end;
+
+        trigger OnQueryClosePage(CloseAction: Action): Boolean
+        begin
+            if CloseAction = Action::Cancel then
+                exit;
+            if LocationCode = '' then
+                Error(NoLocationCodeErr);
+            if TemplateName = '' then
+                Error(NoTemplateNameError);
+            if BatchName = '' then
+                Error(NoBatchNameError);
+            if DocNo = '' then
+                Error(NoDocumentNoError);
+            if FilePath = '' then
+                Error(NoFilePathError);
+        end;
+
     }
 
 
     trigger OnPostReport()
     begin
-        if TemplateName = '' then
-            Error(NoTemplateNameError);
-        if BatchName = '' then
-            Error(NoBatchNameError);
-        if DocNo = '' then
-            Error(NoDocumentNoError);
-        if FilePath = '' then
-            Error(NoFilePathError);
-        CalculateMissingItems := true;
         ImportExcelToPhysicalItemJnl();
     end;
 
     local procedure ImportExcelToPhysicalItemJnl()
     var
         ExcelBuffer: Record "Excel Buffer" temporary;
-        ExcelBuffer2: Record "Excel Buffer" temporary;
         ItemJnlLine: Record "Item Journal Line";
         Subsrcibers: Codeunit "BA SEI Subscibers";
         Window: Dialog;
         ItemNo: Code[20];
-        QtyList: List of [Decimal];
+        BinCode: Code[20];
         Qty: Decimal;
         LineNo: Integer;
         RecCount: Integer;
         i: Integer;
+        LastRow: Integer;
     begin
         if not ImportFile(ExcelBuffer, ImportDialogTitle) then
             exit;
@@ -94,40 +104,37 @@ report 50080 "BA Physical Inventory Import"
             if not Confirm(StrSubstNo(MultiItemLinesMsg, BatchName)) then
                 exit;
         ExcelBuffer.SetFilter("Row No.", '>%1', 1);
-        if not ExcelBuffer.FindSet() then
+        if ExcelBuffer.IsEmpty() then
             exit;
         Window.Open('#1####/#2####');
-        Window.Update(1, 'Reading Lines');
-        ExcelBuffer.SetRange("Column No.", 2);
-        RecCount := ExcelBuffer.Count();
-        repeat
-            i += 1;
-            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
-            if not Evaluate(Qty, ExcelBuffer."Cell Value as Text") then
-                Qty := -1;
-            QtyList.Add(Qty);
-        until ExcelBuffer.Next() = 0;
+        Window.Update(1, 'Importing Lines');
+
         if ItemJnlLine.FindLast() then
             LineNo := ItemJnlLine."Line No.";
-        Window.Update(1, 'Importing Lines');
-        Window.Update(2, '');
         ItemJnlLine.SetFilter("BA Created At", '<=%1', CurrentDateTime());
+
         ExcelBuffer.SetRange("Column No.", 1);
-        ExcelBuffer.FindSet();
-        i := 1;
-        repeat
-            i += 1;
-            Window.Update(2, StrSubstNo('%1 of %2', i, RecCount));
-            ItemNo := CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(ItemJnlLine."Item No."));
-            ItemJnlLine.SetRange("Item No.", ItemNo);
-            QtyList.Get(ExcelBuffer."Row No.", Qty);
-            if Qty <> -1 then
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        ExcelBuffer.FindLast();
+        LastRow := ExcelBuffer."Row No.";
+        RecCount := LastRow - 1;
+        for i := 2 to LastRow do begin
+            Window.Update(2, StrSubstNo('%1 of %2', i - 1, RecCount));
+            ExcelBuffer.Get(i, 3);
+            if Evaluate(Qty, ExcelBuffer."Cell Value as Text") then begin
+                ExcelBuffer.Get(i, 1);
+                ItemNo := CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(ItemJnlLine."Item No."));
+                ExcelBuffer.Get(i, 2);
+                BinCode := CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(ItemJnlLine."Bin Code"));
+                ItemJnlLine.SetRange("Item No.", ItemNo);
+                ItemJnlLine.SetRange("Location Code", LocationCode);
+                ItemJnlLine.SetRange("Bin Code", BinCode);
                 if ItemJnlLine.FindFirst() then
                     UpdateItemJnlLine(ItemJnlLine, Qty)
                 else
-                    if CalculateMissingItems then
-                        CreateItemJnlLine(LineNo, ItemNo, Qty);
-        until ExcelBuffer.Next() = 0;
+                    CreateItemJnlLine(LineNo, ItemNo, Qty, BinCode);
+            end;
+        end;
         Window.Close();
         ItemJnlLine.SetRange("Item No.", '');
         ItemJnlLine.DeleteAll(true);
@@ -141,9 +148,6 @@ report 50080 "BA Physical Inventory Import"
         if not ErrorBuffer.IsEmpty() then
             if Confirm(ViewErrorConf) then
                 Page.Run(Page::"BA Phys. Invt. Import Errors", ErrorBuffer);
-        if not ItemBinCodeBuffer.IsEmpty() then
-            if Confirm(ViewBinCodeConf) then
-                Page.Run(Page::"BA Phys. Invt. Import Errors", ItemBinCodeBuffer);
     end;
 
     local procedure AddError(ItemNo: Code[20]; LineNo: Integer; ErrorMsg: Text; var NameBuffer: Record "Name/Value Buffer")
@@ -160,11 +164,11 @@ report 50080 "BA Physical Inventory Import"
         NameBuffer.Insert(false);
     end;
 
-    local procedure CreateItemJnlLine(var LineNo: Integer; ItemNo: Code[20]; Qty: Decimal)
+    local procedure CreateItemJnlLine(var LineNo: Integer; ItemNo: Code[20]; Qty: Decimal; BinCode: Code[20])
     var
         ItemJnlLine: Record "Item Journal Line";
         Item: Record Item;
-        BinContent: Record "Bin Content";
+        Bin: Record Bin;
     begin
         if not Item.Get(ItemNo) then begin
             AddError(ItemNo, LineNo, StrSubstNo(NoItemError, ItemNo), ErrorBuffer);
@@ -178,9 +182,10 @@ report 50080 "BA Physical Inventory Import"
             AddError(ItemNo, LineNo, StrSubstNo(PurchBlockedError, ItemNo), ErrorBuffer);
             exit;
         end;
-        BinContent.SetRange("Location Code", LocationCode);
-        BinContent.SetRange("Item No.", ItemNo);
-        BinContent.SetRange(Default, true);
+        if not Bin.Get(LocationCode, BinCode) then begin
+            AddError(ItemNo, LineNo, StrSubstNo(MissingBinErr, BinCode, LocationCode), ErrorBuffer);
+            exit;
+        end;
         LineNo += 10000;
         ItemJnlLine.Init();
         ItemJnlLine.Validate("Journal Template Name", TemplateName);
@@ -190,17 +195,11 @@ report 50080 "BA Physical Inventory Import"
         ItemJnlLine.Validate("Posting Date", PostingDate);
         ItemJnlLine.Validate("Item No.", ItemNo);
         ItemJnlLine.Validate("Location Code", LocationCode);
+        ItemJnlLine.Validate("Bin Code", BinCode);
         ItemJnlLine.Validate("Phys. Inventory", true);
         ItemJnlLine.Validate("Qty. (Calculated)", 0);
         ItemJnlLine.Validate("Qty. (Phys. Inventory)", Qty);
-        if not BinContent.FindFirst() then begin
-            BinContent.SetRange(Default);
-            if BinContent.FindFirst() and (BinContent.Count() = 1) then
-                ItemJnlLine.Validate("Bin Code", BinContent."Bin Code")
-            else
-                AddError(ItemNo, LineNo, StrSubstNo(MissingBinErr, LocationCode), ItemBinCodeBuffer);
-        end else
-            ItemJnlLine.Validate("Bin Code", BinContent."Bin Code");
+        ItemJnlLine.Validate("Bin Code", Bin.Code);
         ItemJnlLine."BA Updated" := true;
         ItemJnlLine.Insert(true);
     end;
@@ -254,9 +253,7 @@ report 50080 "BA Physical Inventory Import"
     var
         TempBlob: Record TempBlob temporary;
         ErrorBuffer: Record "Name/Value Buffer" temporary;
-        ItemBinCodeBuffer: Record "Name/Value Buffer" temporary;
         FileMgt: Codeunit "File Management";
-        CalculateMissingItems: Boolean;
         BatchName: Code[20];
         TemplateName: Code[20];
         DocNo: Code[20];
@@ -276,8 +273,8 @@ report 50080 "BA Physical Inventory Import"
         BlockedItemError: Label 'Item %1 is blocked.';
         PurchBlockedError: Label 'Item %1 is blocked for purchasing.';
         ViewErrorConf: Label 'Errors occurred while importing file, view errors now?';
-        ViewBinCodeConf: Label 'One or more Items do not have Bin Codes assigned, view Items now?';
         ImportDialogTitle: Label 'Physical Inventory Import';
-        MissingBinErr: Label 'Missing default Bin Code for Location %1.';
-        ImportInstructions: Label 'After inventory is calculated for the journal, use this feature to upload the physical inventory count numbers into the Qty. (Phys. Inventory) column:\\ - Format an Excel file with 2 columns (Item No. & Quantity)\ - Set the Document No. to match the Document No. of the journal that will receive the Excel file upload.\ - Select "Upload Excel File" and choose the file required.\ - If any items exist in the Excel file that are not on the journal, they will be added as new lines at the bottom of the journal.';
+        MissingBinErr: Label 'Bin %1 does not exist for Location %2.';
+        ImportInstructions: Label 'After inventory is calculated for the journal, use this feature to upload the physical inventory count numbers into the Qty. (Phys. Inventory) column:\\ - Format an Excel file with 3 columns (Item No., Bin Code & Quantity)\ - Set the Document No. to match the Document No. of the Phys. Inventory Journal\ - Select Excel File\ - The Qty. (Phys. Inventory) column will be updated with the qty. associated with the Item No. & Bin Code\ - If an Item No. or Item No./Bin Code combination in the Excel file doesn’t exist in the journal, they will be added as new lines at the bottom of the journal';
+        NoLocationCodeErr: Label 'Location Code must be specified.';
 }

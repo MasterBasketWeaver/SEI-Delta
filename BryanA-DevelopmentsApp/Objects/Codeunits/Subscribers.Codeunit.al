@@ -869,6 +869,7 @@ codeunit 75010 "BA SEI Subscibers"
         ItemLedgerEntry."BA Approved By" := ItemJournalLine."BA Approved By";
         if ItemJournalLine."BA Updated" then
             ItemLedgerEntry."BA Year-end Adjst." := true;
+        ItemLedgerEntry."BA Cycle Count" := ItemJournalLine."BA Cycle Count";
         ItemLedgerEntry.Modify(false);
     end;
 
@@ -888,10 +889,12 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
     [EventSubscriber(ObjectType::Report, Report::"Calculate Inventory", 'OnBeforeInsertItemJnlLine', '', false, false)]
-    local procedure CalcInventoryOnBeforeInsertItemJnlLine(var ItemJournalLine: Record "Item Journal Line"; YearEndInventoryAdjust: Boolean)
+    local procedure CalcInventoryOnBeforeInsertItemJnlLine(var ItemJournalLine: Record "Item Journal Line"; YearEndInventoryAdjust: Boolean; CycleCountUpdate: Boolean)
     begin
         if YearEndInventoryAdjust then
             ItemJournalLine."BA Updated" := true;
+        if CycleCountUpdate then
+            ItemJournalLine."BA Cycle Count" := true;
     end;
 
     [EventSubscriber(ObjectType::Report, Report::"Calculate Inventory", 'OnAfterPostItemDataItem', '', false, false)]

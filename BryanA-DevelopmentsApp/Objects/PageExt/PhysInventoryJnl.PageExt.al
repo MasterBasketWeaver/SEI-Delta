@@ -28,11 +28,15 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
         }
         addafter(Description)
         {
-            field("BA Updated"; "BA Updated")
+            field("BA Updated"; Rec."BA Updated")
             {
                 ApplicationArea = all;
                 Caption = 'Year-End Inventory Adjustment';
                 Editable = true;
+            }
+            field("BA Cycle Count"; Rec."BA Cycle Count")
+            {
+                ApplicationArea = all;
             }
         }
     }
@@ -105,7 +109,7 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
                 PromotedIsBig = true;
                 PromotedOnly = true;
                 Image = PhysicalInventoryLedger;
-                Caption = 'View Inventory Import Errors';
+                Caption = 'View Inv. Import Msg/Errors';
 
                 trigger OnAction()
                 var

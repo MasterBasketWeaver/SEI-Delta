@@ -22,5 +22,11 @@ tableextension 80069 "BA Item Ledger Entry" extends "Item Ledger Entry"
             TableRelation = "User Setup"."User ID";
             Editable = false;
         }
+        field(80020; "BA Cycle Count"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Cycle Count';
+            Editable = false;
+        }
     }
 }
