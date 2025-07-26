@@ -5500,6 +5500,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     local procedure InsertUpdatePassThroughBuffer(var TempSalesTaxLine: Record "Sales Tax Amount Line"; PurchLine: Record "Purchase Line")
     var
+        TaxGroup: Record "Tax Group";
         PurchHeader: Record "Purchase Header";
         PurchPaySetup: Record "Purchases & Payables Setup";
         NameValueBuffer: Record "Name/Value Buffer" temporary;
@@ -5509,6 +5510,9 @@ codeunit 75010 "BA SEI Subscibers"
         if not SingleInstance.GetIsPurchPosting() then
             exit;
         if TempSalesTaxLine."Tax Jurisdiction Code" = '' then
+            exit;
+        TaxGroup.Get(TempSalesTaxLine."Tax Group Code");
+        if TaxGroup."BA Non-Taxable" then
             exit;
         PurchPaySetup.Get();
         if not PurchPaySetup."BA Enable Tax Pass Through" then
