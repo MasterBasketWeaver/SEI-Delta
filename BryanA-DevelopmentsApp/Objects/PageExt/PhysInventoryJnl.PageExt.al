@@ -39,6 +39,17 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
                 ApplicationArea = all;
             }
         }
+        addlast(Control1)
+        {
+            field("BA Unit Cost (Revalued)"; Rec."Unit Cost (Revalued)")
+            {
+                ApplicationArea = all;
+            }
+            field("Inventory Value (Revalued)"; Rec."Inventory Value (Revalued)")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions
@@ -109,7 +120,7 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
                 PromotedCategory = Process;
                 PromotedIsBig = true;
                 PromotedOnly = true;
-                Image = PhysicalInventory;
+                Image = CreateInventoryPickup;
                 Caption = 'Import Item Revaluations';
 
                 trigger OnAction()
