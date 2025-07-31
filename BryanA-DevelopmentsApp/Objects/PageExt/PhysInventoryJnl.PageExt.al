@@ -45,24 +45,7 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
     {
         addlast(Processing)
         {
-            action("BA Import Item Inventory")
-            {
-                ApplicationArea = all;
-                Promoted = true;
-                PromotedCategory = Process;
-                PromotedIsBig = true;
-                PromotedOnly = true;
-                Image = PhysicalInventory;
-                Caption = 'Import Item Inventory';
 
-                trigger OnAction()
-                var
-                    ImportInventory: Report "BA Physical Inventory Import";
-                begin
-                    ImportInventory.SetParameters(Rec);
-                    ImportInventory.RunModal();
-                end;
-            }
             action("BA Update Posting Date")
             {
                 ApplicationArea = all;
@@ -99,6 +82,42 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
                     until ItemJnlLine.Next() = 0;
                     Window.Close();
                     CurrPage.Update(false);
+                end;
+            }
+            action("BA Import Item Inventory")
+            {
+                ApplicationArea = all;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = PhysicalInventory;
+                Caption = 'Import Item Inventory';
+
+                trigger OnAction()
+                var
+                    ImportInventory: Report "BA Physical Inventory Import";
+                begin
+                    ImportInventory.SetParameters(Rec, false);
+                    ImportInventory.RunModal();
+                end;
+            }
+            action("BA Import Item Revaluations")
+            {
+                ApplicationArea = all;
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = PhysicalInventory;
+                Caption = 'Import Item Revaluations';
+
+                trigger OnAction()
+                var
+                    ImportInventory: Report "BA Physical Inventory Import";
+                begin
+                    ImportInventory.SetParameters(Rec, true);
+                    ImportInventory.RunModal();
                 end;
             }
             action("BA View Import Errors")
