@@ -113,24 +113,6 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
                     ImportInventory.RunModal();
                 end;
             }
-            action("BA Import Item Revaluations")
-            {
-                ApplicationArea = all;
-                Promoted = true;
-                PromotedCategory = Process;
-                PromotedIsBig = true;
-                PromotedOnly = true;
-                Image = CreateInventoryPickup;
-                Caption = 'Import Item Revaluations';
-
-                trigger OnAction()
-                var
-                    ImportInventory: Report "BA Physical Inventory Import";
-                begin
-                    ImportInventory.SetParameters(Rec, true);
-                    ImportInventory.RunModal();
-                end;
-            }
             action("BA View Import Errors")
             {
                 ApplicationArea = all;
