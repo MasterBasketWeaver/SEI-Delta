@@ -29,6 +29,7 @@ report 50080 "BA Physical Inventory Import"
                         Caption = 'Location Code';
                         TableRelation = Location.Code;
                         ShowMandatory = true;
+                        Visible = not IsUnitCostImport;
                     }
                     field("Select Excel File"; FilePath)
                     {
@@ -60,6 +61,10 @@ report 50080 "BA Physical Inventory Import"
         trigger OnOpenPage()
         begin
             FilePath := '';
+            if IsUnitCostImport then begin
+                LocationCode := '';
+                DocNo := '';
+            end;
         end;
 
         trigger OnQueryClosePage(CloseAction: Action): Boolean
@@ -73,9 +78,9 @@ report 50080 "BA Physical Inventory Import"
                     Error(NoBatchNameError);
                 if DocNo = '' then
                     Error(NoDocumentNoError);
+                if LocationCode = '' then
+                    Error(NoLocationCodeErr);
             end;
-            if LocationCode = '' then
-                Error(NoLocationCodeErr);
             if FilePath = '' then
                 Error(NoFilePathError);
         end;
@@ -136,11 +141,11 @@ report 50080 "BA Physical Inventory Import"
                         if ItemJnlLine.FindFirst() then
                             UpdateItemJnlLineUnitCost(ItemJnlLine, Qty)
                         else
-                            AddError(ItemNo, 0, StrSubstNo('Item %1 was not found in Journal Batch %2.', ItemNo, BatchName), ErrorBuffer);
+                            AddError(ItemNo, 0, StrSubstNo('Item %1 was not found in Journal Batch %2.', ItemNo, BatchName), ErrorBuffer.RecordId);
                     end else
-                        AddError('', 0, StrSubstNo('Could not evaluate "%1" as a decimal.', ExcelBuffer."Cell Value as Text"), ErrorBuffer)
+                        AddError('', 0, StrSubstNo('Could not evaluate "%1" as a decimal.', ExcelBuffer."Cell Value as Text"), ErrorBuffer.RecordId)
                 else
-                    AddError('', 0, 'Missing Unit Cost value.', ErrorBuffer);
+                    AddError('', 0, 'Missing Unit Cost value.', ErrorBuffer.RecordId);
             end;
             Window.Close();
             ViewErrors(false);
@@ -201,18 +206,23 @@ report 50080 "BA Physical Inventory Import"
             Message(ViewErrorMsg);
     end;
 
-    local procedure AddError(ItemNo: Code[20]; LineNo: Integer; ErrorMsg: Text; var NameBuffer: Record "Name/Value Buffer")
+
+
+
+    local procedure AddError(ItemNo: Code[20]; LineNo: Integer; ErrorMsg: Text; RecID: RecordId)
     var
         ID: Integer;
     begin
-        if NameBuffer.FindLast() then
-            ID := NameBuffer.ID;
-        NameBuffer.Init();
-        NameBuffer.ID := ID + 1;
-        NameBuffer.Name := ItemNo;
-        NameBuffer.Value := Format(LineNo);
-        NameBuffer."Value Long" := CopyStr(ErrorMsg, 1, MaxStrLen(NameBuffer."Value Long"));
-        NameBuffer.Insert(false);
+        if ErrorBuffer.FindLast() then
+            ID := ErrorBuffer.ID;
+        ErrorBuffer.Init();
+        ErrorBuffer.ID := ID + 1;
+        ErrorBuffer."BA Dmension Set ID" := LineNo;
+        ErrorBuffer.Name := ItemNo;
+        if LineNo <> 0 then
+            ErrorBuffer.Value := Format(Format(RecID), 1, MaxStrLen(ErrorBuffer.Value));
+        ErrorBuffer."Value Long" := CopyStr(ErrorMsg, 1, MaxStrLen(ErrorBuffer."Value Long"));
+        ErrorBuffer.Insert(false);
     end;
 
     local procedure CreateItemJnlLine(var LineNo: Integer; ItemNo: Code[20]; Qty: Decimal; BinCode: Code[20])
@@ -223,19 +233,19 @@ report 50080 "BA Physical Inventory Import"
         HasError: Boolean;
     begin
         if not Item.Get(ItemNo) then begin
-            AddError(ItemNo, LineNo, StrSubstNo(NoItemError, ItemNo), ErrorBuffer);
+            AddError(ItemNo, LineNo, StrSubstNo(NoItemError, ItemNo), ErrorBuffer.RecordId);
             HasError := true;
         end else
             if Item.Blocked then begin
-                AddError(ItemNo, LineNo, StrSubstNo(BlockedItemError, ItemNo), ErrorBuffer);
+                AddError(ItemNo, LineNo, StrSubstNo(BlockedItemError, ItemNo), ErrorBuffer.RecordId);
                 HasError := true;
             end else
                 if Item."Purchasing Blocked" then begin
-                    AddError(ItemNo, LineNo, StrSubstNo(PurchBlockedError, ItemNo), ErrorBuffer);
+                    AddError(ItemNo, LineNo, StrSubstNo(PurchBlockedError, ItemNo), ErrorBuffer.RecordId);
                     HasError := true;
                 end;
         if not Bin.Get(LocationCode, BinCode) then begin
-            AddError(ItemNo, LineNo, StrSubstNo(MissingBinErr, BinCode, LocationCode), ErrorBuffer);
+            AddError(ItemNo, LineNo, StrSubstNo(MissingBinErr, BinCode, LocationCode), ErrorBuffer.RecordId);
             HasError := true;
         end;
         if HasError then
@@ -270,7 +280,7 @@ report 50080 "BA Physical Inventory Import"
     local procedure UpdateItemJnlLineUnitCost(var ItemJnlLine: Record "Item Journal Line"; UnitCost: Decimal)
     begin
         if ItemJnlLine.Quantity = 0 then begin
-            AddError(ItemJnlLine."Item No.", ItemJnlLine."Line No.", 'Quantity must be specified.', ErrorBuffer);
+            AddError(ItemJnlLine."Item No.", ItemJnlLine."Line No.", 'Quantity must be specified.', ItemJnlLine.RecordId());
             exit;
         end;
         ItemJnlLine.Validate("Value Entry Type", ItemJnlLine."Value Entry Type"::Revaluation);

@@ -2,7 +2,7 @@ page 50069 "BA Phys. Invt. Import Errors"
 {
     SourceTable = "Name/Value Buffer";
     PageType = List;
-    Caption = 'Physical Inventory Import Errors';
+    Caption = 'Inventory Import Errors';
     Editable = false;
     LinksAllowed = false;
     SourceTableTemporary = true;
@@ -19,10 +19,11 @@ page 50069 "BA Phys. Invt. Import Errors"
                     Caption = 'Item No.';
                     TableRelation = Item."No.";
                 }
-                field("Line No."; Rec.ID)
+                field("Line No."; Rec."BA Dmension Set ID")
                 {
                     ApplicationArea = all;
                     Caption = 'Journal Line No.';
+                    BlankZero = true;
 
                     trigger OnDrillDown()
                     var
@@ -30,7 +31,7 @@ page 50069 "BA Phys. Invt. Import Errors"
                         RecID: RecordId;
                         PhysicalInvJnl: Page "Phys. Inventory Journal";
                     begin
-                        if not Evaluate(RecID, Rec."Value Long") or not ItemJnlLine.Get(RecID) then
+                        if not Evaluate(RecID, Rec."Value") or not ItemJnlLine.Get(RecID) then
                             exit;
                         ItemJnlLine.FilterGroup(2);
                         ItemJnlLine.SetRange("Journal Template Name", ItemJnlLine."Journal Template Name");
@@ -57,9 +58,10 @@ page 50069 "BA Phys. Invt. Import Errors"
             repeat
                 Rec.Init();
                 Rec.ID := ItemJnlLine."Line No.";
+                Rec."BA Dmension Set ID" := ItemJnlLine."Line No.";
                 Rec.Name := ItemJnlLine."Item No.";
-                Rec.Value := ItemJnlLine."BA Warning Message";
-                Rec."Value Long" := Format(ItemJnlLine.RecordId());
+                Rec.Value := CopyStr(Format(ItemJnlLine.RecordId()), 1, MaxStrLen(Rec.Value));
+                Rec."Value Long" := ItemJnlLine."BA Warning Message";
                 Rec.Insert(false);
             until ItemJnlLine.Next() = 0;
     end;
