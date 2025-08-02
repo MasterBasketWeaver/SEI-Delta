@@ -30,6 +30,7 @@ page 50069 "BA Phys. Invt. Import Errors"
                         ItemJnlLine: Record "Item Journal Line";
                         RecID: RecordId;
                         PhysicalInvJnl: Page "Phys. Inventory Journal";
+                        RevaluationJnl: Page "Revaluation Journal";
                     begin
                         if not Evaluate(RecID, Rec."Value") or not ItemJnlLine.Get(RecID) then
                             exit;
@@ -37,9 +38,15 @@ page 50069 "BA Phys. Invt. Import Errors"
                         ItemJnlLine.SetRange("Journal Template Name", ItemJnlLine."Journal Template Name");
                         ItemJnlLine.SetRange("Journal Batch Name", ItemJnlLine."Journal Batch Name");
                         ItemJnlLine.SetRange("Item No.", ItemJnlLine."Item No.");
-                        PhysicalInvJnl.SetTableView(ItemJnlLine);
-                        ItemJnlLine.FilterGroup(0);
-                        PhysicalInvJnl.RunModal();
+                        if ItemJnlLine."Journal Template Name" = 'REVALUATIO' then begin
+                            RevaluationJnl.SetTableView(ItemJnlLine);
+                            ItemJnlLine.FilterGroup(0);
+                            RevaluationJnl.RunModal();
+                        end else begin
+                            PhysicalInvJnl.SetTableView(ItemJnlLine);
+                            ItemJnlLine.FilterGroup(0);
+                            PhysicalInvJnl.RunModal();
+                        end;
                     end;
                 }
                 field(Error; Rec."Value Long")
