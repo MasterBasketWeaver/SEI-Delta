@@ -220,7 +220,7 @@ report 50080 "BA Physical Inventory Import"
         ErrorBuffer."BA Dmension Set ID" := LineNo;
         ErrorBuffer.Name := ItemNo;
         if LineNo <> 0 then
-            ErrorBuffer.Value := Format(Format(RecID), 1, MaxStrLen(ErrorBuffer.Value));
+            ErrorBuffer.Value := CopyStr(Format(RecID), 1, MaxStrLen(ErrorBuffer.Value));
         ErrorBuffer."Value Long" := CopyStr(ErrorMsg, 1, MaxStrLen(ErrorBuffer."Value Long"));
         ErrorBuffer.Insert(false);
     end;
