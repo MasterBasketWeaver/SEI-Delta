@@ -5848,10 +5848,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         SalesLine: Record "Sales Line";
         Item: Record Item;
-        CurrExchRate: Record "Currency Exchange Rate";
     begin
-        if (SalesHeader."Currency Code" <> '') and (SalesHeader."Currency Factor" = 0) then
-            SalesHeader."Currency Factor" := CurrExchRate.ExchangeRate(SalesHeader."Posting Date", SalesHeader."Currency Code");
         SalesLine.SetRange("Document Type", SalesHeader."Document Type");
         SalesLine.SetRange("Document No.", SalesHeader."No.");
         SalesLine.SetRange(Type, SalesLine.Type::Item);
@@ -5872,7 +5869,7 @@ codeunit 75010 "BA SEI Subscibers"
         NewDimSetID: Integer;
     begin
         DefaultDim.SetRange("Table ID", Database::Item);
-        DefaultDim.SetRange("No.", SalesLine."No.");
+        DefaultDim.SetRange("No.", Item."No.");
         if not DefaultDim.FindSet() then
             exit;
         DimMgt.GetDimensionSet(TempDimSetEntry, SalesLine."Dimension Set ID");
