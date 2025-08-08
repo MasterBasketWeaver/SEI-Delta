@@ -5857,7 +5857,7 @@ codeunit 75010 "BA SEI Subscibers"
         DefaultDim.SetRange("Table ID", Database::Item);
         DefaultDim.SetRange("No.", Item."No.");
         if not DefaultDim.FindSet() then
-            exit;
+            exit(false);
         DimMgt.GetDimensionSet(TempDimSetEntry, SalesLine."Dimension Set ID");
         TempDimSetEntry.Reset();
         repeat
@@ -5877,6 +5877,7 @@ codeunit 75010 "BA SEI Subscibers"
         if NewDimSetID = SalesLine."Dimension Set ID" then
             exit(false);
         SalesLine.Validate("Dimension Set ID", NewDimSetID);
+        exit(true);
     end;
 
 
