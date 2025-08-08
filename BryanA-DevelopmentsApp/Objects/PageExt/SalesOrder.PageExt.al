@@ -282,7 +282,18 @@ pageextension 80025 "BA Sales Order" extends "Sales Order"
                 end;
             }
         }
+        addlast(Navigation)
+        {
+            action("BA Item Reclassification Journal")
+            {
+                ApplicationArea = all;
+                Image = BinJournal;
+                Caption = 'Item Reclassification Journal';
+                RunObject = page "Item Reclass. Journal";
+            }
+        }
     }
+
 
 
     var

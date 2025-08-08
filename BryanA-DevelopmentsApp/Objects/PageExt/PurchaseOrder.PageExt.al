@@ -74,4 +74,18 @@ pageextension 80030 "BA Purchase Order" extends "Purchase Order"
             }
         }
     }
+
+    actions
+    {
+        addlast(Navigation)
+        {
+            action("BA Item Reclassification Journal")
+            {
+                ApplicationArea = all;
+                Image = BinJournal;
+                Caption = 'Item Reclassification Journal';
+                RunObject = page "Item Reclass. Journal";
+            }
+        }
+    }
 }
