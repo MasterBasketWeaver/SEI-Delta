@@ -4934,8 +4934,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderHeader."Posting Date" := ServiceHeader."Posting Date";
         OrderHeader."Quote No." := ServiceHeader."Quote No.";
         OrderHeader."Salesperson Code" := ServiceHeader."Salesperson Code";
-        Customer.Get(ServiceHeader."Customer No.");
-        OrderHeader."Sell-to Customer Name" := Customer.Name;
+        if Customer.Get(ServiceHeader."Customer No.") then
+            OrderHeader."Sell-to Customer Name" := Customer.Name;
         OrderHeader."Sell-to Customer No." := ServiceHeader."Customer No.";
         OrderHeader."Shipment Date" := ServiceHeader."BA Shipment Date";
         if OrderHeader."Posted Document No." = '' then
