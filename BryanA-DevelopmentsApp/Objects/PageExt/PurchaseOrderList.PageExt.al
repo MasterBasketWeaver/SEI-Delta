@@ -25,6 +25,19 @@ pageextension 80022 "BA Purchase Order List" extends "Purchase Order List"
             Caption = 'Country';
         }
     }
+    actions
+    {
+        addlast(Navigation)
+        {
+            action("BA Item Reclassification Journal")
+            {
+                ApplicationArea = all;
+                Image = BinJournal;
+                Caption = 'Item Reclassification Journal';
+                RunObject = page "Item Reclass. Journal";
+            }
+        }
+    }
 
 
     trigger OnOpenPage()
