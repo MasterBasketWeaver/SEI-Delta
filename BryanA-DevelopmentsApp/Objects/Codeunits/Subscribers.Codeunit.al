@@ -5857,6 +5857,14 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'Last Direct Cost', false, false)]
+    local procedure ItemOnAfterValidateLastDirectCost(var Rec: Record Item)
+    begin
+        Rec.Validate("BA Last Direct Cost Updated", CurrentDateTime());
+    end;
+
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";

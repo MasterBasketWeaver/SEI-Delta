@@ -127,6 +127,12 @@ tableextension 80012 "BA Item" extends Item
             Caption = 'No. of Bins On Hand';
             Editable = false;
         }
+        field(80080; "BA Last Direct Cost Updated"; DateTime)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Last Direct Cost Updated';
+            Editable = false;
+        }
     }
 
     procedure SetLastCurrencyPurchCost(CurrCode: Code[10]; LastPurchCost: Decimal)
