@@ -107,6 +107,12 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
                 HideValue = Type <> Type::Item;
             }
         }
+        modify("Unit Cost (LCY)")
+        {
+            ApplicationArea = all;
+            BlankZero = true;
+            HideValue = Type <> Type::Item;
+        }
     }
 
     trigger OnOpenPage()

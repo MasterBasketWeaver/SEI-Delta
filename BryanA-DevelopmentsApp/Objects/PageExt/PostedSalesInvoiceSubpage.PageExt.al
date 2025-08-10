@@ -73,6 +73,12 @@ pageextension 80145 "BA Posted Sales Inv. Subpage" extends "Posted Sales Invoice
                 HideValue = Type <> Type::Item;
             }
         }
+        modify("Unit Cost (LCY)")
+        {
+            ApplicationArea = all;
+            BlankZero = true;
+            HideValue = Type <> Type::Item;
+        }
     }
 
     actions
