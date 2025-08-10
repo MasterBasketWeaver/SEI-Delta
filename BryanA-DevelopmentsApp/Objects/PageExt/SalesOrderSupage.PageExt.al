@@ -97,10 +97,14 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
             field("BA Labour Cost"; Rec."BA Labour Cost")
             {
                 ApplicationArea = all;
+                BlankZero = true;
+                HideValue = Type <> Type::Item;
             }
             field("BA Material Cost"; Rec."BA Material Cost")
             {
                 ApplicationArea = all;
+                BlankZero = true;
+                HideValue = Type <> Type::Item;
             }
         }
     }

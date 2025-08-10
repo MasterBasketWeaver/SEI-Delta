@@ -65,7 +65,7 @@ codeunit 75011 "BA Install Codeunit"
         SalesInvLine.SetFilter("No.", '<>%1', '');
         if SalesInvLine.FindSet() then
             repeat
-                if Item.Get(SalesLine."No.") then begin
+                if Item.Get(SalesInvLine."No.") then begin
                     SalesInvLine."BA Labour Cost" := Item."Single-Level Capacity Cost";
                     SalesInvLine."BA Material Cost" := Item."Single-Level Material Cost";
                     SalesInvLine.Modify(false);
