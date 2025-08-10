@@ -1310,7 +1310,18 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnBeforeRunWithCheck', '', false, false)]
     local procedure ItemJnlPostLineOnBeforeRunWithCheck(var ItemJournalLine: Record "Item Journal Line")
+    var
+        ItemJnlTemplate: Record "Item Journal Template";
+        SourceCodeSetup: Record "Source Code Setup";
     begin
+        SingleInstance.SetIsPhysicalInvPosting(false);
+        SourceCodeSetup.Get();
+        if SourceCodeSetup."Phys. Inventory Journal" <> '' then begin
+            ItemJnlTemplate.SetRange("Source Code", SourceCodeSetup."Phys. Inventory Journal");
+            ItemJnlTemplate.SetRange(Type, ItemJnlTemplate.Type::"Phys. Inventory");
+            if ItemJnlTemplate.FindFirst() then
+                SingleInstance.SetIsPhysicalInvPosting(ItemJournalLine."Journal Template Name" = ItemJournalLine."Journal Template Name");
+        end;
         if not IsInventoryApprovalEnabled() or (ItemJournalLine."Journal Template Name" <> 'ITEM') then
             exit;
         ItemJournalLine.TestField("BA Adjust. Reason Code");
@@ -1320,6 +1331,16 @@ codeunit 75010 "BA SEI Subscibers"
             Error(PendingLineError, ItemJournalLine."Line No.");
         if (ItemJournalLine."BA Status" <> ItemJournalLine."BA Status"::Released) and not CheckInventoryLimit(ItemJournalLine) then
             Error(JnlLimitError);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnBeforeCheckItem', '', false, false)]
+    local procedure ItemJnlPostLineOnBeforeCheckItem(ItemNo: Code[20]; var IsHandled: Boolean; var Item: Record Item)
+    begin
+        if SingleInstance.GetIsPhysicalInvPosting() then begin
+            IsHandled := true;
+            if not Item.Get(ItemNo) then
+                Item.Init();
+        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnApproveApprovalRequest', '', false, false)]
@@ -6018,6 +6039,8 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         BinContent.Delete(true);
     end;
+
+
 
 
 

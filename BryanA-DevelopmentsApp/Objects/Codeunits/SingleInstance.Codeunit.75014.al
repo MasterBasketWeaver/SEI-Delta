@@ -110,6 +110,17 @@ codeunit 75014 "BA Single Instance"
     end;
 
 
+    procedure SetIsPhysicalInvPosting(NewValue: Boolean)
+    begin
+        IsPhysicalInvPosting := NewValue;
+    end;
+
+    procedure GetIsPhysicalInvPosting(): Boolean
+    begin
+        exit(IsPhysicalInvPosting);
+    end;
+
+
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
         SkipUSDCreditLimit: Boolean;
@@ -118,4 +129,5 @@ codeunit 75014 "BA Single Instance"
         IsPurchPosting: Boolean;
         SkipLedgerLineSave: Boolean;
         SkipCreditLimitUpdate: Boolean;
+        IsPhysicalInvPosting: Boolean;
 }
