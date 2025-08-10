@@ -79,6 +79,8 @@ codeunit 75010 "BA SEI Subscibers"
         if (Rec.Type <> Rec.Type::Item) or (Rec."No." = xRec."No.") or not Item.Get(Rec."No.") then
             exit;
         Item.TestField("ENC Not for Sale", false);
+        Rec.Validate("BA Labour Cost", Item."Single-Level Capacity Cost");
+        Rec.Validate("BA Material Cost", Item."Single-Level Material Cost");
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Quantity', false, false)]
@@ -5948,7 +5950,6 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         Rec.Validate("BA Last Direct Cost Updated", CurrentDateTime());
     end;
-
 
 
     var
