@@ -67,5 +67,17 @@ tableextension 80002 "BA Sales Line" extends "Sales Line"
         //     FieldClass = FlowField;
         //     CalcFormula = lookup ("BA Order Line"."Entry No." where ("Posted Document Type" = const ("Posted Sales Invoice"), "Posted Document No." = field ("Document No."), "Posted Line No." = field ("Line No.")));
         // }
+        field(80080; "BA Labour Cost"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Labour Cost';
+            Editable = false;
+        }
+        field(80081; "BA Material Cost"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Material Cost';
+            Editable = false;
+        }
     }
 }

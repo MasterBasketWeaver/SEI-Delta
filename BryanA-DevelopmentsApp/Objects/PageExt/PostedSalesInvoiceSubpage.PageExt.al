@@ -58,6 +58,17 @@ pageextension 80145 "BA Posted Sales Inv. Subpage" extends "Posted Sales Invoice
                 ApplicationArea = all;
             }
         }
+        addafter("Unit Cost (LCY)")
+        {
+            field("BA Labour Cost"; Rec."BA Labour Cost")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Material Cost"; Rec."BA Material Cost")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     actions

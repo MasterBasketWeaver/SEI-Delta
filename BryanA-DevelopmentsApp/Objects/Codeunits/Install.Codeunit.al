@@ -9,7 +9,8 @@ codeunit 75011 "BA Install Codeunit"
                   tabledata "Purch. Cr. Memo Hdr." = m,
                   tabledata "Purch. Rcpt. Header" = m,
                   tabledata "Purchase Header" = m,
-                  tabledata "Tax Group" = m;
+                  tabledata "Tax Group" = m,
+                  tabledata "Sales Invoice Line" = M;
 
     trigger OnInstallAppPerCompany()
     begin
@@ -34,6 +35,42 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateCustomerApprovalGroups();
         // PopulateProdOrderNotificationReportUsage();
         // PopulateItemBinCount();
+
+        PopulateSalesItemCosts();
+    end;
+
+    local procedure PopulateSalesItemCosts()
+    var
+        SalesLine: Record "Sales Line";
+        SalesInvLine: Record "Sales Invoice Line";
+        Item: Record Item;
+    begin
+        SalesInvLine.SetFilter("BA Labour Cost", '<>%1', 0);
+        if not SalesInvLine.IsEmpty() then
+            exit;
+        SalesInvLine.SetRange("BA Labour Cost");
+
+        SalesLine.SetRange(Type, SalesLine.Type::Item);
+        SalesLine.SetFilter("No.", '<>%1', '');
+        if SalesLine.FindSet(false) then
+            repeat
+                if Item.Get(SalesLine."No.") then begin
+                    SalesLine."BA Labour Cost" := Item."Single-Level Capacity Cost";
+                    SalesLine."BA Material Cost" := Item."Single-Level Material Cost";
+                    SalesLine.Modify(false);
+                end;
+            until SalesLine.Next() = 0;
+
+        SalesInvLine.SetRange(Type, SalesInvLine.Type::Item);
+        SalesInvLine.SetFilter("No.", '<>%1', '');
+        if SalesInvLine.FindSet() then
+            repeat
+                if Item.Get(SalesLine."No.") then begin
+                    SalesInvLine."BA Labour Cost" := Item."Single-Level Capacity Cost";
+                    SalesInvLine."BA Material Cost" := Item."Single-Level Material Cost";
+                    SalesInvLine.Modify(false);
+                end;
+            until SalesInvLine.Next() = 0;
     end;
 
 

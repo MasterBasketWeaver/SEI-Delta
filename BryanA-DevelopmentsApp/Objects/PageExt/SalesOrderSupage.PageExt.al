@@ -92,6 +92,17 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
                 ApplicationArea = all;
             }
         }
+        addafter("Unit Cost (LCY)")
+        {
+            field("BA Labour Cost"; Rec."BA Labour Cost")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Material Cost"; Rec."BA Material Cost")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 
     trigger OnOpenPage()
