@@ -890,6 +890,64 @@ codeunit 75010 "BA SEI Subscibers"
             Rec.Validate("Credit Limit (LCY)", Rec."BA Credit Limit" * ExchRate."Relational Exch. Rate Amount");
     end;
 
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post", 'OnCodeOnAfterItemJnlPostBatchRun', '', false, false)]
+    local procedure ItemJnlPostOnCodeOnAfterItemJnlPostBatchRun(var ItemJournalLine: Record "Item Journal Line")
+    var
+        ItemJnlTemplate: Record "Item Journal Template";
+        SourceCodeSetup: Record "Source Code Setup";
+    begin
+        SourceCodeSetup.Get();
+        if SourceCodeSetup."Phys. Inventory Journal" = '' then
+            exit;
+        ItemJnlTemplate.SetRange("Source Code", SourceCodeSetup."Phys. Inventory Journal");
+        ItemJnlTemplate.SetRange(Type, ItemJnlTemplate.Type::"Phys. Inventory");
+        if ItemJnlTemplate.FindFirst() then
+            if ItemJournalLine."Journal Template Name" = ItemJnlTemplate.Name then
+                ResetBlockedItems();
+    end;
+
+    local procedure ResetBlockedItems()
+    var
+        BlockedItem: Record "BA Blocked Item";
+        Item: Record Item;
+    begin
+        if BlockedItem.FindSet() then
+            repeat
+                Item.Get(BlockedItem."Item No.");
+                Item.Blocked := true;
+                Item.Modify(false);
+                BlockedItem.Delete(true);
+            until BlockedItem.Next() = 0;
+    end;
+
+    [EventSubscriber(ObjectType::Report, Report::"Calculate Inventory", 'OnAfterItemOnPreDataItem', '', false, false)]
+    local procedure CalcInventoryOnAfterItemOnPreDataItem(var Item: Record Item; IncludeBlockedItems: Boolean)
+    var
+        Item2: Record Item;
+        BlockedItem: Record "BA Blocked Item";
+    begin
+        if IncludeBlockedItems then begin
+            Item2.CopyFilters(Item);
+            Item2.SetRange(Blocked, true);
+            if Item2.FindSet() then
+                repeat
+                    Item2.Blocked := false;
+                    Item2.Modify(false);
+                    if not BlockedItem.Get(Item2."No.") then begin
+                        BlockedItem."Item No." := Item2."No.";
+                        BlockedItem."Blocked At" := CurrentDateTime();
+                        BlockedItem.Insert(true);
+                    end else begin
+                        BlockedItem."Blocked At" := CurrentDateTime();
+                        BlockedItem.Modify(true)
+                    end;
+                until Item2.Next() = 0
+        end else
+            Item.SetRange(Blocked, false);
+    end;
+
     [EventSubscriber(ObjectType::Report, Report::"Calculate Inventory", 'OnBeforeInsertItemJnlLine', '', false, false)]
     local procedure CalcInventoryOnBeforeInsertItemJnlLine(var ItemJournalLine: Record "Item Journal Line"; YearEndInventoryAdjust: Boolean; CycleCountUpdate: Boolean)
     begin
@@ -1305,23 +1363,11 @@ codeunit 75010 "BA SEI Subscibers"
             FieldRec.SetRange("No.", MinValue, MaxValue);
     end;
 
-    //test
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnBeforeRunWithCheck', '', false, false)]
     local procedure ItemJnlPostLineOnBeforeRunWithCheck(var ItemJournalLine: Record "Item Journal Line")
-    var
-        ItemJnlTemplate: Record "Item Journal Template";
-        SourceCodeSetup: Record "Source Code Setup";
     begin
-        SingleInstance.SetIsPhysicalInvPosting(false);
-        SourceCodeSetup.Get();
-        if SourceCodeSetup."Phys. Inventory Journal" <> '' then begin
-            ItemJnlTemplate.SetRange("Source Code", SourceCodeSetup."Phys. Inventory Journal");
-            ItemJnlTemplate.SetRange(Type, ItemJnlTemplate.Type::"Phys. Inventory");
-            if ItemJnlTemplate.FindFirst() then
-                SingleInstance.SetIsPhysicalInvPosting(ItemJournalLine."Journal Template Name" = ItemJournalLine."Journal Template Name");
-        end;
         if not IsInventoryApprovalEnabled() or (ItemJournalLine."Journal Template Name" <> 'ITEM') then
             exit;
         ItemJournalLine.TestField("BA Adjust. Reason Code");
@@ -1331,16 +1377,6 @@ codeunit 75010 "BA SEI Subscibers"
             Error(PendingLineError, ItemJournalLine."Line No.");
         if (ItemJournalLine."BA Status" <> ItemJournalLine."BA Status"::Released) and not CheckInventoryLimit(ItemJournalLine) then
             Error(JnlLimitError);
-    end;
-
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Item Jnl.-Post Line", 'OnBeforeCheckItem', '', false, false)]
-    local procedure ItemJnlPostLineOnBeforeCheckItem(ItemNo: Code[20]; var IsHandled: Boolean; var Item: Record Item)
-    begin
-        if SingleInstance.GetIsPhysicalInvPosting() then begin
-            IsHandled := true;
-            if not Item.Get(ItemNo) then
-                Item.Init();
-        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnApproveApprovalRequest', '', false, false)]
