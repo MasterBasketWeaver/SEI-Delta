@@ -2,12 +2,6 @@ tableextension 80049 "BA Item Jnl. Line" extends "Item Journal Line"
 {
     fields
     {
-        modify("Item No.")
-        {
-            TableRelation = if ("Journal Template Name" = const ('PHYS. INVE')) Item."No."
-            else
-            Item."No." where (Blocked = const (false));
-        }
         field(80000; "BA Updated"; Boolean)
         {
             DataClassification = CustomerContent;

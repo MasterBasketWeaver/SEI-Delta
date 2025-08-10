@@ -12,20 +12,6 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
                 exit(Text <> '');
             end;
         }
-        modify("Item No.")
-        {
-            ApplicationArea = all;
-            Visible = false;
-        }
-        addafter("Item No.")
-        {
-            field("BA Item No."; ItemNo)
-            {
-                ApplicationArea = all;
-                Caption = 'Item No.';
-                TableRelation = Item."No." where (Blocked = const (false));
-            }
-        }
         addfirst(Control1)
         {
             field("Line No."; Rec."Line No.")
@@ -155,10 +141,4 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
 
     var
         DateDialog: Label 'Updating\#1##';
-        ItemNo: Code[20];
-
-    trigger OnAfterGetRecord()
-    begin
-        ItemNo := Rec."Item No.";
-    end;
 }
