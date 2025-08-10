@@ -113,8 +113,6 @@ pageextension 80046 "BA Item List" extends "Item List"
                 Enabled = IsBryanUser;
 
                 trigger OnAction()
-                var
-                    Subscribers: Codeunit "BA SEI Subscibers";
                 begin
                     Subscribers.ImportPricingListToUpdate();
                 end;
@@ -130,12 +128,25 @@ pageextension 80046 "BA Item List" extends "Item List"
                 Caption = 'Show All Items';
 
                 trigger OnAction()
-                var
-                    Subscribers: Codeunit "BA SEI Subscibers";
                 begin
                     Rec.FilterGroup(2);
                     Rec.SetRange("BA Hide Visibility");
                     Rec.FilterGroup(0);
+                end;
+            }
+            action("BA Update Bin Contents from Excel")
+            {
+                ApplicationArea = all;
+                Promoted = true;
+                PromotedCategory = Category4;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Image = BinJournal;
+                Caption = 'Update Bin Contents from Excel';
+
+                trigger OnAction()
+                begin
+                    Subscribers.ImportItemUoM();
                 end;
             }
         }
@@ -155,7 +166,9 @@ pageextension 80046 "BA Item List" extends "Item List"
     end;
 
 
+
     var
+        Subscribers: Codeunit "BA SEI Subscibers";
         [InDataSet]
         IsBryanUser: Boolean;
         CountText: Text;

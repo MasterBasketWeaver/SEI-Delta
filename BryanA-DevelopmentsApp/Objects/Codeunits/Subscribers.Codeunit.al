@@ -5857,6 +5857,77 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+
+
+    procedure ImportItemUoM()
+    var
+        ExcelBuffer: Record "Excel Buffer" temporary;
+        ErrorBuffer: Record "Name/Value Buffer" temporary;
+        TempBlob: Record TempBlob;
+        Item: Record Item;
+        BinContent: Record "Bin Content";
+        ItemUoM: Record "Item Unit of Measure";
+        FileMgt: Codeunit "File Management";
+        IStream: InStream;
+        Window: Dialog;
+        RecCount: Integer;
+        i: Integer;
+        i2: Integer;
+        i3: Integer;
+        LastRow: Integer;
+    begin
+        if FileMgt.BLOBImportWithFilter(TempBlob, 'Select Item UoM List', '', 'Excel|*.xlsx', 'Excel|*.xlsx') = '' then
+            exit;
+        TempBlob.Blob.CreateInStream(IStream);
+        if not ExcelBuffer.GetSheetsNameListFromStream(IStream, ErrorBuffer) or not ErrorBuffer.FindFirst() then
+            Error('No Sheets in file.');
+        ExcelBuffer.OpenBookStream(IStream, ErrorBuffer.Value);
+        ExcelBuffer.ReadSheet();
+        ExcelBuffer.SetFilter("Cell Value as Text", '<>%1', '');
+        ExcelBuffer.SetRange("Column No.", 1);
+        ExcelBuffer.FindLast();
+        LastRow := ExcelBuffer."Row No.";
+        Window.Open('Reading Lines/#1####');
+        RecCount := LastRow - 1;
+        for i := 2 to LastRow do begin
+            Window.Update(1, StrSubstNo('%1 of %2', i, RecCount));
+            ExcelBuffer.Get(i, 1);
+            if Item.Get(CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(Item."No."))) then begin
+                ExcelBuffer.Get(i, 4);
+                BinContent.SetRange("Item No.", Item."No.");
+                if BinContent.FindSet() then
+                    repeat
+                        if not ItemUoM.Get(Item."No.", BinContent."Unit of Measure Code") then begin
+                            if not TryToDeleteBinContent(BinContent) then
+                                BinContent.Delete(false);
+                            i2 += 1;
+                        end;
+                    until BinContent.Next() = 0;
+                // BinContent.SetRange("Unit of Measure Code", Item."Base Unit of Measure");
+                // if BinContent.FindFirst() then
+                //     if not BinContent.Default then begin
+                //         BinContent.Validate(Default, true);
+                //         BinContent.Modify(true);
+                //         i3 += 1;
+                //     end;
+            end;
+        end;
+
+        Window.Close();
+        Message('Deleted bins %1, updated default bins: %2', i2, i3);
+    end;
+
+    [TryFunction]
+    local procedure TryToDeleteBinContent(var BinContent: Record "Bin Content")
+    begin
+        BinContent.Delete(true);
+    end;
+
+
+
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
