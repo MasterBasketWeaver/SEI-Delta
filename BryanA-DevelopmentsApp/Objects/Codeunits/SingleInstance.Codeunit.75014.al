@@ -110,6 +110,8 @@ codeunit 75014 "BA Single Instance"
     end;
 
 
+
+
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
         SkipUSDCreditLimit: Boolean;

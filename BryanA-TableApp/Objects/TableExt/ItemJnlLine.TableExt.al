@@ -28,7 +28,6 @@ tableextension 80049 "BA Item Jnl. Line" extends "Item Journal Line"
             Caption = 'Item Tracking Code';
             Editable = false;
         }
-
         field(80011; "BA Adjust. Reason Code"; Code[20])
         {
             DataClassification = CustomerContent;
