@@ -541,7 +541,7 @@ codeunit 75012 "BA Sales Approval Mgt."
         SalesHeader2.SetRange("No.", SalesHeader."No.");
         RecVar := SalesHeader2;
 
-        TryToSendEmail(EmailAddr, Subject, ReportID, EmailBody, RecVar);
+        SendEmail(EmailAddr, Subject, ReportID, EmailBody, RecVar);
     end;
 
     [TryFunction]
@@ -554,11 +554,7 @@ codeunit 75012 "BA Sales Approval Mgt."
             PurchaseHeader."BA Approval Email User ID" := UserIDCode;
             PurchaseHeader.Modify(false);
         end;
-        PurchaseHeader2.SetRange("Document Type", PurchaseHeader."Document Type");
-        PurchaseHeader2.SetRange("No.", PurchaseHeader."No.");
-        RecVar := PurchaseHeader2;
-
-        TryToSendEmail(EmailAddr, Subject, ReportID, EmailBody, RecVar);
+        TryToSendEmail(PurchaseHeader, EmailAddr, Subject, ReportID, EmailBody);
     end;
 
 
@@ -571,16 +567,19 @@ codeunit 75012 "BA Sales Approval Mgt."
         PurchaseHeader2.SetRange("No.", PurchaseHeader."No.");
         PurchaseHeader2.SetRange("Document Type", PurchaseHeader."Document Type");
         RecVar := PurchaseHeader2;
-        TryToSendEmail(EmailAddr, Subject, ReportID, EmailBody, RecVar);
+        SendEmail(EmailAddr, Subject, ReportID, EmailBody, RecVar);
     end;
 
-    local procedure TryToSendEmail(EmailAddr: Text; Subject: Text; ReportID: Integer; var EmailBody: Text; var RecVar: Variant)
+    local procedure SendEmail(EmailAddr: Text; Subject: Text; ReportID: Integer; var EmailBody: Text; var RecVar: Variant)
     var
         SMTPMail: Codeunit "SMTP Mail";
+        Window: Dialog;
     begin
+        Window.Open(SendingMsg);
         EmailBody := GetBodyHTMLText(RecVar, ReportID);
         SMTPMail.CreateMessage('', GetSenderEmail(), EmailAddr, Subject, EmailBody, true);
         SMTPMail.Send;
+        Window.Close();
     end;
 
     procedure SendOrderForInvoicing(var SalesHeader: Record "Sales Header")
@@ -804,6 +803,25 @@ codeunit 75012 "BA Sales Approval Mgt."
         ApprovalEntry.Modify(true);
     end;
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeCreateMailAndDispatch', '', false, false)]
+    local procedure NotificationEntryDispatcherOnBeforeCreateMailAndDispatch(var NotificationEntry: Record "Notification Entry"; var MailSubject: Text)
+    var
+        ApprovalEntry: Record "Approval Entry";
+        PurchaseHeader: Record "Purchase Header";
+    begin
+        if not ApprovalEntry.Get(notificationEntry."Triggered By Record") or (notificationEntry."Recipient User ID" = '') then
+            exit;
+        if PurchaseHeader.Get(ApprovalEntry."Record ID to Approve") then
+            case ApprovalEntry.Status of
+                ApprovalEntry.Status::Open, ApprovalEntry.Status::Created:
+                    MailSubject := StrSubstNo(PurchRequireApprovalSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor Name");
+                ApprovalEntry.Status::Approved:
+                    MailSubject := StrSubstNo(PurchApprovedSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor Name");
+                ApprovalEntry.Status::Rejected:
+                    MailSubject := StrSubstNo(PurchRejectedSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor Name");
+            end
+    end;
+
     local procedure SendPurchaseApprovalEmail(var PurchaseHeader: Record "Purchase Header"): Boolean
     var
         UserSetup: Record "User Setup";
@@ -956,6 +974,11 @@ codeunit 75012 "BA Sales Approval Mgt."
         NoPurchApprovalAdminErr: Label 'Purchaser Approval Admin must be configured before Purchase documents can be sent for approval.';
         SubstitutenotFoundErr: Label 'There is no substitute, direct approver, or approval administrator for user ID %1 in the Approval User Setup window.';
         ApproverUserIdnotInSetupErr: Label 'You must set up an approver for user ID %1 in the Approval User Setup window.';
+        PurchRequireApprovalSubject: Label 'PO %1 - %2 - Requires Approval';
+        PurchApprovedSubject: Label 'PO %1 - %2 - Approved';
+        PurchRejectedSubject: Label 'PO %1 - %2 - Rejected';
+        SendingMsg: Label 'Sending Email...';
+
 
 }
 
