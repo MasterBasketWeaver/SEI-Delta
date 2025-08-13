@@ -246,10 +246,11 @@ report 50080 "BA Physical Inventory Import"
                     AddError(ItemNo, LineNo, StrSubstNo(PurchBlockedError, ItemNo), ErrorBuffer.RecordId);
                     HasError := true;
                 end;
-        if not Bin.Get(LocationCode, BinCode) then begin
-            AddError(ItemNo, LineNo, StrSubstNo(MissingBinErr, BinCode, LocationCode), ErrorBuffer.RecordId);
-            HasError := true;
-        end;
+        if Location."Bin Mandatory" then
+            if not Bin.Get(LocationCode, BinCode) then begin
+                AddError(ItemNo, LineNo, StrSubstNo(MissingBinErr, BinCode, LocationCode), ErrorBuffer.RecordId);
+                HasError := true;
+            end;
         if HasError then
             exit;
         LineNo += 10000;
@@ -302,6 +303,7 @@ report 50080 "BA Physical Inventory Import"
         if ItemJnlLine."Location Code" <> '' then
             LocationCode := ItemJnlLine."Location Code";
         IsUnitCostImport := UnitCostImport;
+        Location.Get(LocationCode);
     end;
 
 
@@ -332,6 +334,7 @@ report 50080 "BA Physical Inventory Import"
 
 
     var
+        Location: Record Location;
         TempBlob: Record TempBlob temporary;
         ErrorBuffer: Record "Name/Value Buffer" temporary;
         FileMgt: Codeunit "File Management";
