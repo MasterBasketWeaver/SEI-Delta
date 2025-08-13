@@ -5858,23 +5858,33 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure CheckForInvalidPrepayRounding(var SalesHeader: Record "Sales Header")
     var
         SalesLine: Record "Sales Line";
+        Amount: Decimal;
         Update: Boolean;
     begin
         SalesLine.SetRange("Document Type", SalesHeader."Document Type");
         SalesLine.SetRange("Document No.", SalesHeader."No.");
         SalesLine.SetFilter("Prepayment Amount", '<>%1', 0);
+        SalesLine.SetFilter("Prepayment %", '<>%1', 0);
         if SalesLine.FindSet(true) then
             repeat
                 Update := false;
-                if SalesLine."Amount Including VAT" <> SalesLine."Prepayment Amount" then begin
-                    SalesLine."Prepayment Amount" := SalesLine."Amount Including VAT";
-                    SalesLine."Prepmt. Amt. Incl. VAT" := SalesLine."Amount Including VAT";
-                    SalesLine."Prepmt. Amount Inv. (LCY)" := SalesLine."Amount Including VAT";
-                    SalesLine."Prepmt. Amount Inv. Incl. VAT" := SalesLine."Amount Including VAT";
+                if SalesLine."Prepayment %" = 100 then
+                    Amount := SalesLine."Amount Including VAT"
+                else
+                    Amount := SalesLine."Amount Including VAT" / SalesLine."Prepayment %" * 100;
+                if Abs(Round(Amount - SalesLine."Prepayment Amount", 0.001)) <= 0.01 then begin
+                    SalesLine."Prepayment Amount" := Amount;
+                    SalesLine."Prepmt. Amt. Incl. VAT" := Amount;
+                    SalesLine."Prepmt. Amount Inv. (LCY)" := Amount;
+                    SalesLine."Prepmt. Amount Inv. Incl. VAT" := Amount;
                     Update := true;
                 end;
-                if SalesLine.Amount <> SalesLine."Prepmt. Line Amount" then begin
-                    SalesLine."Prepmt. Line Amount" := SalesLine.Amount;
+                if SalesLine."Prepayment %" = 100 then
+                    Amount := SalesLine.Amount
+                else
+                    Amount := SalesLine.Amount / SalesLine."Prepayment %" * 100;
+                if Abs(Round(Amount - SalesLine."Prepmt. Line Amount", 0.001)) <= 0.01 then begin
+                    SalesLine."Prepmt. Line Amount" := Amount;
                     Update := true;
                 end;
                 if Update then
