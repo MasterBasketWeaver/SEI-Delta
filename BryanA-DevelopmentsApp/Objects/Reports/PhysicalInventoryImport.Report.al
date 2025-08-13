@@ -80,6 +80,7 @@ report 50080 "BA Physical Inventory Import"
                     Error(NoDocumentNoError);
                 if LocationCode = '' then
                     Error(NoLocationCodeErr);
+                Location.Get(LocationCode);
             end;
             if FilePath = '' then
                 Error(NoFilePathError);
@@ -175,10 +176,12 @@ report 50080 "BA Physical Inventory Import"
                 if Evaluate(Qty, ExcelBuffer."Cell Value as Text") then begin
                     ExcelBuffer.Get(i, 1);
                     ItemNo := CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(ItemJnlLine."Item No."));
-                    ExcelBuffer.Get(i, 2);
-                    BinCode := CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(ItemJnlLine."Bin Code"));
                     ItemJnlLine.SetRange("Item No.", ItemNo);
-                    ItemJnlLine.SetRange("Bin Code", BinCode);
+                    if ExcelBuffer.Get(i, 2) then begin
+                        BinCode := CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(ItemJnlLine."Bin Code"));
+                        ItemJnlLine.SetRange("Bin Code", BinCode);
+                    end else
+                        ItemJnlLine.SetRange("Bin Code");
                     if ItemJnlLine.FindFirst() then
                         UpdateItemJnlLineQty(ItemJnlLine, Qty)
                     else
@@ -244,10 +247,11 @@ report 50080 "BA Physical Inventory Import"
                     AddError(ItemNo, LineNo, StrSubstNo(PurchBlockedError, ItemNo), ErrorBuffer.RecordId);
                     HasError := true;
                 end;
-        if not Bin.Get(LocationCode, BinCode) then begin
-            AddError(ItemNo, LineNo, StrSubstNo(MissingBinErr, BinCode, LocationCode), ErrorBuffer.RecordId);
-            HasError := true;
-        end;
+        if Location."Bin Mandatory" then
+            if not Bin.Get(LocationCode, BinCode) then begin
+                AddError(ItemNo, LineNo, StrSubstNo(MissingBinErr, BinCode, LocationCode), ErrorBuffer.RecordId);
+                HasError := true;
+            end;
         if HasError then
             exit;
         LineNo += 10000;
@@ -330,6 +334,7 @@ report 50080 "BA Physical Inventory Import"
 
 
     var
+        Location: Record Location;
         TempBlob: Record TempBlob temporary;
         ErrorBuffer: Record "Name/Value Buffer" temporary;
         FileMgt: Codeunit "File Management";
