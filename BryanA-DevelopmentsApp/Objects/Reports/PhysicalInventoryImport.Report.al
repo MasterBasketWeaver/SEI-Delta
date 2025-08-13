@@ -80,6 +80,7 @@ report 50080 "BA Physical Inventory Import"
                     Error(NoDocumentNoError);
                 if LocationCode = '' then
                     Error(NoLocationCodeErr);
+                Location.Get(LocationCode);
             end;
             if FilePath = '' then
                 Error(NoFilePathError);
@@ -303,7 +304,6 @@ report 50080 "BA Physical Inventory Import"
         if ItemJnlLine."Location Code" <> '' then
             LocationCode := ItemJnlLine."Location Code";
         IsUnitCostImport := UnitCostImport;
-        Location.Get(LocationCode);
     end;
 
 
