@@ -5858,6 +5858,9 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure CheckForInvalidPrepayRounding(var SalesHeader: Record "Sales Header")
     var
         SalesLine: Record "Sales Line";
+        AmountInclVAT: Decimal;
+        Amount: Decimal;
+        Difference: Decimal;
         Update: Boolean;
     begin
         SalesLine.SetRange("Document Type", SalesHeader."Document Type");
@@ -5866,17 +5869,28 @@ codeunit 75010 "BA SEI Subscibers"
         if SalesLine.FindSet(true) then
             repeat
                 Update := false;
-                if SalesLine."Amount Including VAT" <> SalesLine."Prepayment Amount" then begin
-                    SalesLine."Prepayment Amount" := SalesLine."Amount Including VAT";
-                    SalesLine."Prepmt. Amt. Incl. VAT" := SalesLine."Amount Including VAT";
-                    SalesLine."Prepmt. Amount Inv. (LCY)" := SalesLine."Amount Including VAT";
-                    SalesLine."Prepmt. Amount Inv. Incl. VAT" := SalesLine."Amount Including VAT";
-                    Update := true;
+                if SalesLine."Prepayment %" = 0 then begin
+                    Amount := SalesLine.Amount;
+                    AmountInclVAT := SalesLine."Amount Including VAT";
+                end else begin
+                    Amount := SalesLine.Amount * SalesLine."Prepayment %" / 100;
+                    AmountInclVAT := SalesLine."Amount Including VAT" * SalesLine."Prepayment %" / 100;
                 end;
-                if SalesLine.Amount <> SalesLine."Prepmt. Line Amount" then begin
-                    SalesLine."Prepmt. Line Amount" := SalesLine.Amount;
-                    Update := true;
-                end;
+                Difference := Round(Abs(AmountInclVAT - SalesLine."Prepayment Amount"), 0.01);
+                if Difference > 0 then
+                    if Difference <= 0.01 then begin
+                        SalesLine."Prepayment Amount" := AmountInclVAT;
+                        SalesLine."Prepmt. Amt. Incl. VAT" := AmountInclVAT;
+                        SalesLine."Prepmt. Amount Inv. (LCY)" := AmountInclVAT;
+                        SalesLine."Prepmt. Amount Inv. Incl. VAT" := AmountInclVAT;
+                        Update := true;
+                    end;
+                Difference := Round(Abs(Amount - SalesLine."Prepmt. Line Amount"), 0.01);
+                if Difference > 0 then
+                    if Difference <= 0.01 then begin
+                        SalesLine."Prepmt. Line Amount" := Amount;
+                        Update := true;
+                    end;
                 if Update then
                     SalesLine.Modify(false);
             until SalesLine.Next() = 0;
