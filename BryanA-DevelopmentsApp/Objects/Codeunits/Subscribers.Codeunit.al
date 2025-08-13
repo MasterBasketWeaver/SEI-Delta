@@ -972,35 +972,35 @@ codeunit 75010 "BA SEI Subscibers"
 
     procedure DoesItemJnlHaveMultipleItemLines(var ItemJnlLine: Record "Item Journal Line"): Boolean
     var
-        TempItemJnlLine: Record "Item Journal Line" temporary;
+        ItemJnlLine2: Record "Item Journal Line";
+        Window: Dialog;
         ItemNos: List of [Code[20]];
+        ItemNos2: List of [Code[20]];
         ItemNo: Code[20];
-        HasWarnings: Boolean;
+        Result: Boolean;
     begin
         if ItemJnlLine.IsEmpty() then
             exit(false);
-        ItemJnlLine.SetFilter("BA Warning Message", '<>%1', '');
-        ItemJnlLine.ModifyAll("BA Warning Message", '');
-        ItemJnlLine.SetRange("BA Warning Message");
-        if not ItemJnlLine.FindSet() then
+        ItemJnlLine2.CopyFilters(ItemJnlLine);
+        if not ItemJnlLine2.FindSet(true) then
             exit(false);
+        Window.Open('Checking for Duplicate Items...');
         repeat
-            if ItemNos.Contains(ItemJnlLine."Item No.") then begin
-                TempItemJnlLine := ItemJnlLine;
-                TempItemJnlLine.Insert(false);
+            if ItemNos.Contains(ItemJnlLine2."Item No.") then begin
+                if not ItemNos2.Contains(ItemJnlLine2."Item No.") then
+                    ItemNos2.Add(ItemJnlLine2."Item No.");
             end else
-                ItemNos.Add(ItemJnlLine."Item No.");
-        until ItemJnlLine.Next() = 0;
-        if not TempItemJnlLine.FindSet() then
-            exit(false);
-        repeat
-            ItemJnlLine.SetRange("Item No.", TempItemJnlLine."Item No.");
-            if ItemJnlLine.Count() > 1 then begin
-                HasWarnings := true;
-                ItemJnlLine.ModifyAll("BA Warning Message", StrSubstNo(MultiItemMsg, TempItemJnlLine."Item No."));
-            end;
-        until TempItemJnlLine.Next() = 0;
-        exit(HasWarnings);
+                ItemNos.Add(ItemJnlLine2."Item No.");
+            ItemJnlLine2."BA Warning Message" := '';
+            ItemJnlLine2.Modify(false);
+        until ItemJnlLine2.Next() = 0;
+        Result := ItemNos2.Count() > 0;
+        foreach ItemNo in ItemNos2 do begin
+            ItemJnlLine2.SetRange("Item No.", ItemNo);
+            ItemJnlLine2.ModifyAll("BA Warning Message", StrSubstNo(MultiItemMsg, ItemNo));
+        end;
+        Window.Close();
+        exit(Result);
     end;
 
     [EventSubscriber(ObjectType::Page, Page::"Phys. Inventory Journal", 'OnAfterActionEvent', 'CalculateInventory', false, false)]
