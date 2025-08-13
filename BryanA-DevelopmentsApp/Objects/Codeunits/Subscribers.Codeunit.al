@@ -3452,11 +3452,13 @@ codeunit 75010 "BA SEI Subscibers"
             UpdateSalesHeaderCustomerFields(Rec, Customer);
     end;
 
+
     local procedure UpdateSalesHeaderCustomerFields(var SalesHeader: Record "Sales Header"; var Customer: Record Customer)
     begin
         SalesHeader.Validate("BA EORI No.", Customer."BA EORI No.");
         SalesHeader.Validate("BA New Business Expiry", Customer."BA New Business Expiry");
         SalesHeader.Validate("BA New Business Qualified", Customer."BA New Business Qualified");
+        SalesHeader.Validate("BA Ship-to Email", Customer."BA Ship-to Email");
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Service Header", 'OnAfterValidateEvent', 'Customer No.', false, false)]
@@ -3469,6 +3471,7 @@ codeunit 75010 "BA SEI Subscibers"
             Rec.Validate("Ship-to E-mail", Customer."BA Ship-to Email");
         end;
     end;
+
 
 
     local procedure CheckPromisedDeliveryDate(var SalesHeader: Record "Sales Header")
