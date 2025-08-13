@@ -1,12 +1,40 @@
-report 50091 "BA Sales Order Approval Note."
+report 50091 "BA Approved Notification"
 {
-    Caption = 'Sales Order Approval Notification';
+    Caption = 'Sales/Purch. Order Approval Notification';
     UseRequestPage = false;
-    WordLayout = './Objects/ReportLayouts/SalesOrderApprovalNote.docx';
+    WordLayout = './Objects/ReportLayouts/ApprovedNotification.docx';
     DefaultLayout = Word;
 
     dataset
     {
+        dataitem(PurchaseHeader; "Purchase Header")
+        {
+            trigger OnAfterGetRecord()
+            var
+                ApprovalRejection: Record "BA Approval Rejection";
+            begin
+                if not UsePurchase then
+                    exit;
+                PageURL := GetUrl(ClientType::Windows, CompanyName(), ObjectType::Page, Page::"Purchase Order", PurchaseHeader);
+                URLCaption := StrSubstNo(PurchUrlLbl, PurchaseHeader."No.");
+                Username := GetUserFullName(PurchaseHeader."Assigned User ID");
+                DocNo := PurchaseHeader."No.";
+                DocType := 'Purchase';
+                SourceType := 'Vendor';
+                SourceNo := PurchaseHeader."Buy-from Vendor No.";
+                SourceName := PurchaseHeader."Buy-from Vendor Name";
+                if PurchaseHeader."BA Appr. Reject. Reason Code" <> '' then begin
+                    ApprovalAction := RejectedLbl;
+                    ApprovalRejection.Get(PurchaseHeader."BA Appr. Reject. Reason Code");
+                    if ApprovalRejection.Description <> '' then
+                        RejectReason := ApprovalRejection.Description
+                    else
+                        RejectReason := ApprovalRejection.Code;
+                    RejectReason := StrSubstNo('Rejection Reason: %1', RejectReason);
+                end else
+                    ApprovalAction := ApprovedLbl;
+            end;
+        }
         dataitem(SalesHeader; "Sales Header")
         {
             column(No; "No.") { }

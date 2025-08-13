@@ -73,5 +73,16 @@ pageextension 80030 "BA Purchase Order" extends "Purchase Order"
                 Caption = 'Country';
             }
         }
+        addafter(Status)
+        {
+            field("BA Appr. Reject. Reason Code"; "BA Appr. Reject. Reason Code")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Rejection Reason"; "BA Rejection Reason")
+            {
+                ApplicationArea = all;
+            }
+        }
     }
 }

@@ -10,6 +10,8 @@ report 50089 "BA Prod. Order Approval"
         dataitem(PurchaseHeader; "Purchase Header")
         {
             trigger OnAfterGetRecord()
+            var
+                ApprovalRejection: Record "BA Approval Rejection";
             begin
                 if not UsePurchase then
                     exit;
@@ -21,7 +23,16 @@ report 50089 "BA Prod. Order Approval"
                 SourceType := 'Vendor';
                 SourceNo := PurchaseHeader."Buy-from Vendor No.";
                 SourceName := PurchaseHeader."Buy-from Vendor Name";
-                ApprovalAction := ApprovedLbl;
+                if PurchaseHeader."BA Appr. Reject. Reason Code" <> '' then begin
+                    ApprovalAction := RejectedLbl;
+                    ApprovalRejection.Get(PurchaseHeader."BA Appr. Reject. Reason Code");
+                    if ApprovalRejection.Description <> '' then
+                        RejectReason := ApprovalRejection.Description
+                    else
+                        RejectReason := ApprovalRejection.Code;
+                    RejectReason := StrSubstNo('Rejection Reason: %1', RejectReason);
+                end else
+                    ApprovalAction := ApprovedLbl;
             end;
         }
         dataitem(SalesHeader; "Sales Header")
