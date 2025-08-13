@@ -175,10 +175,12 @@ report 50080 "BA Physical Inventory Import"
                 if Evaluate(Qty, ExcelBuffer."Cell Value as Text") then begin
                     ExcelBuffer.Get(i, 1);
                     ItemNo := CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(ItemJnlLine."Item No."));
-                    ExcelBuffer.Get(i, 2);
-                    BinCode := CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(ItemJnlLine."Bin Code"));
                     ItemJnlLine.SetRange("Item No.", ItemNo);
-                    ItemJnlLine.SetRange("Bin Code", BinCode);
+                    if ExcelBuffer.Get(i, 2) then begin
+                        BinCode := CopyStr(ExcelBuffer."Cell Value as Text", 1, MaxStrLen(ItemJnlLine."Bin Code"));
+                        ItemJnlLine.SetRange("Bin Code", BinCode);
+                    end else
+                        ItemJnlLine.SetRange("Bin Code");
                     if ItemJnlLine.FindFirst() then
                         UpdateItemJnlLineQty(ItemJnlLine, Qty)
                     else
