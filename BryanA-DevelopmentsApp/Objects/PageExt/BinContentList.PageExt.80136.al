@@ -41,15 +41,16 @@ pageextension 80136 "BA Bin Content List" extends "Bin Contents List"
     begin
         if not Calculated.ContainsKey(Rec.RecordId()) then begin
             Rec.CalcFields(Quantity);
-            if Rec.Quantity <> 0 then
-                HasSerialEntries := Subscribers.GetMatchingWhseEntriesBySerialNo(EntryNos, Rec."Item No.", Rec."Bin Code", Rec."Location Code",
-                    Rec."Variant Code", Rec."Unit of Measure Code");
+            if Rec.Quantity <> 0 then begin
+                HasSerialEntries := Subscribers.GetMatchingWhseEntriesBySerialNo(EntryNos, Rec."Item No.", Rec."Bin Code", Rec."Location Code", Rec."Variant Code", Rec."Unit of Measure Code");
+                EntryNoLists.Add(Rec.RecordId, EntryNos);
+            end;
             Calculated.Add(Rec.RecordId(), HasSerialEntries);
         end else
             HasSerialEntries := Calculated.Get(Rec.RecordId());
 
-        if HasSerialEntries then
-            SerialNoDisplay := 'Yes'
+        if HasSerialEntries and EntryNoLists.Get(Rec.RecordId(), EntryNos) then
+            SerialNoDisplay := StrSubstNo('Yes (%1)', EntryNos.Count())
         else
             SerialNoDisplay := 'No';
     end;
