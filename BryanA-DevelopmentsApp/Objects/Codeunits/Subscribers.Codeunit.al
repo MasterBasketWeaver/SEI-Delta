@@ -5995,17 +5995,13 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnUpdateDefaultBinContentOnBeforeBinContentModify', '', false, false)]
-    local procedure WhseJnlRegisterLineOnUpdateDefaultBinContentOnBeforeBinContentModify(var BinContent: Record "Bin Content")
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnBeforeUpdateDefaultBinContent', '', false, false)]
+    local procedure WhseJnlRegisterLineOnBeforeUpdateDefaultBinContent(var IsHandled: Boolean)
     begin
-        BinContent.Default := true;
+        IsHandled := true;
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnUpdateDefaultBinContentOnBeforeBinContent2Modify', '', false, false)]
-    local procedure WhseJnlRegisterLineOnUpdateDefaultBinContentOnBeforeBinContent2Modify(var BinContent: Record "Bin Content")
-    begin
-        BinContent.Default := false;
-    end;
+
 
 
 
