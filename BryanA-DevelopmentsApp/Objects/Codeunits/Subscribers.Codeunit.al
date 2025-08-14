@@ -5978,13 +5978,6 @@ codeunit 75010 "BA SEI Subscibers"
                             i2 += 1;
                         end;
                     until BinContent.Next() = 0;
-                // BinContent.SetRange("Unit of Measure Code", Item."Base Unit of Measure");
-                // if BinContent.FindFirst() then
-                //     if not BinContent.Default then begin
-                //         BinContent.Validate(Default, true);
-                //         BinContent.Modify(true);
-                //         i3 += 1;
-                //     end;
             end;
         end;
 
@@ -5999,6 +5992,27 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnUpdateDefaultBinContentOnBeforeBinContentModify', '', false, false)]
+    local procedure WhseJnlRegisterLineOnUpdateDefaultBinContentOnBeforeBinContentModify(var BinContent: Record "Bin Content")
+    begin
+        BinContent.Default := true;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnUpdateDefaultBinContentOnBeforeBinContent2Modify', '', false, false)]
+    local procedure WhseJnlRegisterLineOnUpdateDefaultBinContentOnBeforeBinContent2Modify(var BinContent: Record "Bin Content")
+    begin
+        BinContent.Default := false;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnDeleteFromBinContentOnAfterSetFiltersForWhseEntry', '', false, false)]
+    local procedure WhseJnlRegisterLineOnDeleteFromBinContentOnAfterSetFiltersForWhseEntry(var BinContent: Record "Bin Content")
+    begin
+        if BinContent.Default then
+            BinContent."Fixed" := true;
+    end;
 
 
 
