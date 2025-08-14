@@ -6070,13 +6070,6 @@ codeunit 75010 "BA SEI Subscibers"
                             i2 += 1;
                         end;
                     until BinContent.Next() = 0;
-                // BinContent.SetRange("Unit of Measure Code", Item."Base Unit of Measure");
-                // if BinContent.FindFirst() then
-                //     if not BinContent.Default then begin
-                //         BinContent.Validate(Default, true);
-                //         BinContent.Modify(true);
-                //         i3 += 1;
-                //     end;
             end;
         end;
 
@@ -6091,6 +6084,27 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnUpdateDefaultBinContentOnBeforeBinContentModify', '', false, false)]
+    local procedure WhseJnlRegisterLineOnUpdateDefaultBinContentOnBeforeBinContentModify(var BinContent: Record "Bin Content")
+    begin
+        BinContent.Default := true;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnUpdateDefaultBinContentOnBeforeBinContent2Modify', '', false, false)]
+    local procedure WhseJnlRegisterLineOnUpdateDefaultBinContentOnBeforeBinContent2Modify(var BinContent: Record "Bin Content")
+    begin
+        BinContent.Default := false;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnDeleteFromBinContentOnAfterSetFiltersForWhseEntry', '', false, false)]
+    local procedure WhseJnlRegisterLineOnDeleteFromBinContentOnAfterSetFiltersForWhseEntry(var BinContent: Record "Bin Content")
+    begin
+        if BinContent.Default then
+            BinContent."Fixed" := true;
+    end;
 
 
 
@@ -6144,7 +6158,6 @@ codeunit 75010 "BA SEI Subscibers"
         NonServiceCustomerErr: Label '%1 can only be sold to Service Center customers.';
         UpdateItemManfDeptConf: Label 'Would you like to update the %1 listed on the Item Card?';
         PendingApprovalErr: Label 'Cannot set as Barbados Order as there is one or more pending approval requests.';
-        SEIFuncAppName: Label 'BryanA - SEI Functionality by BryanA BC Developments Inc.';
         NoPromDelDateErr: Label '%1 must be assigned before invoicing.\Please have the sales staff fill in the %1.';
         UpdateReasonCodeMsg: Label 'Please update the %1 field to a new value.';
         SalesPricePermissionErr: Label 'You do not have permission to edit Sales Prices.';
@@ -6155,11 +6168,7 @@ codeunit 75010 "BA SEI Subscibers"
         MultiShipmentDateMsg: Label 'Sales Order %1 has multiple Shipment Dates setup.\Do you want to update all Shipment Dates to have the same date?';
         PaymentTermsPermErr: Label 'You do not have permission to change Payment Terms.';
         ServiceItemWarrantyError: Label 'You cannot change the warranty information when a value has been specified in the %1 field.';
-        BlockedDimErr: Label 'Dimension %1 %2 on line %3 is blocked.';
-        InactiveDimErr: Label 'Dimension %1 %2 on line %3 is inactive.';
         DeleteOrderErr: Label 'Order deletion is not authorized. Please contact your NAV / Business Central System Administrator to request permission and reason for the order deletion.';
-        SingleRepairCodeErr: Label 'Repair Status must be set to %1 for all Service Item Lines before %2 can be posted';
-        MultiRepairCodeErr: Label 'Repair Status must be set to one of the following for all Service Item Lines before %1 can be posted:\%2';
         NotVerifiedSalespersonErr: Label 'Salesperson must be verified before %1 %2 can be specified.';
         DisablesSalesOrderDayErr: Label 'Sales Order creation is disabled on %1''s.';
         EarlyCreateErr: Label 'Cannot create Sales Orders before %1.';
@@ -6167,12 +6176,10 @@ codeunit 75010 "BA SEI Subscibers"
         LateStartTimeErr: Label 'Restrict Start Time must be earlier than Restrict End Time: %1';
         EarlyStartTimeErr: Label 'Restrict End Time must be later than Restrict Start Time: %1';
         DeactivateItemErr: Label 'You do not have permission to change item visibility.';
-        NoBookingDateErr: Label 'Booking Date on line %1 must be specified.';
         InsufficientProdLineInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2, on inventory.';
         InsufficientProdLinesInventoryErr: Label 'You have insufficient quantity of Item %1, on Line No. %2%3 and %4, on inventory.';
         NoStandardCostErr: Label '%1 %2 cannot be posted.\Item "%3" does not have a standard cost setup.\Please contact engineering staff.';
         ComponentNoStandardCostErr: Label '%1 %2 cannot be posted.\Component Item "%3" for Item "%4" does not have a standard cost setup.\Please contact engineering staff.';
-        PartialPrepayAmtErr: Label 'Cannot post %1 %2 with partial prepay amount.';
         ExistingItemLedgerEntriesErr: Label 'You cannot delete %1 %2 because it has related ledger entries.';
 }
 
