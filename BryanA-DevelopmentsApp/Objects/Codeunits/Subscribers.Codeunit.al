@@ -6007,12 +6007,6 @@ codeunit 75010 "BA SEI Subscibers"
         BinContent.Default := false;
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnDeleteFromBinContentOnAfterSetFiltersForWhseEntry', '', false, false)]
-    local procedure WhseJnlRegisterLineOnDeleteFromBinContentOnAfterSetFiltersForWhseEntry(var BinContent: Record "Bin Content")
-    begin
-        if BinContent.Default then
-            BinContent."Fixed" := true;
-    end;
 
 
 
