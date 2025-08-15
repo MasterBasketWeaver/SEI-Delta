@@ -10,6 +10,8 @@ report 50089 "BA Prod. Order Approval"
         dataitem(PurchaseHeader; "Purchase Header")
         {
             trigger OnAfterGetRecord()
+            var
+                ApprovalRejection: Record "BA Approval Rejection";
             begin
                 if not UsePurchase then
                     exit;
@@ -21,7 +23,24 @@ report 50089 "BA Prod. Order Approval"
                 SourceType := 'Vendor';
                 SourceNo := PurchaseHeader."Buy-from Vendor No.";
                 SourceName := PurchaseHeader."Buy-from Vendor Name";
-                ApprovalAction := ApprovedLbl;
+                if PurchaseHeader."BA Appr. Reject. Reason Code" <> '' then begin
+                    ApprovalAction := RejectedLbl;
+                    ApprovalRejection.Get(PurchaseHeader."BA Appr. Reject. Reason Code");
+                    if ApprovalRejection.Description <> '' then
+                        RejectReason := ApprovalRejection.Description
+                    else
+                        RejectReason := ApprovalRejection.Code;
+                    RejectReason := StrSubstNo('Rejection Reason: %1', RejectReason);
+                end else
+                    ApprovalAction := ApprovedLbl;
+                PurchaseHeader.CalcFields("Amount Including VAT");
+                if PurchaseHeader."Currency Code" = '' then begin
+                    GLSetup.Get();
+                    GLSetup.TestField("LCY Code");
+                    CurrencyCode := GLSetup."LCY Code";
+                end else
+                    CurrencyCode := PurchaseHeader."Currency Code";
+                AmountText := StrSubstNo(AmountLbl, CurrencyCode, PurchaseHeader."Amount Including VAT");
             end;
         }
         dataitem(SalesHeader; "Sales Header")
@@ -43,8 +62,7 @@ report 50089 "BA Prod. Order Approval"
             trigger OnAfterGetRecord()
             var
                 ApprovalRejection: Record "BA Approval Rejection";
-                GLSetup: Record "General Ledger Setup";
-                CurrencyCode: Code[10];
+
             begin
                 if UsePurchase then
                     exit;
@@ -104,6 +122,7 @@ report 50089 "BA Prod. Order Approval"
 
 
     var
+        GLSetup: Record "General Ledger Setup";
         Username: Text;
         RejectReason: Text;
         ApprovalAction: Text;
@@ -115,6 +134,7 @@ report 50089 "BA Prod. Order Approval"
         SourceNo: Text;
         SourceName: Text;
         SourceType: Text;
+        CurrencyCode: Code[10];
         UsePurchase: Boolean;
 
 

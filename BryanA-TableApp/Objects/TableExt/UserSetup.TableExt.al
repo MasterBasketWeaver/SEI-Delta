@@ -2,6 +2,14 @@ tableextension 80024 "BA User Setup" extends "User Setup"
 {
     fields
     {
+        modify("Approval Administrator")
+        {
+            Caption = 'Sales Approval Admin.';
+        }
+        modify("Approver ID")
+        {
+            Caption = 'Sales Approver ID';
+        }
         field(80000; "BA Job Title"; Text[50])
         {
             DataClassification = CustomerContent;
@@ -111,7 +119,7 @@ tableextension 80024 "BA User Setup" extends "User Setup"
         field(80140; "BA Purch. Approval Admin"; Boolean)
         {
             DataClassification = CustomerContent;
-            Caption = 'Purchase Approval Admin';
+            Caption = 'Purchase Approval Admin.';
 
             trigger OnValidate()
             var
@@ -123,6 +131,20 @@ tableextension 80024 "BA User Setup" extends "User Setup"
                 UserSetup.SetRange("BA Purch. Approval Admin", true);
                 if UserSetup.FindFirst() then
                     Error(ExistingPurchAdminErr, Rec.FieldCaption("BA Purch. Approval Admin"), UserSetup."User ID");
+            end;
+        }
+        field(80141; "BA Purch. Approver ID"; Code[50])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Purchase Approver ID';
+            TableRelation = "User Setup"."User ID";
+
+            trigger OnValidate()
+            var
+                UserSetup: Record "User Setup";
+            begin
+                if Rec."BA Purch. Approver ID" = Rec."User ID" then
+                    FieldError("BA Purch. Approver ID");
             end;
         }
     }
