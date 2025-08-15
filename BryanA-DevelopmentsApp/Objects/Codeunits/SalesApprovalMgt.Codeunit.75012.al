@@ -346,7 +346,7 @@ codeunit 75012 "BA Sales Approval Mgt."
     var
         ApprovalEntry: Record "Approval Entry";
     begin
-        if ApprovalEntry.Get(NotificationEntry."Triggered By Record") and (NotificationEntry."Recipient User ID" = '') then
+        if ApprovalEntry.Get(NotificationEntry."Triggered By Record") and (NotificationEntry."Recipient User ID" <> '') then
             case ApprovalEntry."Record ID to Approve".TableNo() of
                 Database::"Sales Header":
                     CheckToCatchDefaultSalesNotificationEmails(NotificationEntry, ApprovalEntry, IsHandled, Result, BodyTextOut);
@@ -404,34 +404,48 @@ codeunit 75012 "BA Sales Approval Mgt."
         EmailBody: Text;
         Subject: Text;
         ReportID: Integer;
+        SendEmail: Boolean;
     begin
+
+
         if not PurchaseHeader.Get(ApprovalEntry."Record ID to Approve") then
             exit;
         if PurchaseHeader."Document Type" <> PurchaseHeader."Document Type"::Order then
             exit;
 
-        if (PurchaseHeader."Assigned User ID" = NotificationEntry."Recipient User ID") and (ApprovalEntry.Status = ApprovalEntry.Status::Rejected) then begin
-            if not UserSetup.Get(PurchaseHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
-                exit;
+        IsHandled := true;
+        Result := false;
+        NotificationEntry.Delete(true);
+        exit;
 
-            Subject := StrSubstNo(RejectionEmailSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
-            ReportID := Report::"BA Prod. Order Approval";
-        end else begin
-            UserSetup.SetRange("User ID", NotificationEntry."Recipient User ID");
-            UserSetup.SetRange("BA Purch. Approval Admin", true);
-            UserSetup.SetFilter("E-Mail", '<>%1', '');
-            if not UserSetup.FindFirst() then
-                exit;
+        if PurchaseHeader."Assigned User ID" <> NotificationEntry."Recipient User ID" then
+            exit;
+        if not UserSetup.Get(PurchaseHeader."Assigned User ID") or (UserSetup."E-Mail" = '') then
+            exit;
 
-            Subject := StrSubstNo(ApprovalRequestSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
-            ReportID := Report::"BA Approved Notification";
+        case ApprovalEntry.Status of
+            ApprovalEntry.Status::Rejected:
+                begin
+                    Subject := StrSubstNo(RejectionEmailSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
+                    ReportID := Report::"BA Prod. Order Approval";
+                    SendEmail := true;
+                end;
+            ApprovalEntry.Status::Approved:
+                begin
+                    Subject := StrSubstNo(ApprovalRequestSubject, PurchaseHeader."No.", PurchaseHeader."Buy-from Vendor No.", PurchaseHeader."Buy-from Vendor Name");
+                    ReportID := Report::"BA Approved Notification";
+                    SendEmail := true;
+                end;
         end;
-        if not TryToSendEmail(PurchaseHeader, UserSetup."E-Mail", Subject, ReportID, EmailBody) then begin
-            NotificationEntry.SeterrorMessage(GetLasterrorText());
-            ClearLasterror();
-            NotificationEntry.Modify(true);
-        end else
-            NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
+
+
+        if SendEmail then
+            if not TryToSendEmail(PurchaseHeader, UserSetup."E-Mail", Subject, ReportID, EmailBody) then begin
+                NotificationEntry.SeterrorMessage(GetLasterrorText());
+                ClearLasterror();
+                NotificationEntry.Modify(true);
+            end else
+                NotificationMgt.MoveNotificationEntryToSentNotificationEntries(NotificationEntry, EmailBody, true, 0);
         IsHandled := true;
         Result := false;
     end;
