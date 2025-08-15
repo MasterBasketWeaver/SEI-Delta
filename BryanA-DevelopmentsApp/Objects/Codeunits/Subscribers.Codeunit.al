@@ -6076,15 +6076,6 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnBeforeUpdateDefaultBinContent', '', false, false)]
-    local procedure WhseJnlRegisterLineOnBeforeUpdateDefaultBinContent(var IsHandled: Boolean)
-    begin
-        IsHandled := true;
-    end;
-
-
-
-
 
 
     var
