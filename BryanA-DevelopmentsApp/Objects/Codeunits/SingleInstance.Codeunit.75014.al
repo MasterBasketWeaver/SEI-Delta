@@ -111,6 +111,17 @@ codeunit 75014 "BA Single Instance"
 
 
 
+    procedure GetSkipBlockedItem(): Boolean
+    begin
+        exit(SkipBlockedItem);
+    end;
+
+    procedure SetSkipBlockedItem(NewValue: Boolean)
+    begin
+        SkipBlockedItem := NewValue;
+    end;
+
+
 
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
@@ -120,4 +131,5 @@ codeunit 75014 "BA Single Instance"
         IsPurchPosting: Boolean;
         SkipLedgerLineSave: Boolean;
         SkipCreditLimitUpdate: Boolean;
+        SkipBlockedItem: Boolean;
 }

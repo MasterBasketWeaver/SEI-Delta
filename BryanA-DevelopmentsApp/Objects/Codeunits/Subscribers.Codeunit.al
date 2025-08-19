@@ -5283,18 +5283,30 @@ codeunit 75010 "BA SEI Subscibers"
         UserSetup: Record "User Setup";
         ItemBlockedReason: Page "BA Item Block Reason";
     begin
-        if Rec."BA Skip Blocked Reason" then
+        if Rec."BA Skip Blocked Reason" or SingleInstance.GetSkipBlockedItem() then
             exit;
         if Rec.Blocked then begin
             if ItemBlockedReason.RunModal() <> Action::OK then
                 Error('');
             Rec."Block Reason" := ItemBlockedReason.GetBlockedReason();
             if Rec."Block Reason" = '' then
-                Error('Block reason must be specified when blocking an item.');
+                Error(NoBlockReasonErr);
         end;
         Rec."BA Block Last Updated" := CurrentDateTime();
         Rec."BA Block Updated By" := UserId();
         Rec.Modify(true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Config. Package Management", 'OnModifyRecordDataFieldsOnBeforeFindConfigPackageField', '', false, false)]
+    local procedure ConfigPackageMgtOnModifyRecordDataFieldsOnBeforeFindConfigPackageField(RecRef: RecordRef)
+    begin
+        SingleInstance.SetSkipBlockedItem(true);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Config. Package Management", 'OnModifyRecordDataFieldsOnAfterFindConfigPackageField', '', false, false)]
+    local procedure ConfigPackageMgtOnModifyRecordDataFieldsOnAfterFindConfigPackageField(RecRef: RecordRef)
+    begin
+        SingleInstance.SetSkipBlockedItem(false);
     end;
 
 
@@ -6151,5 +6163,6 @@ codeunit 75010 "BA SEI Subscibers"
         NoStandardCostErr: Label '%1 %2 cannot be posted.\Item "%3" does not have a standard cost setup.\Please contact engineering staff.';
         ComponentNoStandardCostErr: Label '%1 %2 cannot be posted.\Component Item "%3" for Item "%4" does not have a standard cost setup.\Please contact engineering staff.';
         ExistingItemLedgerEntriesErr: Label 'You cannot delete %1 %2 because it has related ledger entries.';
+        NoBlockReasonErr: Label 'Block reason must be specified when blocking an item.';
 }
 
