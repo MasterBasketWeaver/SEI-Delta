@@ -153,11 +153,14 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
                 var
                     BlockedItem: Record "BA Blocked Item";
                     Subscribers: Codeunit "BA SEI Subscibers";
+                    Window: Dialog;
                     RecCount: Integer;
                 begin
                     RecCount := BlockedItem.Count();
                     if RecCount <> 0 then begin
+                        Window.Open('Reseting blocked items...');
                         Subscribers.ResetBlockedItems();
+                        Window.Close();
                         Message('Reset %1 blocked items.', RecCount);
                     end else
                         Message('No blocked Items to reset');
