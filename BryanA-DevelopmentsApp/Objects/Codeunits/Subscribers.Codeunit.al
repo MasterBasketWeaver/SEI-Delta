@@ -908,7 +908,7 @@ codeunit 75010 "BA SEI Subscibers"
                 ResetBlockedItems();
     end;
 
-    local procedure ResetBlockedItems()
+    procedure ResetBlockedItems()
     var
         BlockedItem: Record "BA Blocked Item";
         Item: Record Item;
