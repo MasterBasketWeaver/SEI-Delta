@@ -35,8 +35,27 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateCustomerApprovalGroups();
         // PopulateProdOrderNotificationReportUsage();
         // PopulateItemBinCount();
+        // PopulateSalesItemCosts();
 
-        PopulateSalesItemCosts();
+        DeleteInvalidBinContentUoM();
+    end;
+
+
+    local procedure DeleteInvalidBinContentUoM()
+    var
+        Item: Record Item;
+        ItemUnitOfMeasure: Record "Item Unit of Measure";
+        BinContent: Record "Bin Content";
+    begin
+        if Item.FindSet() then
+            repeat
+                BinContent.SetRange("Item No.", Item."No.");
+                if BinContent.FindSet() then
+                    repeat
+                        if not ItemUnitOfMeasure.Get(BinContent."Item No.", BinContent."Unit of Measure Code") then
+                            BinContent.Delete(true);
+                    until BinContent.Next() = 0;
+            until Item.Next() = 0;
     end;
 
     local procedure PopulateSalesItemCosts()
