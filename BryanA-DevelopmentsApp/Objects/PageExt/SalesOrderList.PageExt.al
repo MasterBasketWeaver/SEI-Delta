@@ -71,5 +71,15 @@ pageextension 80121 "BA Sales Order List" extends "Sales Order List"
                 end;
             }
         }
+        addlast(Navigation)
+        {
+            action("BA Item Reclassification Journal")
+            {
+                ApplicationArea = all;
+                Image = BinJournal;
+                Caption = 'Item Reclassification Journal';
+                RunObject = page "Item Reclass. Journal";
+            }
+        }
     }
 }
