@@ -36,8 +36,7 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateProdOrderNotificationReportUsage();
         // PopulateItemBinCount();
         // PopulateSalesItemCosts();
-
-        DeleteInvalidBinContentUoM();
+        // DeleteInvalidBinContentUoM();
     end;
 
 
