@@ -56,7 +56,6 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
     {
         addlast(Processing)
         {
-
             action("BA Update Posting Date")
             {
                 ApplicationArea = all;
@@ -134,6 +133,37 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
                     ItemJnlLine.SetFilter("BA Warning Message", '<>%1', '');
                     ErrorPage.PopulateRecords(ItemJnlLine);
                     ErrorPage.RunModal();
+                end;
+            }
+        }
+        addafter(CalculateInventory)
+        {
+            action("BA Reset Blocked Items")
+            {
+                ApplicationArea = all;
+                Promoted = true;
+                Image = Restore;
+                PromotedCategory = Category5;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Caption = 'Reset Blocked Items';
+                ToolTip = 'Re-blocks any items that were unblocked during the Calculate Inventory action.';
+
+                trigger OnAction()
+                var
+                    BlockedItem: Record "BA Blocked Item";
+                    Subscribers: Codeunit "BA SEI Subscibers";
+                    Window: Dialog;
+                    RecCount: Integer;
+                begin
+                    RecCount := BlockedItem.Count();
+                    if RecCount <> 0 then begin
+                        Window.Open('Reseting blocked items...');
+                        Subscribers.ResetBlockedItems();
+                        Window.Close();
+                        Message('Reset %1 blocked items.', RecCount);
+                    end else
+                        Message('No blocked Items to reset');
                 end;
             }
         }
