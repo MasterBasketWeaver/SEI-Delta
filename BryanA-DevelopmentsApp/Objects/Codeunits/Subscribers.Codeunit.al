@@ -6098,13 +6098,13 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Create Inventory Pick/Movement", 'OnBeforeFindSalesLine', '', false, false)]
-    local procedure CreateInventoryPickMovementOnBeforeFindSalesLine(var SalesLine: Record "Sales Line")
+    local procedure CreateInventoryPickMovementOnBeforeFindSalesLine(var SalesLine: Record "Sales Line"; SalesHeader: Record "Sales Header")
     var
         BinContent: Record "Bin Content";
         WarningText: TextBuilder;
         AvailableQty: Decimal;
     begin
-        if SalesLine."Document Type" <> SalesLine."Document Type"::Order then
+        if SalesHeader."Document Type" <> SalesHeader."Document Type"::Order then
             exit;
         SalesLine.SetFilter("Bin Code", '<>%1', '');
         if SalesLine.FindSet() then
@@ -6199,7 +6199,7 @@ codeunit 75010 "BA SEI Subscibers"
         ComponentNoStandardCostErr: Label '%1 %2 cannot be posted.\Component Item "%3" for Item "%4" does not have a standard cost setup.\Please contact engineering staff.';
         ExistingItemLedgerEntriesErr: Label 'You cannot delete %1 %2 because it has related ledger entries.';
         NoBlockReasonErr: Label 'Block reason must be specified when blocking an item.';
-        BinContentAvailableQtyMsg: Label 'Line %1, Item %2, Bin %3: Available: %4 Requested: %5';
+        BinContentAvailableQtyMsg: Label 'Line %1, Item %2, Bin %3 -> Available: %4, Requested: %5';
         BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested, do you want to continue?\\%1';
 }
 
