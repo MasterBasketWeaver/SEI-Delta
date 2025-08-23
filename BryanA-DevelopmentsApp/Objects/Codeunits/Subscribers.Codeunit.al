@@ -6108,7 +6108,7 @@ codeunit 75010 "BA SEI Subscibers"
         RecID: RecordId;
         AvailableQty: Decimal;
     begin
-        if SalesHeader."Document Type" <> SalesHeader."Document Type"::Order then
+        if (SalesHeader."Document Type" <> SalesHeader."Document Type"::Order) or SingleInstance.GetHasDisplayedInventoryWarning() then
             exit;
         SalesLine2.CopyFilters(SalesLine);
         SalesLine2.SetFilter("Bin Code", '<>%1', '');
@@ -6144,10 +6144,23 @@ codeunit 75010 "BA SEI Subscibers"
                 WarningText.AppendLine(StrSubstNo(BinContentAvailableQtyMsg, SalesLine2."Line No.", SalesLine2."No.", SalesLine2."Bin Code", AvailableBinQtys.Get(RecID), SalesLine2."Qty. to Ship"));
         until SalesLine2.Next() = 0;
 
-        if WarningText.Length() > 0 then
+        if WarningText.Length() > 0 then begin
+            SingleInstance.SetHasDisplayedInventoryWarning(true);
             if not Confirm(BinContentWarningPrefixMsg, false, WarningText.ToText()) then
                 Error('');
+        end;
     end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Create Inventory Pick/Movement", 'OnBeforeCheckSourceDoc', '', false, false)]
+    local procedure CreateInventoryPickMovementOnBeforeCheckSourceDoc()
+    begin
+        SingleInstance.SetHasDisplayedInventoryWarning(false);
+    end;
+
+
+
+
+
 
 
     var
@@ -6225,6 +6238,6 @@ codeunit 75010 "BA SEI Subscibers"
         ExistingItemLedgerEntriesErr: Label 'You cannot delete %1 %2 because it has related ledger entries.';
         NoBlockReasonErr: Label 'Block reason must be specified when blocking an item.';
         BinContentAvailableQtyMsg: Label 'Line %1, Item %2, Bin %3 -> Available: %4, Requested: %5';
-        BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested, do you want to continue?\\%1';
+        BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested, do you want to continue?\If you continue, only the available quantity will be used.\\%1';
 }
 
