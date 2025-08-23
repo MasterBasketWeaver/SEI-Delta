@@ -6027,28 +6027,53 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Create Inventory Pick/Movement", 'OnBeforeFindSalesLine', '', false, false)]
     local procedure CreateInventoryPickMovementOnBeforeFindSalesLine(var SalesLine: Record "Sales Line"; SalesHeader: Record "Sales Header")
     var
+        SalesLine2: Record "Sales Line";
         BinContent: Record "Bin Content";
         WarningText: TextBuilder;
+        BinQtys: Dictionary of [RecordId, Decimal];
+        AvailableBinQtys: Dictionary of [RecordId, Decimal];
+        RecID: RecordId;
         AvailableQty: Decimal;
     begin
         if SalesHeader."Document Type" <> SalesHeader."Document Type"::Order then
             exit;
-        SalesLine.SetFilter("Bin Code", '<>%1', '');
-        if SalesLine.FindSet() then
-            repeat
-                if BinContent.Get(SalesLine."Location Code", SalesLine."Bin Code", SalesLine."No.", SalesLine."Variant Code", SalesLine."Unit of Measure Code") then begin
-                    AvailableQty := BinContent.CalcQtyAvailToTakeUOM();
-                    if SalesLine."Qty. to Ship" > AvailableQty then
-                        WarningText.AppendLine(StrSubstNo(BinContentAvailableQtyMsg, SalesLine."Line No.", SalesLine."No.", SalesLine."Bin Code", AvailableQty, SalesLine."Qty. to Ship"));
-                end;
-            until SalesLine.Next() = 0;
+        SalesLine2.CopyFilters(SalesLine);
+        SalesLine2.SetFilter("Bin Code", '<>%1', '');
+        if not SalesLine2.FindSet() then
+            exit;
+
+        repeat
+            if BinContent.Get(SalesLine2."Location Code", SalesLine2."Bin Code", SalesLine2."No.", SalesLine2."Variant Code", SalesLine2."Unit of Measure Code") then
+                if not BinQtys.ContainsKey(BinContent.RecordId()) then
+                    BinQtys.Add(BinContent.RecordId(), BinContent.CalcQtyAvailToTakeUOM());
+        until SalesLine2.Next() = 0;
+        if not SalesLine2.FindSet() then
+            exit;
+
+        Clear(BinContent);
+        repeat
+            BinContent."Location Code" := SalesLine2."Location Code";
+            BinContent."Bin Code" := SalesLine2."Bin Code";
+            BinContent."Item No." := SalesLine2."No.";
+            BinContent."Variant Code" := SalesLine2."Variant Code";
+            BinContent."Unit of Measure Code" := SalesLine2."Unit of Measure Code";
+            RecID := BinContent.RecordId();
+            AvailableQty := BinQtys.Get(RecID);
+            if AvailableQty > 0 then begin
+                if AvailableBinQtys.ContainsKey(RecID) then
+                    AvailableBinQtys.Set(RecID, AvailableQty)
+                else
+                    AvailableBinQtys.Add(RecID, AvailableQty);
+                AvailableQty -= SalesLine2."Qty. to Ship";
+                BinQtys.Set(RecID, AvailableQty);
+            end;
+            if AvailableQty <= 0 then
+                WarningText.AppendLine(StrSubstNo(BinContentAvailableQtyMsg, SalesLine2."Line No.", SalesLine2."No.", SalesLine2."Bin Code", AvailableBinQtys.Get(RecID), SalesLine2."Qty. to Ship"));
+        until SalesLine2.Next() = 0;
 
         if WarningText.Length() > 0 then
             if not Confirm(BinContentWarningPrefixMsg, false, WarningText.ToText()) then
                 Error('');
-
-
-        SalesLine.SetRange("Bin Code");
     end;
 
 
