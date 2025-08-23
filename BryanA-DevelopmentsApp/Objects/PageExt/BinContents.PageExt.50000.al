@@ -1,9 +1,10 @@
 pageextension 50120 "BA Bin Contents" extends "Bin Contents"
 {
+    PromotedActionCategories = 'Navigate';
+
     layout
     {
-
-        addlast(Control37)
+        addafter("Item No.")
         {
             field("BA Item Description"; Rec."BA Item Description")
             {
@@ -32,6 +33,24 @@ pageextension 50120 "BA Bin Contents" extends "Bin Contents"
             field("BA Quantity"; Rec."BA Quantity")
             {
                 ApplicationArea = all;
+            }
+        }
+    }
+
+    actions
+    {
+        addlast(Navigation)
+        {
+            action("BA Item Reclassification Journal")
+            {
+                ApplicationArea = all;
+                Image = InventoryJournal;
+                Promoted = true;
+                PromotedCategory = New;
+                PromotedIsBig = true;
+                RunObject = page "Item Reclass. Journal";
+                Caption = 'Item Reclassification Journal';
+                ToolTip = 'Opens the Item Reclassifcation Journal';
             }
         }
     }
