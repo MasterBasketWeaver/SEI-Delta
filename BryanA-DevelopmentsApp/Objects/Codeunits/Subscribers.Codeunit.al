@@ -6127,6 +6127,6 @@ codeunit 75010 "BA SEI Subscibers"
         ExistingItemLedgerEntriesErr: Label 'You cannot delete %1 %2 because it has related ledger entries.';
         NoBlockReasonErr: Label 'Block reason must be specified when blocking an item.';
         BinContentAvailableQtyMsg: Label 'Line %1, Item %2, Bin %3: Available: %4 Requested: %5';
-        BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested:\%1';
+        BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested, do you want to continue?\\%1';
 }
 
