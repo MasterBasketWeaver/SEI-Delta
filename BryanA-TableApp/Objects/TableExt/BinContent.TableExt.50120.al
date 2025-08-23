@@ -42,6 +42,7 @@ tableextension 80120 "BA Bin Content" extends "Bin Content"
             DataClassification = CustomerContent;
             Editable = false;
             Caption = 'Quantity';
+            DecimalPlaces = 0 : 5;
         }
     }
 
