@@ -6014,6 +6014,14 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnBeforeBinContentDelete', '', false, false)]
+    local procedure WhseJnlRegisterLineOnBeforeBinContentDelete(var IsHandled: Boolean)
+    begin
+        IsHandled := true;
+    end;
+
+
+
 
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
