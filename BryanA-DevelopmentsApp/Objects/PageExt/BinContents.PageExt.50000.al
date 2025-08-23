@@ -29,7 +29,7 @@ pageextension 50120 "BA Bin Contents" extends "Bin Contents"
         }
         addafter(CalcQtyUOM)
         {
-            field("BA Quantty"; Rec."BA Quantty")
+            field("BA Quantity"; Rec."BA Quantity")
             {
                 ApplicationArea = all;
             }

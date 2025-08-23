@@ -37,26 +37,26 @@ tableextension 80120 "BA Bin Content" extends "Bin Content"
             Editable = false;
             Caption = 'Item Hide Visibility';
         }
-        field(80004; "BA Quantty"; Decimal)
+        field(80004; "BA Quantity"; Decimal)
         {
             DataClassification = CustomerContent;
             Editable = false;
-            Caption = 'Quantty';
+            Caption = 'Quantity';
         }
     }
 
     trigger OnModify()
     begin
-        Rec.Validate("BA Quantty", Rec.CalcQtyUOM());
+        Rec.Validate("BA Quantity", Rec.CalcQtyUOM());
     end;
 
     trigger OnAfterModify()
     begin
-        Rec.Validate("BA Quantty", Rec.CalcQtyUOM());
+        Rec.Validate("BA Quantity", Rec.CalcQtyUOM());
     end;
 
     trigger OnRename()
     begin
-        Rec.Validate("BA Quantty", Rec.CalcQtyUOM());
+        Rec.Validate("BA Quantity", Rec.CalcQtyUOM());
     end;
 }
