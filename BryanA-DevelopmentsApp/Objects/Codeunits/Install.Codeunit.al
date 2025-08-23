@@ -51,7 +51,7 @@ codeunit 75011 "BA Install Codeunit"
         BinContent.Reset();
         if BinContent.FindSet(true) then
             repeat
-                BinContent."BA Quantty" := BinContent.CalcQtyUOM();
+                BinContent."BA Quantity" := BinContent.CalcQtyUOM();
                 BinContent.Modify(false);
             until BinContent.Next() = 0;
     end;
