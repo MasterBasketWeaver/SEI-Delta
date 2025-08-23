@@ -20,6 +20,18 @@ pageextension 80151 "BA Item Journal" extends "Item Journal"
                     ClearDimensions();
             end;
         }
+        modify("Bin Code")
+        {
+            trigger OnLookup(var Text: Text): Boolean
+            var
+                WMSMgt: Codeunit "WMS Management";
+                BinCode: Code[20];
+            begin
+                BinCode := WMSMgt.BinContentLookUp(Rec."Location Code", Rec."No.", Rec."Variant Code", '', "Bin Code");
+                if BinCode <> '' then
+                    Rec.Validate("Bin Code", BinCode);
+            end;
+        }
         addfirst(Control1)
         {
             field("Line No."; Rec."Line No.")
