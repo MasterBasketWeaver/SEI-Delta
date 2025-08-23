@@ -48,18 +48,18 @@ pageextension 80165 "BA Item Reclass. Jnl." extends "Item Reclass. Journal"
                     Rec.Validate("Bin Code", BinCode);
             end;
         }
-        modify("New Bin Code")
-        {
-            trigger OnLookup(var Text: Text): Boolean
-            var
-                WMSMgt: Codeunit "WMS Management";
-                BinCode: Code[20];
-            begin
-                BinCode := WMSMgt.BinContentLookUp(Rec."Location Code", Rec."Item No.", Rec."Variant Code", '', "Bin Code");
-                if BinCode <> '' then
-                    Rec.Validate("New Bin Code", BinCode);
-            end;
-        }
+        // modify("New Bin Code")
+        // {
+        //     trigger OnLookup(var Text: Text): Boolean
+        //     var
+        //         WMSMgt: Codeunit "WMS Management";
+        //         BinCode: Code[20];
+        //     begin
+        //         BinCode := WMSMgt.BinContentLookUp(Rec."Location Code", Rec."Item No.", Rec."Variant Code", '', "Bin Code");
+        //         if BinCode <> '' then
+        //             Rec.Validate("New Bin Code", BinCode);
+        //     end;
+        // }
     }
 
     actions
