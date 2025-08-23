@@ -37,6 +37,25 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateItemBinCount();
         // PopulateSalesItemCosts();
         // DeleteInvalidBinContentUoM();
+        PopuldateBinContentQuantity();
+    end;
+
+
+
+    local procedure PopuldateBinContentQuantity()
+    var
+        BinContent: Record "Bin Content";
+    begin
+        BinContent.SetFilter("BA Quantity", '<>%1', 0);
+        if not BinContent.IsEmpty() then
+            exit;
+
+        BinContent.Reset();
+        if BinContent.FindSet(true) then
+            repeat
+                BinContent."BA Quantty" := BinContent.CalcQtyUOM();
+                BinContent.Modify(false);
+            until BinContent.Next() = 0;
     end;
 
 
