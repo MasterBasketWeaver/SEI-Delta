@@ -6023,6 +6023,35 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Create Inventory Pick/Movement", 'OnBeforeFindSalesLine', '', false, false)]
+    local procedure CreateInventoryPickMovementOnBeforeFindSalesLine(var SalesLine: Record "Sales Line")
+    var
+        BinContent: Record "Bin Content";
+        WarningText: TextBuilder;
+        AvailableQty: Decimal;
+    begin
+        if SalesLine."Document Type" <> SalesLine."Document Type"::Order then
+            exit;
+        SalesLine.SetFilter("Bin Code", '<>%1', '');
+        if SalesLine.FindSet() then
+            repeat
+                if BinContent.Get(SalesLine."Location Code", SalesLine."Bin Code", SalesLine."No.", SalesLine."Variant Code", SalesLine."Unit of Measure Code") then begin
+                    AvailableQty := BinContent.CalcQtyAvailToTakeUOM();
+                    if SalesLine."Qty. to Ship" > AvailableQty then
+                        WarningText.AppendLine(StrSubstNo(BinContentAvailableQtyMsg, SalesLine."Line No.", SalesLine."No.", SalesLine."Bin Code", AvailableQty, SalesLine."Qty. to Ship"));
+                end;
+            until SalesLine.Next() = 0;
+
+        if WarningText.Length() > 0 then
+            if not Confirm(BinContentWarningPrefixMsg, false, WarningText.ToText()) then
+                Error('');
+
+
+        SalesLine.SetRange("Bin Code");
+    end;
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
@@ -6097,5 +6126,7 @@ codeunit 75010 "BA SEI Subscibers"
         ComponentNoStandardCostErr: Label '%1 %2 cannot be posted.\Component Item "%3" for Item "%4" does not have a standard cost setup.\Please contact engineering staff.';
         ExistingItemLedgerEntriesErr: Label 'You cannot delete %1 %2 because it has related ledger entries.';
         NoBlockReasonErr: Label 'Block reason must be specified when blocking an item.';
+        BinContentAvailableQtyMsg: Label 'Line %1, Item %2, Bin %3: Available: %4 Requested: %5';
+        BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested:\%1';
 }
 
