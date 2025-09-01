@@ -71,6 +71,15 @@ pageextension 80145 "BA Posted Sales Inv. Subpage" extends "Posted Sales Invoice
                 ApplicationArea = all;
                 BlankZero = true;
                 HideValue = Type <> Type::Item;
+
+                trigger OnDrillDown()
+                var
+                    DirectCostEntry: Record "BA Direct Cost Entry";
+                begin
+                    DirectCostEntry.SetCurrentKey("Item No.");
+                    DirectCostEntry.SetRange("Item No.", Rec."No.");
+                    Page.Run(0, DirectCostEntry);
+                end;
             }
         }
         modify("Unit Cost (LCY)")
