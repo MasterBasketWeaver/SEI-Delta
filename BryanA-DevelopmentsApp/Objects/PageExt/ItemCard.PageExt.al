@@ -359,6 +359,15 @@ pageextension 80009 "BA Item Card" extends "Item Card"
             field("BA Last Direct Cost Updated"; Rec."BA Last Direct Cost Updated")
             {
                 ApplicationArea = all;
+
+                trigger OnDrillDown()
+                var
+                    DirectCostEntry: Record "BA Direct Cost Entry";
+                begin
+                    DirectCostEntry.SetCurrentKey("Item No.");
+                    DirectCostEntry.SetRange("Item No.", Rec."No.");
+                    Page.Run(0, DirectCostEntry);
+                end;
             }
         }
     }

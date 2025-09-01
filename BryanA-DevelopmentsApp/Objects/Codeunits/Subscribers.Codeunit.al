@@ -5859,8 +5859,15 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'Last Direct Cost', false, false)]
     local procedure ItemOnAfterValidateLastDirectCost(var Rec: Record Item)
+    var
+        DirectCostEntry: Record "BA Direct Cost Entry";
     begin
         Rec.Validate("BA Last Direct Cost Updated", CurrentDateTime());
+        DirectCostEntry.Validate("Item No.", Rec."No.");
+        DirectCostEntry.Validate("Updated At", CurrentDateTime());
+        DirectCostEntry.Validate("Updated By", UserId());
+        DirectCostEntry.Validate("Direct Cost", Rec."Last Direct Cost");
+        DirectCostEntry.Insert(true);
     end;
 
 

@@ -34,6 +34,25 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateCustomerApprovalGroups();
         // PopulateProdOrderNotificationReportUsage();
         // PopulateItemBinCount();
+
+        PopulateDirectCostEntries();
+    end;
+
+
+    local procedure PopulateDirectCostEntries()
+    var
+        Item: Record Item;
+        DirectCostEntry: Record "BA Direct Cost Entry";
+    begin
+        if not DirectCostEntry.IsEmpty() then
+            exit;
+
+        if Item.FindSet() then
+            repeat
+                DirectCostEntry."Item No." := Item."No.";
+                DirectCostEntry."Direct Cost" := Item."Last Direct Cost";
+                DirectCostEntry.Insert(true);
+            until Item.Next() = 0;
     end;
 
 
