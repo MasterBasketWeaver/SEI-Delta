@@ -37,6 +37,7 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateItemBinCount();
 
         PopulateSalesItemCosts();
+        PopulateDirectCostEntries();
     end;
 
     local procedure PopulateSalesItemCosts()
@@ -71,7 +72,7 @@ codeunit 75011 "BA Install Codeunit"
                     SalesInvLine.Modify(false);
                 end;
             until SalesInvLine.Next() = 0;
-        PopulateDirectCostEntries();
+
     end;
 
 
