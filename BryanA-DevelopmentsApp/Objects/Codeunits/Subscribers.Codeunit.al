@@ -6166,7 +6166,12 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Copy Document Mgt.", 'OnBeforeModifySalesHeader', '', false, false)]
+    local procedure CopyDocMgtOnBeforeModifySalesHeader(var ToSalesHeader: Record "Sales Header"; FromDocType: Option)
+    begin
+        if ToSalesHeader."Document Type" = ToSalesHeader."Document Type"::Quote then
+            ToSalesHeader.Validate("BA Quote Date", Today());
+    end;
 
 
 
