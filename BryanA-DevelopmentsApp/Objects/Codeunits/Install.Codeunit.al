@@ -37,8 +37,8 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateItemBinCount();
         // PopulateSalesItemCosts();
         // DeleteInvalidBinContentUoM();
-        PopuldateBinContentQuantity();
-        PopulateSalesItemCosts();
+        // PopuldateBinContentQuantity();
+        // PopulateSalesItemCosts();
         PopulateDirectCostEntries();
     end;
 
@@ -120,12 +120,17 @@ codeunit 75011 "BA Install Codeunit"
     var
         Item: Record Item;
         DirectCostEntry: Record "BA Direct Cost Entry";
+        EntryNo: Integer;
     begin
+        DirectCostEntry.DeleteAll(false);
         if not DirectCostEntry.IsEmpty() then
             exit;
 
         if Item.FindSet() then
             repeat
+                EntryNo += 1;
+                DirectCostEntry.Init();
+                DirectCostEntry."Entry No." := EntryNo;
                 DirectCostEntry."Item No." := Item."No.";
                 DirectCostEntry."Direct Cost" := Item."Last Direct Cost";
                 DirectCostEntry.Insert(true);
