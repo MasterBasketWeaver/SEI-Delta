@@ -4,10 +4,10 @@
         {
             "type": "al",
             "request": "launch",
-            "name": "Dev",
+            "name": "Dev2",
             "server": "http://localhost",
             "port": 7119,
-            "serverInstance": "Dev",
+            "serverInstance": "Dev2",
             "launchBrowser":  false,
             "authentication": "UserPassword",
             // "schemaUpdateMode":"Recreate"
