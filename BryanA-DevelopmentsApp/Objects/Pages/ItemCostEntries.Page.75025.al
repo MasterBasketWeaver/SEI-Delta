@@ -1,4 +1,4 @@
-page 50099 "BA Item Cost Entries"
+page 75025 "BA Item Cost Entries"
 {
     ApplicationArea = all;
     UsageCategory = Lists;
