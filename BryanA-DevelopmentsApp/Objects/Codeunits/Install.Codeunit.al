@@ -35,6 +35,18 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateProdOrderNotificationReportUsage();
         // PopulateItemBinCount();
         // DeleteInvalidBinContentUoM();
+        FixQuoteDates();
+    end;
+
+
+    local procedure FixQuoteDates()
+    var
+        SalesHeader: Record "Sales Header";
+    begin
+        SalesHeader.SetRange("Document Type", SalesHeader."Document Type"::Quote);
+        SalesHeader.SetFilter("No.", 'SQ015314|SQ015315|SQ015316|SQ015317');
+        SalesHeader.SetFilter("BA Quote Date", '<>%1', DMY2Date(9, 7, 2025));
+        SalesHeader.ModifyAll("BA Quote Date", DMY2Date(9, 7, 2025));
     end;
 
 
