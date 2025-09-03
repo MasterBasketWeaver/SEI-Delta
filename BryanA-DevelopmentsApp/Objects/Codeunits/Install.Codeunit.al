@@ -122,7 +122,6 @@ codeunit 75011 "BA Install Codeunit"
         DirectCostEntry: Record "BA Direct Cost Entry";
         EntryNo: Integer;
     begin
-        DirectCostEntry.DeleteAll(false);
         if not DirectCostEntry.IsEmpty() then
             exit;
 
