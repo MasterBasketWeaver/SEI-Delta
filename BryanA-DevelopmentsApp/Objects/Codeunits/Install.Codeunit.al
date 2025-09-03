@@ -39,7 +39,7 @@ codeunit 75011 "BA Install Codeunit"
         // DeleteInvalidBinContentUoM();
         // PopuldateBinContentQuantity();
         // PopulateSalesItemCosts();
-        PopulateDirectCostEntries();
+        // PopulateDirectCostEntries();
     end;
 
 
