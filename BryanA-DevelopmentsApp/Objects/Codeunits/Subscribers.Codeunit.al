@@ -6042,6 +6042,7 @@ codeunit 75010 "BA SEI Subscibers"
         AvailableBinQtys: Dictionary of [RecordId, Decimal];
         RecID: RecordId;
         AvailableQty: Decimal;
+        BinQty: Decimal;
     begin
         if (SalesHeader."Document Type" <> SalesHeader."Document Type"::Order) or SingleInstance.GetHasDisplayedInventoryWarning() then
             exit;
@@ -6075,8 +6076,12 @@ codeunit 75010 "BA SEI Subscibers"
                     AvailableQty -= SalesLine2."Qty. to Ship";
                     BinQtys.Set(RecID, AvailableQty);
                 end;
+                if AvailableBinQtys.ContainsKey(RecID) then
+                    BinQty := AvailableBinQtys.Get(RecID)
+                else
+                    BinQty := 0;
                 if AvailableQty <= 0 then
-                    WarningText.AppendLine(StrSubstNo(BinContentAvailableQtyMsg, SalesLine2."Line No.", SalesLine2."No.", SalesLine2."Bin Code", AvailableBinQtys.Get(RecID), SalesLine2."Qty. to Ship"));
+                    WarningText.AppendLine(StrSubstNo(BinContentAvailableQtyMsg, SalesLine2."Line No.", SalesLine2."No.", SalesLine2."Bin Code", BinQty, SalesLine2."Qty. to Ship"));
             end;
         until SalesLine2.Next() = 0;
 
