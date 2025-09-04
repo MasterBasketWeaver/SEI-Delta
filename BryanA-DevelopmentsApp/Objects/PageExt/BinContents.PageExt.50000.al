@@ -6,19 +6,19 @@ pageextension 50120 "BA Bin Contents" extends "Bin Contents"
     {
         addafter("Item No.")
         {
-            field("BA Item Description"; Rec."BA Item Description")
+            field("BA Description"; Rec."BA Description")
             {
                 ApplicationArea = all;
             }
-            field("BA Item Description 2"; Rec."BA Item Description 2")
+            field("BA Description 2"; Rec."BA Description 2")
             {
                 ApplicationArea = all;
             }
-            field("BA Item Blocked"; Rec."BA Item Blocked")
+            field("BA Blocked"; Rec."BA Blocked")
             {
                 ApplicationArea = all;
             }
-            field("BA Item Hide Visibility"; Rec."BA Item Hide Visibility")
+            field("BA Hide Visibility"; Rec."BA Hide Visibility")
             {
                 ApplicationArea = all;
             }
