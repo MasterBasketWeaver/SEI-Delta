@@ -60,8 +60,6 @@ codeunit 75011 "BA Install Codeunit"
                 BinContent."BA Quantity" := BinContent.CalcQtyUOM();
                 BinContent.Modify(false);
             until BinContent.Next() = 0;
-<<<<<<< HEAD
-
     end;
 
 
@@ -73,8 +71,6 @@ codeunit 75011 "BA Install Codeunit"
         SalesHeader.SetFilter("No.", 'SQ015314|SQ015315|SQ015316|SQ015317');
         SalesHeader.SetFilter("BA Quote Date", '<>%1', DMY2Date(9, 7, 2025));
         SalesHeader.ModifyAll("BA Quote Date", DMY2Date(9, 7, 2025));
-=======
->>>>>>> invpickfix
     end;
 
 
