@@ -36,6 +36,8 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateItemBinCount();
         // DeleteInvalidBinContentUoM();
         // FixQuoteDates();
+
+        PopuldateBinContentQuantity();
     end;
 
 
@@ -47,6 +49,25 @@ codeunit 75011 "BA Install Codeunit"
         SalesHeader.SetFilter("No.", 'SQ015314|SQ015315|SQ015316|SQ015317');
         SalesHeader.SetFilter("BA Quote Date", '<>%1', DMY2Date(9, 7, 2025));
         SalesHeader.ModifyAll("BA Quote Date", DMY2Date(9, 7, 2025));
+
+    end;
+
+
+
+    local procedure PopuldateBinContentQuantity()
+    var
+        BinContent: Record "Bin Content";
+    begin
+        BinContent.SetFilter("BA Quantity", '<>%1', 0);
+        if not BinContent.IsEmpty() then
+            exit;
+
+        BinContent.Reset();
+        if BinContent.FindSet(true) then
+            repeat
+                BinContent."BA Quantity" := BinContent.CalcQtyUOM();
+                BinContent.Modify(false);
+            until BinContent.Next() = 0;
     end;
 
 

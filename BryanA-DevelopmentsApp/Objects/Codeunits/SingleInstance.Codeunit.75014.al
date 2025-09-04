@@ -122,6 +122,16 @@ codeunit 75014 "BA Single Instance"
     end;
 
 
+    procedure GetHasDisplayedInventoryWarning(): Boolean
+    begin
+        exit(HasDisplayedInventoryWarning);
+    end;
+
+    procedure SetHasDisplayedInventoryWarning(NewValue: Boolean)
+    begin
+        HasDisplayedInventoryWarning := NewValue;
+    end;
+
 
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
@@ -132,4 +142,5 @@ codeunit 75014 "BA Single Instance"
         SkipCreditLimitUpdate: Boolean;
         SkipLedgerLineSave: Boolean;
         SkipBlockedItem: Boolean;
+        HasDisplayedInventoryWarning: Boolean;
 }

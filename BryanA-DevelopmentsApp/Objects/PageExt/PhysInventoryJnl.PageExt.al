@@ -12,6 +12,18 @@ pageextension 80087 "BA Phys. Inventory Jnl." extends "Phys. Inventory Journal"
                 exit(Text <> '');
             end;
         }
+        modify("Bin Code")
+        {
+            trigger OnLookup(var Text: Text): Boolean
+            var
+                WMSMgt: Codeunit "WMS Management";
+                BinCode: Code[20];
+            begin
+                BinCode := WMSMgt.BinContentLookUp(Rec."Location Code", Rec."Item No.", Rec."Variant Code", '', "Bin Code");
+                if BinCode <> '' then
+                    Rec.Validate("Bin Code", BinCode);
+            end;
+        }
         addfirst(Control1)
         {
             field("Line No."; Rec."Line No.")

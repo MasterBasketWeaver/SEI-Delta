@@ -51,6 +51,18 @@ pageextension 80000 "BA Purch. Order Subpage" extends "Purchase Order Subform"
                 Rec.Validate("Cross-Reference No.", ItemCrossRef."Cross-Reference No.");
             end;
         }
+        modify("Bin Code")
+        {
+            trigger OnLookup(var Text: Text): Boolean
+            var
+                WMSMgt: Codeunit "WMS Management";
+                BinCode: Code[20];
+            begin
+                BinCode := WMSMgt.BinContentLookUp(Rec."Location Code", Rec."No.", Rec."Variant Code", '', "Bin Code");
+                if BinCode <> '' then
+                    Rec.Validate("Bin Code", BinCode);
+            end;
+        }
         addafter(Quantity)
         {
             field("Direct Unit Cost2"; Rec."Direct Unit Cost")

@@ -6022,6 +6022,80 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Whse. Jnl.-Register Line", 'OnBeforeBinContentDelete', '', false, false)]
+    local procedure WhseJnlRegisterLineOnBeforeBinContentDelete(var IsHandled: Boolean)
+    begin
+        IsHandled := true;
+    end;
+
+
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Create Inventory Pick/Movement", 'OnBeforeFindSalesLine', '', false, false)]
+    local procedure CreateInventoryPickMovementOnBeforeFindSalesLine(var SalesLine: Record "Sales Line"; SalesHeader: Record "Sales Header")
+    var
+        SalesLine2: Record "Sales Line";
+        BinContent: Record "Bin Content";
+        WarningText: TextBuilder;
+        BinQtys: Dictionary of [RecordId, Decimal];
+        AvailableBinQtys: Dictionary of [RecordId, Decimal];
+        RecID: RecordId;
+        AvailableQty: Decimal;
+    begin
+        if (SalesHeader."Document Type" <> SalesHeader."Document Type"::Order) or SingleInstance.GetHasDisplayedInventoryWarning() then
+            exit;
+        SalesLine2.CopyFilters(SalesLine);
+        SalesLine2.SetFilter("Bin Code", '<>%1', '');
+        if not SalesLine2.FindSet() then
+            exit;
+
+        repeat
+            if BinContent.Get(SalesLine2."Location Code", SalesLine2."Bin Code", SalesLine2."No.", SalesLine2."Variant Code", SalesLine2."Unit of Measure Code") then
+                if not BinQtys.ContainsKey(BinContent.RecordId()) then
+                    BinQtys.Add(BinContent.RecordId(), BinContent.CalcQtyAvailToTakeUOM());
+        until SalesLine2.Next() = 0;
+        if not SalesLine2.FindSet() then
+            exit;
+
+        Clear(BinContent);
+        repeat
+            BinContent."Location Code" := SalesLine2."Location Code";
+            BinContent."Bin Code" := SalesLine2."Bin Code";
+            BinContent."Item No." := SalesLine2."No.";
+            BinContent."Variant Code" := SalesLine2."Variant Code";
+            BinContent."Unit of Measure Code" := SalesLine2."Unit of Measure Code";
+            RecID := BinContent.RecordId();
+            AvailableQty := BinQtys.Get(RecID);
+            if AvailableQty > 0 then begin
+                if AvailableBinQtys.ContainsKey(RecID) then
+                    AvailableBinQtys.Set(RecID, AvailableQty)
+                else
+                    AvailableBinQtys.Add(RecID, AvailableQty);
+                AvailableQty -= SalesLine2."Qty. to Ship";
+                BinQtys.Set(RecID, AvailableQty);
+            end;
+            if AvailableQty <= 0 then
+                WarningText.AppendLine(StrSubstNo(BinContentAvailableQtyMsg, SalesLine2."Line No.", SalesLine2."No.", SalesLine2."Bin Code", AvailableBinQtys.Get(RecID), SalesLine2."Qty. to Ship"));
+        until SalesLine2.Next() = 0;
+
+        if WarningText.Length() > 0 then begin
+            SingleInstance.SetHasDisplayedInventoryWarning(true);
+            if not Confirm(BinContentWarningPrefixMsg, false, WarningText.ToText()) then
+                Error('');
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Create Inventory Pick/Movement", 'OnBeforeCheckSourceDoc', '', false, false)]
+    local procedure CreateInventoryPickMovementOnBeforeCheckSourceDoc()
+    begin
+        SingleInstance.SetHasDisplayedInventoryWarning(false);
+    end;
+
+
+
+
+
 
 
     var
@@ -6098,5 +6172,7 @@ codeunit 75010 "BA SEI Subscibers"
         ComponentNoStandardCostErr: Label '%1 %2 cannot be posted.\Component Item "%3" for Item "%4" does not have a standard cost setup.\Please contact engineering staff.';
         ExistingItemLedgerEntriesErr: Label 'You cannot delete %1 %2 because it has related ledger entries.';
         NoBlockReasonErr: Label 'Block reason must be specified when blocking an item.';
+        BinContentAvailableQtyMsg: Label 'Line %1, Item %2, Bin %3 -> Available: %4, Requested: %5';
+        BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested, do you want to continue?\If you continue, only the available quantity will be used.\\%1';
 }
 

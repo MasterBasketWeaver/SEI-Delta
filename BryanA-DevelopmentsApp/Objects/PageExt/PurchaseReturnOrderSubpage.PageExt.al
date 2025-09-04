@@ -28,6 +28,18 @@ pageextension 80019 "BA Purch. Ret. Order Subpage" extends "Purchase Return Orde
             ApplicationArea = all;
             Visible = not "BA Requisition Order";
         }
+        modify("Bin Code")
+        {
+            trigger OnLookup(var Text: Text): Boolean
+            var
+                WMSMgt: Codeunit "WMS Management";
+                BinCode: Code[20];
+            begin
+                BinCode := WMSMgt.BinContentLookUp(Rec."Location Code", Rec."No.", Rec."Variant Code", '', "Bin Code");
+                if BinCode <> '' then
+                    Rec.Validate("Bin Code", BinCode);
+            end;
+        }
         addafter(Quantity)
         {
             field("Direct Unit Cost2"; Rec."Direct Unit Cost")
