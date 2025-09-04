@@ -6055,8 +6055,7 @@ codeunit 75010 "BA SEI Subscibers"
                 if not BinQtys.ContainsKey(BinContent.RecordId()) then
                     BinQtys.Add(BinContent.RecordId(), BinContent.CalcQtyAvailToTakeUOM());
         until SalesLine2.Next() = 0;
-        if not SalesLine2.FindSet() then
-            exit;
+        SalesLine2.FindSet();
 
         Clear(BinContent);
         repeat
@@ -6066,17 +6065,19 @@ codeunit 75010 "BA SEI Subscibers"
             BinContent."Variant Code" := SalesLine2."Variant Code";
             BinContent."Unit of Measure Code" := SalesLine2."Unit of Measure Code";
             RecID := BinContent.RecordId();
-            AvailableQty := BinQtys.Get(RecID);
-            if AvailableQty > 0 then begin
-                if AvailableBinQtys.ContainsKey(RecID) then
-                    AvailableBinQtys.Set(RecID, AvailableQty)
-                else
-                    AvailableBinQtys.Add(RecID, AvailableQty);
-                AvailableQty -= SalesLine2."Qty. to Ship";
-                BinQtys.Set(RecID, AvailableQty);
+            if BinQtys.ContainsKey(RecID) then begin
+                AvailableQty := BinQtys.Get(RecID);
+                if AvailableQty > 0 then begin
+                    if AvailableBinQtys.ContainsKey(RecID) then
+                        AvailableBinQtys.Set(RecID, AvailableQty)
+                    else
+                        AvailableBinQtys.Add(RecID, AvailableQty);
+                    AvailableQty -= SalesLine2."Qty. to Ship";
+                    BinQtys.Set(RecID, AvailableQty);
+                end;
+                if AvailableQty <= 0 then
+                    WarningText.AppendLine(StrSubstNo(BinContentAvailableQtyMsg, SalesLine2."Line No.", SalesLine2."No.", SalesLine2."Bin Code", AvailableBinQtys.Get(RecID), SalesLine2."Qty. to Ship"));
             end;
-            if AvailableQty <= 0 then
-                WarningText.AppendLine(StrSubstNo(BinContentAvailableQtyMsg, SalesLine2."Line No.", SalesLine2."No.", SalesLine2."Bin Code", AvailableBinQtys.Get(RecID), SalesLine2."Qty. to Ship"));
         until SalesLine2.Next() = 0;
 
         if WarningText.Length() > 0 then begin
