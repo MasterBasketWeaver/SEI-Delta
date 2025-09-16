@@ -6181,6 +6181,78 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, codeunit::"Sales-Post", 'OnBeforePostLines', '', false, false)]
+
+    local procedure SalesPostOnBeforePostLines(SalesHeader: Record "Sales Header"; var SalesLine: Record "Sales Line")
+    begin
+        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then
+            if SalesHeader."No." = 'SO027920' then
+                CheckToUpdatePrepayLineAmounts(SalesHeader, SalesLine);
+    end;
+
+    local procedure CheckToUpdatePrepayLineAmounts(var SalesHeader: Record "Sales Header"; var TempSalesLine: Record "Sales Line")
+    var
+        SalsInvoiceHeader: Record "Sales Invoice Header";
+        SalesLine: Record "Sales Line";
+        LineNo: Integer;
+    begin
+        SalsInvoiceHeader.SetCurrentKey("Order No.");
+        SalsInvoiceHeader.SetRange("Order No.", 'SO027920');
+        if SalsInvoiceHeader.Count() <> 2 then
+            exit;
+
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        SalesLine.FindLast();
+        LineNo := SalesLine."Line No.";
+        SalesHeader.SuspendStatusCheck(true);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '12100', 281283.49);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '13010', 27);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '22310', -118247.43);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '30200', -8731.43);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '35100', -154331.63);
+    end;
+
+    local procedure AddSalesLine(var SalesHeader: Record "Sales Header"; var SalesLine: Record "Sales Line"; var SalesLine2: Record "Sales Line"; var LineNo: Integer; AccountNo: Code[20]; Amount: Decimal)
+    begin
+        LineNo += 10000;
+        SalesLine.SuspendStatusCheck(true);
+        SalesLine.Init();
+        SalesLine.Validate("Document Type", SalesHeader."Document Type");
+        SalesLine.Validate("Document No.", SalesHeader."No.");
+        SalesLine.Validate("Line No.", LineNo);
+        SalesLine.Validate(Type, SalesLine.Type::"G/L Account");
+        SalesLine.Validate("No.", AccountNo);
+        SalesLine.Validate("Unit Price", Amount);
+        SalesLine.Validate(Quantity, 1);
+        SalesLine.Insert(true);
+
+        SalesLine2.SetRange(Type, SalesLine.Type);
+        SalesLine2.SetRange("No.", SalesLine."No.");
+        SalesLine2.FindFirst();
+        SalesLine.Validate("Dimension Set ID", SalesLine2."Dimension Set ID");
+        SalesLine.Modify(true);
+    end;
+
+
+
+
+
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
