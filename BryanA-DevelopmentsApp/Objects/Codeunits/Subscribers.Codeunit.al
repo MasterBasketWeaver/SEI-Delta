@@ -4754,8 +4754,8 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         SingleInstance.SetSkipLedgerLineSave(true);
 
-        if (TempSalesLine."Document No." = 'SO027920') and (TempSalesLine."Line No." > 9999999) then
-            IsHandled := true
+        // if (TempSalesLine."Document No." = 'SO027920') and (TempSalesLine."Line No." > 9999999) then
+        //     IsHandled := true
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
@@ -6166,7 +6166,7 @@ codeunit 75010 "BA SEI Subscibers"
         SalesLine.Validate(Type, SalesLine.Type::"G/L Account");
         SalesLine.Validate("No.", AccountNo);
         SalesLine.Validate("Prepayment %", 0);
-        SalesLine.Validate("Unit Price", Amount);
+        SalesLine.Validate("Unit Price", -Amount * SalesHeader."Currency Factor");
         SalesLine.Validate(Quantity, 1);
         SalesLine.Description := 'G/L Offset Amount.';
         SalesLine.Insert(true);
