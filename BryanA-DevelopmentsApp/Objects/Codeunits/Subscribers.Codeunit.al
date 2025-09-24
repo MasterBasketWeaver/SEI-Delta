@@ -4754,7 +4754,7 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         SingleInstance.SetSkipLedgerLineSave(true);
 
-        if (TempSalesLine."Document No." = '') and (TempSalesLine."Line No." > 9999999) then
+        if (TempSalesLine."Document No." = 'SO027920') and (TempSalesLine."Line No." > 9999999) then
             IsHandled := true
     end;
 
