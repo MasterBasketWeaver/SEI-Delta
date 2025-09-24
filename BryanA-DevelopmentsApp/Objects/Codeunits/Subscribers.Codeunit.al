@@ -6134,19 +6134,21 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         SalsInvoiceHeader.SetCurrentKey("Order No.");
         SalsInvoiceHeader.SetRange("Order No.", 'SO027920');
-        if SalsInvoiceHeader.Count() <> 2 then
+
+        if SalsInvoiceHeader.Count() <> 3 then
             exit;
 
-        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
-        SalesLine.SetRange("Document No.", SalesHeader."No.");
-        SalesLine.FindLast();
-        LineNo := SalesLine."Line No.";
+        LineNo := 9999999;
         SalesHeader.SuspendStatusCheck(true);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '12100', 281283.49);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '13010', 27);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '22310', -118247.43);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '30200', -8731.43);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '35100', -154331.63);
+        SalesHeader.SetHideValidationDialog(true);
+
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '13010', 1339707.35);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '13030', -155.48);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '22310', -27);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '35100', -151992.63);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '40200', -1464.45);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '40910', -0.01);
+        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '40920', 0.03);
     end;
 
     local procedure AddSalesLine(var SalesHeader: Record "Sales Header"; var SalesLine: Record "Sales Line"; var SalesLine2: Record "Sales Line"; var LineNo: Integer; AccountNo: Code[20]; Amount: Decimal)
@@ -6161,13 +6163,8 @@ codeunit 75010 "BA SEI Subscibers"
         SalesLine.Validate("No.", AccountNo);
         SalesLine.Validate("Unit Price", Amount);
         SalesLine.Validate(Quantity, 1);
+        SalesLine.Description := 'G/L Offset Amount.';
         SalesLine.Insert(true);
-
-        SalesLine2.SetRange(Type, SalesLine.Type);
-        SalesLine2.SetRange("No.", SalesLine."No.");
-        SalesLine2.FindFirst();
-        SalesLine.Validate("Dimension Set ID", SalesLine2."Dimension Set ID");
-        SalesLine.Modify(true);
     end;
 
 
