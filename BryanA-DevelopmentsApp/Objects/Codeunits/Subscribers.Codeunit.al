@@ -4750,9 +4750,12 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostUpdateOrderLineModifyTempLine', '', false, false)]
-    local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine()
+    local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine(var IsHandled: Boolean; var TempSalesLine: Record "Sales Line")
     begin
         SingleInstance.SetSkipLedgerLineSave(true);
+
+        if (TempSalesLine."Document No." = '') and (TempSalesLine."Line No." > 9999999) then
+            IsHandled := true
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
@@ -6155,12 +6158,14 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         LineNo += 10000;
         SalesLine.SuspendStatusCheck(true);
+        SalesLine.SetHideValidationDialog(true);
         SalesLine.Init();
         SalesLine.Validate("Document Type", SalesHeader."Document Type");
         SalesLine.Validate("Document No.", SalesHeader."No.");
         SalesLine.Validate("Line No.", LineNo);
         SalesLine.Validate(Type, SalesLine.Type::"G/L Account");
         SalesLine.Validate("No.", AccountNo);
+        SalesLine.Validate("Prepayment %", 0);
         SalesLine.Validate("Unit Price", Amount);
         SalesLine.Validate(Quantity, 1);
         SalesLine.Description := 'G/L Offset Amount.';
