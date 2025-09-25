@@ -46,8 +46,6 @@ pageextension 80120 "BA Sales Quotes" extends "Sales Quotes"
                 PromotedOnly = true;
 
                 trigger OnAction()
-                var
-                    Subscribers: Codeunit "BA SEI Subscibers";
                 begin
                     Subscribers.ImportSalesQuoteListToRemove();
                 end;
@@ -58,10 +56,11 @@ pageextension 80120 "BA Sales Quotes" extends "Sales Quotes"
 
     trigger OnOpenPage()
     begin
-        IsBryan := UserId = 'SEI-IND\BRYANBCDEV';
+        IsBryan := Subscribers.IsDebugUser();
     end;
 
     var
+        Subscribers: Codeunit "BA SEI Subscibers";
         [InDataSet]
         IsBryan: Boolean;
 }

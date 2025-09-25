@@ -154,7 +154,7 @@ pageextension 80046 "BA Item List" extends "Item List"
 
     trigger OnOpenPage()
     begin
-        IsBryanUser := UserId = 'SEI-IND\BRYANBCDEV';
+        IsBryanUser := Subscribers.IsDebugUser();
         Rec.FilterGroup(2);
         Rec.SetRange("BA Hide Visibility", false);
         Rec.FilterGroup(0);
