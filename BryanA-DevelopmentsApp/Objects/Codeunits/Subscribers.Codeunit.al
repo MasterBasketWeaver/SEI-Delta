@@ -6250,6 +6250,33 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+    [EventSubscriber(ObjectType::Table, Database::"BA Commission Rate", 'OnBeforeInsertEvent', '', false, false)]
+    local procedure CommissionRateOnBeforeInsert()
+    begin
+        if not SingleInstance.CanViewCommissionData() then
+            Error(NoCommissionAccessErr);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"BA Commission Rate", 'OnBeforeModifyEvent', '', false, false)]
+    local procedure CommissionRateOnBeforeModify()
+    begin
+        if not SingleInstance.CanViewCommissionData() then
+            Error(NoCommissionAccessErr);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"BA Commission Rate", 'OnBeforeRenameEvent', '', false, false)]
+    local procedure CommissionRateOnBeforeRename()
+    begin
+        if not SingleInstance.CanViewCommissionData() then
+            Error(NoCommissionAccessErr);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"BA Commission Rate", 'OnBeforeDeleteEvent', '', false, false)]
+    local procedure CommissionRateOnBeforeDelete()
+    begin
+        if not SingleInstance.CanViewCommissionData() then
+            Error(NoCommissionAccessErr);
+    end;
 
 
 
@@ -6330,5 +6357,6 @@ codeunit 75010 "BA SEI Subscibers"
         NoBlockReasonErr: Label 'Block reason must be specified when blocking an item.';
         BinContentAvailableQtyMsg: Label 'Line %1, Item %2, Bin %3 -> Available: %4, Requested: %5';
         BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested, do you want to continue?\If you continue, only the available quantity will be used.\\%1';
+        NoCommissionAccessErr: Label 'You do not have permission to edit commission data.';
 }
 

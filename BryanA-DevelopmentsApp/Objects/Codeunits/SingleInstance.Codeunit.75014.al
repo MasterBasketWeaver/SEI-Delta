@@ -133,6 +133,15 @@ codeunit 75014 "BA Single Instance"
     end;
 
 
+
+    procedure CanViewCommissionData(): Boolean
+    var
+        UserSetup: Record "User Setup";
+    begin
+        exit(UserSetup.Get(UserId()) and UserSetup."BA Can View/Edit Commissions");
+    end;
+
+
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
         SkipUSDCreditLimit: Boolean;

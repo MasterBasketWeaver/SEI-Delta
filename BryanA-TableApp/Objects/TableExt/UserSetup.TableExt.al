@@ -147,6 +147,11 @@ tableextension 80024 "BA User Setup" extends "User Setup"
                     FieldError("BA Purch. Approver ID");
             end;
         }
+        field(80150; "BA Can View/Edit Commissions"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Can View/Edit Commissions';
+        }
     }
 
     var
