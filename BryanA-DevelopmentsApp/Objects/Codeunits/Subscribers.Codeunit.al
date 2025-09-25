@@ -4750,12 +4750,9 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforePostUpdateOrderLineModifyTempLine', '', false, false)]
-    local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine(var IsHandled: Boolean; var TempSalesLine: Record "Sales Line")
+    local procedure SalesPostOnBeforePostUpdateOrderLineModifyTempLine()
     begin
         SingleInstance.SetSkipLedgerLineSave(true);
-
-        // if (TempSalesLine."Document No." = 'SO027920') and (TempSalesLine."Line No." > 9999999) then
-        //     IsHandled := true
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterPostUpdateOrderLineModifyTempLine', '', false, false)]
@@ -6120,41 +6117,31 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    [EventSubscriber(ObjectType::Codeunit, codeunit::"Sales-Post", 'OnBeforePostLines', '', false, false)]
 
-    local procedure SalesPostOnBeforePostLines(SalesHeader: Record "Sales Header"; var SalesLine: Record "Sales Line")
-    begin
-        if SalesHeader."Document Type" = SalesHeader."Document Type"::Order then
-            if SalesHeader."No." = 'SO027920' then
-                CheckToUpdatePrepayLineAmounts(SalesHeader, SalesLine);
-    end;
 
-    local procedure CheckToUpdatePrepayLineAmounts(var SalesHeader: Record "Sales Header"; var TempSalesLine: Record "Sales Line")
+    procedure AddGLOffsetAmounts(var SalesHeader: Record "Sales Header")
     var
-        SalsInvoiceHeader: Record "Sales Invoice Header";
-        SalesLine: Record "Sales Line";
         LineNo: Integer;
     begin
-        SalsInvoiceHeader.SetCurrentKey("Order No.");
-        SalsInvoiceHeader.SetRange("Order No.", 'SO027920');
-
-        if SalsInvoiceHeader.Count() <> 3 then
+        if SalesHeader."No." <> 'SO027920' then
             exit;
 
         LineNo := 9999999;
         SalesHeader.SuspendStatusCheck(true);
         SalesHeader.SetHideValidationDialog(true);
 
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '13010', 1339707.35);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '13030', -155.48);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '22310', -27);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '35100', -151992.63);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '40200', -1464.45);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '40910', -0.01);
-        AddSalesLine(SalesHeader, TempSalesLine, SalesLine, LineNo, '40920', 0.03);
+        AddSalesLine(SalesHeader, LineNo, '13010', -1646.94);
+        AddSalesLine(SalesHeader, LineNo, '13030', -0.01);
+        AddSalesLine(SalesHeader, LineNo, '22310', 26.995);
+        AddSalesLine(SalesHeader, LineNo, '35100', 151992.62);
+        AddSalesLine(SalesHeader, LineNo, '40200', 1464.45);
+        AddSalesLine(SalesHeader, LineNo, '40910', 0.01);
+        AddSalesLine(SalesHeader, LineNo, '40920', 155.48);
     end;
 
-    local procedure AddSalesLine(var SalesHeader: Record "Sales Header"; var SalesLine: Record "Sales Line"; var SalesLine2: Record "Sales Line"; var LineNo: Integer; AccountNo: Code[20]; Amount: Decimal)
+    local procedure AddSalesLine(var SalesHeader: Record "Sales Header"; var LineNo: Integer; AccountNo: Code[20]; Amount: Decimal)
+    var
+        SalesLine: Record "Sales Line";
     begin
         LineNo += 10000;
         SalesLine.SuspendStatusCheck(true);
@@ -6166,7 +6153,7 @@ codeunit 75010 "BA SEI Subscibers"
         SalesLine.Validate(Type, SalesLine.Type::"G/L Account");
         SalesLine.Validate("No.", AccountNo);
         SalesLine.Validate("Prepayment %", 0);
-        SalesLine.Validate("Unit Price", -Amount * SalesHeader."Currency Factor");
+        SalesLine.Validate("Unit Price", Amount * SalesHeader."Currency Factor");
         SalesLine.Validate(Quantity, 1);
         SalesLine.Description := 'G/L Offset Amount.';
         SalesLine.Insert(true);

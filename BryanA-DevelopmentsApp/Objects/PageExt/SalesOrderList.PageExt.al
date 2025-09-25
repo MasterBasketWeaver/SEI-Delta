@@ -81,5 +81,38 @@ pageextension 80121 "BA Sales Order List" extends "Sales Order List"
                 RunObject = page "Item Reclass. Journal";
             }
         }
+        addlast(Processing)
+        {
+            action("BA Add G/L Offset Amounts")
+            {
+                ApplicationArea = all;
+                Image = AssessFinanceCharges;
+                Caption = 'Add G/L Offset Amounts';
+                Promoted = true;
+                PromotedCategory = Process;
+                PromotedIsBig = true;
+                PromotedOnly = true;
+                Visible = IsDevUser;
+                Enabled = IsDevUser;
+
+                trigger OnAction()
+                begin
+                    Subscribers.AddGLOffsetAmounts(Rec);
+                end;
+            }
+        }
     }
+
+
+    var
+        Subscribers: Codeunit "BA SEI Subscibers";
+        [InDataSet]
+        IsDevUser: Boolean;
+
+
+    trigger OnOpenPage()
+    begin
+        IsDevUser := Subscribers.IsDebugUser();
+    end;
+
 }
