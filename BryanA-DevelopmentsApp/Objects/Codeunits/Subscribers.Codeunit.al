@@ -6121,6 +6121,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     procedure AddGLOffsetAmounts(var SalesHeader: Record "Sales Header")
     var
+        SalesLine: Record "Sales Line";
         LineNo: Integer;
     begin
         if SalesHeader."No." <> 'SO027920' then
@@ -6130,6 +6131,15 @@ codeunit 75010 "BA SEI Subscibers"
         SalesHeader.SuspendStatusCheck(true);
         SalesHeader.SetHideValidationDialog(true);
 
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        SalesLine.SetFilter("Line No.", '>%1', LineNo);
+        if SalesLine.FindSet() then
+            repeat
+                SalesLine.SuspendStatusCheck(true);
+                SalesLine.Delete(true);
+            until SalesLine.Next() = 0;
+
         AddSalesLine(SalesHeader, LineNo, '13010', -1646.94);
         AddSalesLine(SalesHeader, LineNo, '13030', -0.01);
         AddSalesLine(SalesHeader, LineNo, '22310', 26.995);
@@ -6137,6 +6147,8 @@ codeunit 75010 "BA SEI Subscibers"
         AddSalesLine(SalesHeader, LineNo, '40200', 1464.45);
         AddSalesLine(SalesHeader, LineNo, '40910', 0.01);
         AddSalesLine(SalesHeader, LineNo, '40920', 155.48);
+
+        Message('added lines');
     end;
 
     local procedure AddSalesLine(var SalesHeader: Record "Sales Header"; var LineNo: Integer; AccountNo: Code[20]; Amount: Decimal)
