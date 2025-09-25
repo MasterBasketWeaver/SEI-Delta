@@ -36,4 +36,15 @@ page 50056 "BA Commission Rates"
             }
         }
     }
+
+    trigger OnOpenPage()
+    var
+        SingleInstance: Codeunit "BA Single Instance";
+    begin
+        if not SingleInstance.CanViewCommissionData() then
+            Error(NoAccessErr);
+    end;
+
+    var
+        NoAccessErr: Label 'You do not have access to view Commission data.';
 }

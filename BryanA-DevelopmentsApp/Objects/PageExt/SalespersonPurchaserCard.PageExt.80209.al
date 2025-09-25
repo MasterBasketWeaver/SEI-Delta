@@ -36,7 +36,17 @@ pageextension 80209 "BA Salesperson/Purchaser Card" extends "Salesperson/Purchas
             {
                 ApplicationArea = all;
             }
-
         }
     }
+
+    trigger OnOpenPage()
+    var
+        SingleInstance: Codeunit "BA Single Instance";
+    begin
+        if not SingleInstance.CanViewCommissionData() then
+            Error(NoAccessErr);
+    end;
+
+    var
+        NoAccessErr: Label 'You do not have access to view this page as it contains Commission data.';
 }

@@ -108,5 +108,10 @@ tableextension 80024 "BA User Setup" extends "User Setup"
             DataClassification = CustomerContent;
             Caption = 'Can Deactivate Items';
         }
+        field(80140; "BA Can View/Edit Commissions"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Can View/Edit Commissions';
+        }
     }
 }
