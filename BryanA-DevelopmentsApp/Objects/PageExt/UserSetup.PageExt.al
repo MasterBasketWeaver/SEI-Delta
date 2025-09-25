@@ -73,6 +73,10 @@ pageextension 80044 "BA User Setup" extends "User Setup"
             {
                 ApplicationArea = all;
             }
+            field("BA Can View/Edit Commissions"; Rec."BA Can View/Edit Commissions")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 
