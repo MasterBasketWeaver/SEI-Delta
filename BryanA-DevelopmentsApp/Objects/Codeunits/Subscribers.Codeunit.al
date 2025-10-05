@@ -6185,68 +6185,25 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-    procedure AddGLOffsetAmounts(var SalesHeader: Record "Sales Header")
-    var
-        SalesLine: Record "Sales Line";
-        LineNo: Integer;
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Gen. Jnl.-Post Line", 'OnInsertGLEntryOnBeforeCheckAmountRounding', '', false, false)]
+    local procedure GenJnlPostLineOnInsertGLEntryOnBeforeCheckAmountRounding(var GenJnlLine: Record "Gen. Journal Line"; var IsHandled: Boolean)
     begin
-        if SalesHeader."No." <> 'SO027920' then
-            exit;
-
-        LineNo := 9999999;
-        SalesHeader.SuspendStatusCheck(true);
-        SalesHeader.SetHideValidationDialog(true);
-
-        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
-        SalesLine.SetRange("Document No.", SalesHeader."No.");
-        SalesLine.SetFilter("Line No.", '>%1', LineNo);
-        if SalesLine.FindSet() then
-            repeat
-                SalesLine.SuspendStatusCheck(true);
-                SalesLine.Delete(true);
-            until SalesLine.Next() = 0;
-
-        AddSalesLine(SalesHeader, LineNo, '13010', -1646.94);
-        AddSalesLine(SalesHeader, LineNo, '13030', -0.01);
-        AddSalesLine(SalesHeader, LineNo, '22310', 26.995);
-        AddSalesLine(SalesHeader, LineNo, '35100', 151992.62);
-        AddSalesLine(SalesHeader, LineNo, '40200', 1464.45);
-        AddSalesLine(SalesHeader, LineNo, '40910', 0.01);
-        AddSalesLine(SalesHeader, LineNo, '40920', 155.48);
-
-        Message('added lines');
+        if GenJnlLine."Journal Template Name" = 'DEPOSITS' then
+            if (GenJnlLine."Account Type" = GenJnlLine."Account Type"::Customer) and (GenJnlLine."Account No." = 'EONINT') then
+                if GenJnlLine."Credit Amount" = 552700.48 then
+                    // if GenJnlLine."External Document No." = 'DEP013053' then
+                    IsHandled := true;
     end;
 
-    local procedure AddSalesLine(var SalesHeader: Record "Sales Header"; var LineNo: Integer; AccountNo: Code[20]; Amount: Decimal)
-    var
-        SalesLine: Record "Sales Line";
-    begin
-        LineNo += 10000;
-        SalesLine.SuspendStatusCheck(true);
-        SalesLine.SetHideValidationDialog(true);
-        SalesLine.Init();
-        SalesLine.Validate("Document Type", SalesHeader."Document Type");
-        SalesLine.Validate("Document No.", SalesHeader."No.");
-        SalesLine.Validate("Line No.", LineNo);
-        SalesLine.Validate(Type, SalesLine.Type::"G/L Account");
-        SalesLine.Validate("No.", AccountNo);
-        SalesLine.Validate("Prepayment %", 0);
-        SalesLine.Validate("Unit Price", Amount * SalesHeader."Currency Factor");
-        SalesLine.Validate(Quantity, 1);
-        SalesLine.Description := 'G/L Offset Amount.';
-        SalesLine.Insert(true);
-    end;
+
+
+
+
+
+
+
+
+
 
 
 
