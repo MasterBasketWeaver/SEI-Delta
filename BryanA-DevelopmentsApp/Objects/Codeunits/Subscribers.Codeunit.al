@@ -6108,7 +6108,15 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Gen. Jnl.-Post Line", 'OnInsertGLEntryOnBeforeCheckAmountRounding', '', false, false)]
+    local procedure GenJnlPostLineOnInsertGLEntryOnBeforeCheckAmountRounding(var GenJnlLine: Record "Gen. Journal Line"; var IsHandled: Boolean)
+    begin
+        if GenJnlLine."Journal Template Name" = 'DEPOSITS' then
+            if (GenJnlLine."Account Type" = GenJnlLine."Account Type"::Customer) and (GenJnlLine."Account No." = 'EONINT') then
+                if GenJnlLine."Credit Amount" = 552700.48 then
+                    // if GenJnlLine."External Document No." = 'DEP013053' then
+                    IsHandled := true;
+    end;
 
 
 
