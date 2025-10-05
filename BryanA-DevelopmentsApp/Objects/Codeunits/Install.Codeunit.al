@@ -36,8 +36,7 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateItemBinCount();
         // DeleteInvalidBinContentUoM();
         // FixQuoteDates();
-
-        PopuldateBinContentQuantity();
+        // PopuldateBinContentQuantity();
     end;
 
 
