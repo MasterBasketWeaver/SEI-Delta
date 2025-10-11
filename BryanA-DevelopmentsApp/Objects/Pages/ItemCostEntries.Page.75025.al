@@ -7,6 +7,7 @@ page 75025 "BA Item Cost Entries"
     PageType = List;
     Editable = false;
     LinksAllowed = false;
+    SourceTableView = sorting ("Entry No.") order(descending);
 
     layout
     {
