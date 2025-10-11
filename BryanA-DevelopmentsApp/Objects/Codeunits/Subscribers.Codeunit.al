@@ -4991,8 +4991,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderHeader."Posting Date" := ServiceHeader."Posting Date";
         OrderHeader."Quote No." := ServiceHeader."Quote No.";
         OrderHeader."Salesperson Code" := ServiceHeader."Salesperson Code";
-        Customer.Get(ServiceHeader."Customer No.");
-        OrderHeader."Sell-to Customer Name" := Customer.Name;
+        if Customer.Get(ServiceHeader."Customer No.") then
+            OrderHeader."Sell-to Customer Name" := Customer.Name;
         OrderHeader."Sell-to Customer No." := ServiceHeader."Customer No.";
         OrderHeader."Shipment Date" := ServiceHeader."BA Shipment Date";
         if OrderHeader."Posted Document No." = '' then
@@ -6132,6 +6132,68 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeSalesLineInsert', '', false, false)]
+    local procedure SalesHeaderOnBeforeSalesLineInsert(var SalesLine: Record "Sales Line")
+    var
+        Item: Record Item;
+    begin
+        if SalesLine.Type = SalesLine.Type::Item then
+            if (SalesLine."No." <> '') and Item.Get(SalesLine."No.") then
+                TransferOldDimensions(Item, SalesLine);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterUpdateCurrencyFactor', '', false, false)]
+    local procedure SalesHeaderOnAfterUpdateCurrencyFactor(var SalesHeader: Record "Sales Header")
+    var
+        SalesLine: Record "Sales Line";
+        Item: Record Item;
+    begin
+        SalesLine.SetRange("Document Type", SalesHeader."Document Type");
+        SalesLine.SetRange("Document No.", SalesHeader."No.");
+        SalesLine.SetRange(Type, SalesLine.Type::Item);
+        SalesLine.SetFilter("No.", '<>%1', '');
+        if SalesLine.FindSet(true) then
+            repeat
+                if Item.Get(SalesLine."No.") then
+                    if TransferOldDimensions(Item, SalesLine) then
+                        SalesLine.Modify(true);
+            until SalesLine.Next() = 0;
+    end;
+
+    local procedure TransferOldDimensions(var Item: Record Item; var SalesLine: Record "Sales Line"): Boolean
+    var
+        DefaultDim: Record "Default Dimension";
+        TempDimSetEntry: Record "Dimension Set Entry" temporary;
+        DimMgt: Codeunit DimensionManagement;
+        NewDimSetID: Integer;
+    begin
+        DefaultDim.SetRange("Table ID", Database::Item);
+        DefaultDim.SetRange("No.", Item."No.");
+        if not DefaultDim.FindSet() then
+            exit(false);
+        DimMgt.GetDimensionSet(TempDimSetEntry, SalesLine."Dimension Set ID");
+        TempDimSetEntry.Reset();
+        repeat
+            TempDimSetEntry.SetRange("Dimension Code", DefaultDim."Dimension Code");
+            if TempDimSetEntry.FindFirst() then begin
+                TempDimSetEntry.Validate("Dimension Code", DefaultDim."Dimension Code");
+                TempDimSetEntry.Validate("Dimension Value Code", DefaultDim."Dimension Value Code");
+                TempDimSetEntry.Modify(false);
+            end else begin
+                TempDimSetEntry.Init();
+                TempDimSetEntry.Validate("Dimension Code", DefaultDim."Dimension Code");
+                TempDimSetEntry.Validate("Dimension Value Code", DefaultDim."Dimension Value Code");
+                TempDimSetEntry.Insert(false);
+            end;
+        until DefaultDim.Next() = 0;
+        NewDimSetID := DimMgt.GetDimensionSetID(TempDimSetEntry);
+        if NewDimSetID = SalesLine."Dimension Set ID" then
+            exit(false);
+        SalesLine.Validate("Dimension Set ID", NewDimSetID);
+        exit(true);
+    end;
 
 
     var
