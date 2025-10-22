@@ -6208,6 +6208,7 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         DefaultDim.SetRange("Table ID", Database::Item);
         DefaultDim.SetRange("No.", Item."No.");
+        DefaultDim.SetFilter("Dimension Value Code", '<>%1', '');
         if not DefaultDim.FindSet() then
             exit(false);
         DimMgt.GetDimensionSet(TempDimSetEntry, SalesLine."Dimension Set ID");
