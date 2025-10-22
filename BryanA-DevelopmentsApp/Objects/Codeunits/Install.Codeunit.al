@@ -9,7 +9,8 @@ codeunit 75011 "BA Install Codeunit"
                   tabledata "Purch. Cr. Memo Hdr." = m,
                   tabledata "Purch. Rcpt. Header" = m,
                   tabledata "Purchase Header" = m,
-                  tabledata "Tax Group" = m;
+                  tabledata "Tax Group" = m,
+                  tabledata "Sales Invoice Line" = M;
 
     trigger OnInstallAppPerCompany()
     begin
@@ -37,6 +38,8 @@ codeunit 75011 "BA Install Codeunit"
         // DeleteInvalidBinContentUoM();
         // FixQuoteDates();
         // PopuldateBinContentQuantity();
+        PopulateSalesItemCosts();
+        PopulateDirectCostEntries();
     end;
 
 
@@ -84,6 +87,62 @@ codeunit 75011 "BA Install Codeunit"
                         if not ItemUnitOfMeasure.Get(BinContent."Item No.", BinContent."Unit of Measure Code") then
                             BinContent.Delete(true);
                     until BinContent.Next() = 0;
+            until Item.Next() = 0;
+    end;
+
+    local procedure PopulateSalesItemCosts()
+    var
+        SalesLine: Record "Sales Line";
+        SalesInvLine: Record "Sales Invoice Line";
+        Item: Record Item;
+    begin
+        SalesInvLine.SetFilter("BA Labour Cost", '<>%1', 0);
+        if not SalesInvLine.IsEmpty() then
+            exit;
+        SalesInvLine.SetRange("BA Labour Cost");
+
+        SalesLine.SetRange(Type, SalesLine.Type::Item);
+        SalesLine.SetFilter("No.", '<>%1', '');
+        if SalesLine.FindSet(false) then
+            repeat
+                if Item.Get(SalesLine."No.") then begin
+                    SalesLine."BA Labour Cost" := Item."Single-Level Capacity Cost";
+                    SalesLine."BA Material Cost" := Item."Single-Level Material Cost";
+                    SalesLine.Modify(false);
+                end;
+            until SalesLine.Next() = 0;
+
+        SalesInvLine.SetRange(Type, SalesInvLine.Type::Item);
+        SalesInvLine.SetFilter("No.", '<>%1', '');
+        if SalesInvLine.FindSet() then
+            repeat
+                if Item.Get(SalesInvLine."No.") then begin
+                    SalesInvLine."BA Labour Cost" := Item."Single-Level Capacity Cost";
+                    SalesInvLine."BA Material Cost" := Item."Single-Level Material Cost";
+                    SalesInvLine.Modify(false);
+                end;
+            until SalesInvLine.Next() = 0;
+
+    end;
+
+
+    local procedure PopulateDirectCostEntries()
+    var
+        Item: Record Item;
+        DirectCostEntry: Record "BA Direct Cost Entry";
+        EntryNo: Integer;
+    begin
+        if not DirectCostEntry.IsEmpty() then
+            exit;
+
+        if Item.FindSet() then
+            repeat
+                EntryNo += 1;
+                DirectCostEntry.Init();
+                DirectCostEntry."Entry No." := EntryNo;
+                DirectCostEntry."Item No." := Item."No.";
+                DirectCostEntry."Direct Cost" := Item."Last Direct Cost";
+                DirectCostEntry.Insert(true);
             until Item.Next() = 0;
     end;
 

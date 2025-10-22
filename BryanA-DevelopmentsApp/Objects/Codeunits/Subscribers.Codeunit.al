@@ -79,6 +79,8 @@ codeunit 75010 "BA SEI Subscibers"
         if (Rec.Type <> Rec.Type::Item) or (Rec."No." = xRec."No.") or not Item.Get(Rec."No.") then
             exit;
         Item.TestField("ENC Not for Sale", false);
+        Rec.Validate("BA Labour Cost", Item."Single-Level Capacity Cost");
+        Rec.Validate("BA Material Cost", Item."Single-Level Material Cost");
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Quantity', false, false)]
@@ -6005,10 +6007,45 @@ codeunit 75010 "BA SEI Subscibers"
         Message('Deleted bins %1, updated default bins: %2', i2, i3);
     end;
 
+
+
+
     [TryFunction]
     local procedure TryToDeleteBinContent(var BinContent: Record "Bin Content")
     begin
         BinContent.Delete(true);
+    end;
+
+    [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'Last Direct Cost', false, false)]
+    local procedure ItemOnAfterValidateLastDirectCost(var Rec: Record Item)
+    begin
+        InsertDirectCostEntry(Rec);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::ItemCostManagement, 'OnBeforeUpdateUnitCost', '', false, false)]
+    local procedure ItemCostMgtOnBeforeUpdateUnitCost(var Item: Record Item; var UnitCostUpdated: Boolean)
+    begin
+        if not UnitCostUpdated then
+            SingleInstance.SetInitialLastDirectCost(Item."Last Direct Cost");
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::ItemCostManagement, 'OnUpdateUnitCostOnBeforeValidatePriceProfitCalculation', '', false, false)]
+    local procedure ItemCostMgtOnUpdateUnitCostOnBeforeValidatePriceProfitCalculation(var Item: Record Item)
+    begin
+        if SingleInstance.GetInitialLastDirectCost() <> Item."Last Direct Cost" then
+            InsertDirectCostEntry(Item);
+    end;
+
+    local procedure InsertDirectCostEntry(var Item: Record Item)
+    var
+        DirectCostEntry: Record "BA Direct Cost Entry";
+    begin
+        Item.Validate("BA Last Direct Cost Updated", CurrentDateTime());
+        DirectCostEntry.Validate("Item No.", Item."No.");
+        DirectCostEntry.Validate("Updated At", CurrentDateTime());
+        DirectCostEntry.Validate("Updated By", UserId());
+        DirectCostEntry.Validate("Direct Cost", Item."Last Direct Cost");
+        DirectCostEntry.Insert(true);
     end;
 
 

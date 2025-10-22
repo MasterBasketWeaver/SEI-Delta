@@ -133,8 +133,20 @@ codeunit 75014 "BA Single Instance"
     end;
 
 
+    procedure SetInitialLastDirectCost(NewValue: Decimal)
+    begin
+        InitialLastDirectCost := NewValue;
+    end;
+
+    procedure GetInitialLastDirectCost(): Decimal
+    begin
+        exit(InitialLastDirectCost);
+    end;
+
+
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
+        InitialLastDirectCost: Decimal;
         SkipUSDCreditLimit: Boolean;
         ForceUSDCreditLimit: Boolean;
         SkipSalesPrepaymentApprovalCheck: Boolean;
