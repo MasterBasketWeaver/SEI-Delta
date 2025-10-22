@@ -164,5 +164,4 @@ codeunit 75014 "BA Single Instance"
         SkipCreditLimitUpdate: Boolean;
         SkipBlockedItem: Boolean;
         HasDisplayedInventoryWarning: Boolean;
-
 }

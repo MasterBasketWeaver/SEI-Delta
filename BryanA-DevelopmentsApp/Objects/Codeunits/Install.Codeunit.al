@@ -35,12 +35,10 @@ codeunit 75011 "BA Install Codeunit"
         // PopulateCustomerApprovalGroups();
         // PopulateProdOrderNotificationReportUsage();
         // PopulateItemBinCount();
-        // PopulateSalesItemCosts();
         // DeleteInvalidBinContentUoM();
         // PopuldateBinContentQuantity();
-        PopulateSalesItemCosts();
-        PopulateDirectCostEntries();
-        FixQuoteDates();
+        // PopulateSalesItemCosts();
+        // PopulateDirectCostEntries();
     end;
 
 
@@ -89,7 +87,6 @@ codeunit 75011 "BA Install Codeunit"
                             BinContent.Delete(true);
                     until BinContent.Next() = 0;
             until Item.Next() = 0;
-
     end;
 
     local procedure PopulateSalesItemCosts()
