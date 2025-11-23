@@ -940,17 +940,17 @@ codeunit 75010 "BA SEI Subscibers"
         Rec."BA Created At" := CurrentDateTime();
     end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Config. Package Management", 'OnApplyItemDimension', '', false, false)]
-    local procedure ConfigPackageMgtOnApplyItemDim(ItemNo: Code[20]; DimCode: Code[20]; DimValue: Code[20])
-    var
-        Item: Record Item;
-        ItemCard: Page "Item Card";
-    begin
-        if Item.Get(ItemNo) and ItemCard.CheckToUpdateDimValues(Item, DimValue) then begin
-            Item.Modify(true);
-            Commit();
-        end;
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Config. Package Management", 'OnApplyItemDimension', '', false, false)]
+    // local procedure ConfigPackageMgtOnApplyItemDim(ItemNo: Code[20]; DimCode: Code[20]; DimValue: Code[20])
+    // var
+    //     Item: Record Item;
+    //     ItemCard: Page "Item Card";
+    // begin
+    //     if Item.Get(ItemNo) and ItemCard.CheckToUpdateDimValues(Item, DimValue) then begin
+    //         Item.Modify(true);
+    //         Commit();
+    //     end;
+    // end;
 
 
     procedure ReuseItemNo(ItemNo: Code[20])
@@ -3476,6 +3476,8 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
+
+    // ETF RCB CAD
     [EventSubscriber(ObjectType::Page, Page::"Payment Journal", 'OnBeforeActionEvent', 'ExportPaymentsToFile', false, false)]
     local procedure PaymentJournalOnBeforeExportPaymentsToFile(var Rec: Record "Gen. Journal Line")
     var
@@ -3490,6 +3492,7 @@ codeunit 75010 "BA SEI Subscibers"
         UserSetup.Validate("BA Payment Filter Record ID", Rec.RecordId());
         UserSetup.Modify(true);
     end;
+
 
     [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeOpenPage', '', false, false)]
     local procedure ExportElectronicPaymentsOnBeforeOpenPage(var BankAccount: Record "Bank Account"; var SupportedOutputMethod: Option; var FilterRecordID: RecordId)
@@ -3506,6 +3509,7 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         SupportedOutputMethod := 0;
     end;
+
 
     [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeGenJournalLineOnAfterGetRecord', '', false, false)]
     local procedure ExportElectronicPaymentsOnBeforeGenJournalLineOnAfterGetRecord(var GenJournalLine: Record "Gen. Journal Line")
@@ -3542,7 +3546,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
     begin
         ACHRBHeader."File Creation Date" := FormatACHDate(Today());
-        ACHRBHeader."Federal ID No." := StrSubstNo('%1', FormatACHDate(Today() - 30));
+        ACHRBHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHRBHeader."Federal ID No."));
         ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
     end;
 
@@ -3559,18 +3563,16 @@ codeunit 75010 "BA SEI Subscibers"
         VendorBankAccount.TestField("Bank Account No.");
         VendorBankAccount.TestField(Name);
         ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
-        ACHRBDetail."Language Code" := FormatPaymentAmount(ACHRBDetail."Payment Amount");
-        ACHRBDetail."Vendor/Customer Name" := VendorBankAccount.Name;
+        ACHRBDetail."Language Code" := CopyStr(FormatPaymentAmount(ACHRBDetail."Payment Amount"), 1, MaxStrLen(ACHRBDetail."Language Code"));
+        ACHRBDetail."Vendor/Customer Name" := CopyStr(VendorBankAccount.Name, 1, MaxStrLen(ACHRBDetail."Vendor/Customer Name"));
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBFooterModify', '', false, false)]
     local procedure ExportETFRBOnBeforeACHRBFooterModify(var ACHRBFooter: Record "ACH RB Footer"; var TempEFTExportWorkset: Record "EFT Export Workset")
     begin
         ACHRBFooter."Record Count" := TempEFTExportWorkset.Count();
-        ACHRBFooter."BA Payment Amount Text" := FormatPaymentAmount(ACHRBFooter."Total File Credit");
+        ACHRBFooter."BA Payment Amount Text" := CopyStr(FormatPaymentAmount(ACHRBFooter."Total File Credit"), 1, MaxStrLen(ACHRBFooter."BA Payment Amount Text"));
     end;
-
-
 
 
     local procedure FormatACHDate(Input: Date): Integer
@@ -3596,6 +3598,8 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         exit(DelChr(PaymentText, '=', ',.') + '00');
     end;
+    // -ETF RCB CAD
+
 
 
     local procedure PrintRecord(RecVar: Variant): Text
