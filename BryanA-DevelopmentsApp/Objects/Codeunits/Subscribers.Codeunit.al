@@ -3544,16 +3544,38 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
     local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
+    var
+        CompInfo: Record "Company Information";
+        Parts: List of [Text];
+        FileNumberText: Text;
     begin
         ACHRBHeader."File Creation Date" := FormatACHDate(Today());
         ACHRBHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHRBHeader."Federal ID No."));
         ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
+
+        CompInfo.Get();
+        ACHRBHeader."Client Name" := CopyStr(CompInfo.Name, 1, MaxStrLen(ACHRBHeader."Client Name"));
+
+        if BankAccount."Last E-Pay Export File Name".Contains('.') then begin
+            Parts := BankAccount."Last E-Pay Export File Name".Split('.');
+            FileNumberText := Parts.Get(1);
+        end else
+            FileNumberText := BankAccount."Last E-Pay Export File Name";
+        FileNumberText := GetNumeralsOnly(FileNumberText);
+        if FileNumberText = '' then
+            FileNumberText := '1';
+        Evaluate(ACHRBHeader."File Creation Number", GetNumeralsOnly(FileNumberText));
+        ACHRBHeader."File Creation Number" -= 1;
+        BankAccount."Last E-Pay File Creation No." := ACHRBHeader."File Creation Number";
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]
     local procedure ExportETFRBOnBeforeACHRBDetailModify(var ACHRBDetail: Record "ACH RB Detail"; var TempEFTExportWorkset: Record "EFT Export Workset")
     var
+        Vendor: Record Vendor;
+        CompInfo: Record "Company Information";
         VendorBankAccount: Record "Vendor Bank Account";
+        BankAccount: Record "Bank Account";
     begin
         VendorBankAccount.SetRange("Vendor No.", TempEFTExportWorkset."Account No.");
         VendorBankAccount.SetRange("Use for Electronic Payments", true);
@@ -3564,7 +3586,16 @@ codeunit 75010 "BA SEI Subscibers"
         VendorBankAccount.TestField(Name);
         ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
         ACHRBDetail."Language Code" := CopyStr(FormatPaymentAmount(ACHRBDetail."Payment Amount"), 1, MaxStrLen(ACHRBDetail."Language Code"));
-        ACHRBDetail."Vendor/Customer Name" := CopyStr(VendorBankAccount.Name, 1, MaxStrLen(ACHRBDetail."Vendor/Customer Name"));
+        Vendor.Get(TempEFTExportWorkset."Account No.");
+        Vendor.TestField(Name);
+        ACHRBDetail."Vendor/Customer Name" := CopyStr(Vendor.Name, 1, MaxStrLen(ACHRBDetail."Vendor/Customer Name"));
+
+        BankAccount.Get(TempEFTExportWorkset."Bank Account No.");
+        BankAccount.TestField("Bank Account No.");
+        ACHRBDetail."Client Number" := CopyStr(GetNumeralsOnly(BankAccount."Bank Account No."), 1, MaxStrLen(ACHRBDetail."Client Number"));
+
+        CompInfo.Get();
+        ACHRBDetail."Client Name" := CopyStr(CompInfo.Name, 1, MaxStrLen(ACHRBDetail."Client Name"));
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBFooterModify', '', false, false)]
@@ -3574,6 +3605,19 @@ codeunit 75010 "BA SEI Subscibers"
         ACHRBFooter."BA Payment Amount Text" := CopyStr(FormatPaymentAmount(ACHRBFooter."Total File Credit"), 1, MaxStrLen(ACHRBFooter."BA Payment Amount Text"));
     end;
 
+    local procedure GetNumeralsOnly(Input: Text): Text
+    var
+        s: Text;
+        c: Char;
+        i: Integer;
+    begin
+        for i := 1 to StrLen(Input) do begin
+            c := Input[i];
+            if (c >= '0') and (c < '9') then
+                s += c;
+        end;
+        exit(s);
+    end;
 
     local procedure FormatACHDate(Input: Date): Integer
     begin
