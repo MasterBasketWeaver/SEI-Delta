@@ -4345,6 +4345,19 @@ codeunit 75010 "BA SEI Subscibers"
         UserSetup.Modify(true);
     end;
 
+    [EventSubscriber(ObjectType::Table, Database::"Gen. Journal Line", 'OnAfterValidateEvent', 'Recipient Bank Account', false, false)]
+    local procedure GenJournalLineOnAfterValidateRecipientBankAccount(var Rec: Record "Gen. Journal Line")
+    var
+        VendorBankAccount: Record "Vendor Bank Account";
+    begin
+        if Rec."Recipient Bank Account" <> '' then
+            if Rec."Account Type" = Rec."Account Type"::Vendor then
+                if VendorBankAccount.Get(Rec."Recipient Bank Account") then
+                    if VendorBankAccount."Use for Electronic Payments" then
+                        Rec.Validate("Bank Payment Type", Rec."Bank Payment Type"::"Electronic Payment");
+
+    end;
+
 
     [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeOpenPage', '', false, false)]
     local procedure ExportElectronicPaymentsOnBeforeOpenPage(var BankAccount: Record "Bank Account"; var SupportedOutputMethod: Option; var FilterRecordID: RecordId)
