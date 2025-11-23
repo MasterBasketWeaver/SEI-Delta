@@ -4345,6 +4345,7 @@ codeunit 75010 "BA SEI Subscibers"
         UserSetup.Modify(true);
     end;
 
+
     [EventSubscriber(ObjectType::Table, Database::"Gen. Journal Line", 'OnAfterValidateEvent', 'Recipient Bank Account', false, false)]
     local procedure GenJournalLineOnAfterValidateRecipientBankAccount(var Rec: Record "Gen. Journal Line")
     var
@@ -4352,10 +4353,9 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         if Rec."Recipient Bank Account" <> '' then
             if Rec."Account Type" = Rec."Account Type"::Vendor then
-                if VendorBankAccount.Get(Rec."Recipient Bank Account") then
+                if VendorBankAccount.Get(Rec."Account No.", Rec."Recipient Bank Account") then
                     if VendorBankAccount."Use for Electronic Payments" then
                         Rec.Validate("Bank Payment Type", Rec."Bank Payment Type"::"Electronic Payment");
-
     end;
 
 
