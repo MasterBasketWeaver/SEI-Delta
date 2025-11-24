@@ -6286,6 +6286,7 @@ codeunit 75010 "BA SEI Subscibers"
     var
         SalesLine: Record "Sales Line";
         Item: Record Item;
+        GLAccount: Record "G/L Account";
     begin
         SalesLine.SetRange("Document Type", SalesHeader."Document Type");
         SalesLine.SetRange("Document No.", SalesHeader."No.");
@@ -6295,6 +6296,13 @@ codeunit 75010 "BA SEI Subscibers"
             repeat
                 if Item.Get(SalesLine."No.") then
                     if RestorePreviousSalesLinesDimensions(Item, SalesLine) then
+                        SalesLine.Modify(true);
+            until SalesLine.Next() = 0;
+        SalesLine.SetRange(Type, SalesLine.Type::"G/L Account");
+        if SalesLine.FindSet(true) then
+            repeat
+                if GLAccount.Get(SalesLine."No.") then
+                    if RestorePreviousSalesLinesDimensions(GLAccount, SalesLine) then
                         SalesLine.Modify(true);
             until SalesLine.Next() = 0;
     end;
@@ -6343,15 +6351,14 @@ codeunit 75010 "BA SEI Subscibers"
         exit(true);
     end;
 
-
-
     local procedure ValidateSalesLineGLSourceDimensions(var SalesLine: Record "Sales Line")
     var
         GLAccount: Record "G/L Account";
     begin
         GLAccount.Get(SalesLine."No.");
         if RestorePreviousSalesLinesDimensions(GLAccount, SalesLine) then
-            SalesLine.Modify(true);
+            if not SalesLine.Modify(true) then
+                SalesLine.Insert(true);
     end;
 
 
