@@ -6356,10 +6356,9 @@ codeunit 75010 "BA SEI Subscibers"
         GLAccount: Record "G/L Account";
     begin
         GLAccount.Get(SalesLine."No.");
-        if RestorePreviousSalesLinesDimensions(GLAccount, SalesLine) then
-            if not SalesLine.Modify(true) then
-                SalesLine.Insert(true);
+        RestorePreviousSalesLinesDimensions(GLAccount, SalesLine);
     end;
+
 
 
     var
