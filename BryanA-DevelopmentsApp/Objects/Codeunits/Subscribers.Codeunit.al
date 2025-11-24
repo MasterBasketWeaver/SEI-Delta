@@ -76,11 +76,20 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         if (Rec."Document Type" = Rec."Document Type"::Order) and (xRec."No." = '') then
             Rec."BA Booking Date" := WorkDate();
-        if (Rec.Type <> Rec.Type::Item) or (Rec."No." = xRec."No.") or not Item.Get(Rec."No.") then
+
+        if (Rec."No." = xRec."No.") or (Rec."No." = '') then
             exit;
-        Item.TestField("ENC Not for Sale", false);
-        Rec.Validate("BA Labour Cost", Item."Single-Level Capacity Cost");
-        Rec.Validate("BA Material Cost", Item."Single-Level Material Cost");
+
+        case Rec.Type of
+            Rec.Type::Item:
+                if Item.Get(Rec."No.") then begin
+                    Item.TestField("ENC Not for Sale", false);
+                    Rec.Validate("BA Labour Cost", Item."Single-Level Capacity Cost");
+                    Rec.Validate("BA Material Cost", Item."Single-Level Material Cost");
+                end;
+            Rec.Type::"G/L Account":
+                ValidateSalesLineGLSourceDimensions(Rec);
+        end;
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Quantity', false, false)]
@@ -6258,11 +6267,18 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnBeforeSalesLineInsert', '', false, false)]
     local procedure SalesHeaderOnBeforeSalesLineInsert(var SalesLine: Record "Sales Line")
     var
+        GLAccount: Record "G/L Account";
         Item: Record Item;
     begin
-        if SalesLine.Type = SalesLine.Type::Item then
-            if (SalesLine."No." <> '') and Item.Get(SalesLine."No.") then
-                TransferOldDimensions(Item, SalesLine);
+        if SalesLine."No." <> '' then
+            case SalesLine.Type of
+                SalesLine.Type::Item:
+                    if Item.Get(SalesLine."No.") then
+                        RestorePreviousSalesLinesDimensions(Item, SalesLine);
+                SalesLine.Type::"G/L Account":
+                    if GLAccount.Get(SalesLine."No.") then
+                        RestorePreviousSalesLinesDimensions(GLAccount, SalesLine);
+            end;
     end;
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Header", 'OnAfterUpdateCurrencyFactor', '', false, false)]
@@ -6278,20 +6294,30 @@ codeunit 75010 "BA SEI Subscibers"
         if SalesLine.FindSet(true) then
             repeat
                 if Item.Get(SalesLine."No.") then
-                    if TransferOldDimensions(Item, SalesLine) then
+                    if RestorePreviousSalesLinesDimensions(Item, SalesLine) then
                         SalesLine.Modify(true);
             until SalesLine.Next() = 0;
     end;
 
-    local procedure TransferOldDimensions(var Item: Record Item; var SalesLine: Record "Sales Line"): Boolean
+    local procedure RestorePreviousSalesLinesDimensions(var Item: Record Item; var SalesLine: Record "Sales Line"): Boolean
+    begin
+        exit(RestorePreviousSalesLinesDimensions(Database::Item, Item."No.", SalesLine));
+    end;
+
+    local procedure RestorePreviousSalesLinesDimensions(var GLAccount: Record "G/L Account"; var SalesLine: Record "Sales Line"): Boolean
+    begin
+        exit(RestorePreviousSalesLinesDimensions(Database::"G/L Account", GLAccount."No.", SalesLine));
+    end;
+
+    local procedure RestorePreviousSalesLinesDimensions(TableNo: Integer; SourceNo: Code[20]; var SalesLine: Record "Sales Line"): Boolean
     var
         DefaultDim: Record "Default Dimension";
         TempDimSetEntry: Record "Dimension Set Entry" temporary;
         DimMgt: Codeunit DimensionManagement;
         NewDimSetID: Integer;
     begin
-        DefaultDim.SetRange("Table ID", Database::Item);
-        DefaultDim.SetRange("No.", Item."No.");
+        DefaultDim.SetRange("Table ID", TableNo);
+        DefaultDim.SetRange("No.", SourceNo);
         DefaultDim.SetFilter("Dimension Value Code", '<>%1', '');
         if not DefaultDim.FindSet() then
             exit(false);
@@ -6315,6 +6341,17 @@ codeunit 75010 "BA SEI Subscibers"
             exit(false);
         SalesLine.Validate("Dimension Set ID", NewDimSetID);
         exit(true);
+    end;
+
+
+
+    local procedure ValidateSalesLineGLSourceDimensions(var SalesLine: Record "Sales Line")
+    var
+        GLAccount: Record "G/L Account";
+    begin
+        GLAccount.Get(SalesLine."No.");
+        if RestorePreviousSalesLinesDimensions(GLAccount, SalesLine) then
+            SalesLine.Modify(true);
     end;
 
 
