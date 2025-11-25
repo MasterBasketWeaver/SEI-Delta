@@ -25,5 +25,17 @@ tableextension 80082 "BA Service Invoice Line" extends "Service Invoice Line"
             FieldClass = FlowField;
             CalcFormula = lookup ("BA Order Line"."Entry No." where ("Posted Document Type" = const ("Posted Service Invoice"), "Posted Document No." = field ("Document No."), "Posted Line No." = field ("Line No.")));
         }
+        field(80080; "BA Labour Cost"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Labour Cost';
+            Editable = false;
+        }
+        field(80081; "BA Material Cost"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Material Cost';
+            Editable = false;
+        }
     }
 }
