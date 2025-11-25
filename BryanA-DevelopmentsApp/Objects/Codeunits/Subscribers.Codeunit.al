@@ -4427,8 +4427,11 @@ codeunit 75010 "BA SEI Subscibers"
         ACHRBHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHRBHeader."Federal ID No."));
         ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
 
-        CompInfo.Get();
-        ACHRBHeader."Client Name" := CopyStr(CompInfo.Name, 1, MaxStrLen(ACHRBHeader."Client Name"));
+        if BankAccount."Client Name" = '' then begin
+            CompInfo.Get();
+            ACHRBHeader."Client Name" := CopyStr(CompInfo.Name, 1, MaxStrLen(ACHRBHeader."Client Name"));
+        end else
+            ACHRBHeader."Client Name" := CopyStr(BankAccount."Client Name", 1, MaxStrLen(ACHRBHeader."Client Name"));
 
         if BankAccount."Last E-Pay Export File Name".Contains('.') then begin
             Parts := BankAccount."Last E-Pay Export File Name".Split('.');
@@ -4439,8 +4442,8 @@ codeunit 75010 "BA SEI Subscibers"
         if FileNumberText = '' then
             FileNumberText := '1';
         Evaluate(ACHRBHeader."File Creation Number", GetNumeralsOnly(FileNumberText));
-        ACHRBHeader."File Creation Number" -= 1;
         BankAccount."Last E-Pay File Creation No." := ACHRBHeader."File Creation Number";
+        BankAccount.Modify(true);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]
@@ -4468,8 +4471,11 @@ codeunit 75010 "BA SEI Subscibers"
         BankAccount.TestField("Bank Account No.");
         ACHRBDetail."Client Number" := CopyStr(GetNumeralsOnly(BankAccount."Bank Account No."), 1, MaxStrLen(ACHRBDetail."Client Number"));
 
-        CompInfo.Get();
-        ACHRBDetail."Client Name" := CopyStr(CompInfo.Name, 1, MaxStrLen(ACHRBDetail."Client Name"));
+        if BankAccount."Client Name" = '' then begin
+            CompInfo.Get();
+            ACHRBDetail."Client Name" := CopyStr(CompInfo.Name, 1, MaxStrLen(ACHRBDetail."Client Name"));
+        end else
+            ACHRBDetail."Client Name" := CopyStr(BankAccount."Client Name", 1, MaxStrLen(ACHRBDetail."Client Name"));
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBFooterModify', '', false, false)]
