@@ -24,7 +24,15 @@ table 75030 "BA Direct Cost Entry"
         {
             Editable = false;
         }
-        field(5; "Direct Cost"; Decimal)
+        field(5; "Total Standard Cost"; Decimal)
+        {
+            Editable = false;
+        }
+        field(6; "Labour Cost"; Decimal)
+        {
+            Editable = false;
+        }
+        field(7; "Material Cost"; Decimal)
         {
             Editable = false;
         }

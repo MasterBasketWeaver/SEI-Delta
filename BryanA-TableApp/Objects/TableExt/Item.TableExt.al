@@ -127,10 +127,10 @@ tableextension 80012 "BA Item" extends Item
             Caption = 'No. of Bins On Hand';
             Editable = false;
         }
-        field(80080; "BA Last Direct Cost Updated"; DateTime)
+        field(80080; "BA Last Standard Cost Updated"; DateTime)
         {
             DataClassification = CustomerContent;
-            Caption = 'Last Direct Cost Updated';
+            Caption = 'Last Standard Cost Updated';
             Editable = false;
         }
     }

@@ -140,7 +140,7 @@ codeunit 75011 "BA Install Codeunit"
                 DirectCostEntry.Init();
                 DirectCostEntry."Entry No." := EntryNo;
                 DirectCostEntry."Item No." := Item."No.";
-                DirectCostEntry."Direct Cost" := Item."Last Direct Cost";
+                DirectCostEntry."Total Standard Cost" := Item."Last Direct Cost";
                 DirectCostEntry.Insert(true);
             until Item.Next() = 0;
     end;

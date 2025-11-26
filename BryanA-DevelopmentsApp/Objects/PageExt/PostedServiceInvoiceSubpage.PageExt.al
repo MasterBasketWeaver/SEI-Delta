@@ -39,6 +39,8 @@ pageextension 80147 "BA Posted Service Inv. Subpage" extends "Posted Service Inv
         modify("Unit Cost (LCY)")
         {
             Editable = false;
+            BlankZero = true;
+            HideValue = Type <> Type::Item;
         }
         modify("Unit Price")
         {
@@ -138,6 +140,21 @@ pageextension 80147 "BA Posted Service Inv. Subpage" extends "Posted Service Inv
             field("BA Order Entry No."; Rec."BA Order Entry No.")
             {
                 ApplicationArea = all;
+            }
+        }
+        addafter("Unit Cost (LCY)")
+        {
+            field("BA Labour Cost"; Rec."BA Labour Cost")
+            {
+                ApplicationArea = all;
+                BlankZero = true;
+                HideValue = Type <> Type::Item;
+            }
+            field("BA Material Cost"; Rec."BA Material Cost")
+            {
+                ApplicationArea = all;
+                BlankZero = true;
+                HideValue = Type <> Type::Item;
             }
         }
     }

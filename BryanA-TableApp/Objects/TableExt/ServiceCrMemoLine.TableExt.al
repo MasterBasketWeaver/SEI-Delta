@@ -7,5 +7,17 @@ tableextension 80083 "BA Service Cr.Memo Line" extends "Service Cr.Memo Line"
             DataClassification = CustomerContent;
             Caption = 'Omit From Reports';
         }
+        field(80080; "BA Labour Cost"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Labour Cost';
+            Editable = false;
+        }
+        field(80081; "BA Material Cost"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Material Cost';
+            Editable = false;
+        }
     }
 }

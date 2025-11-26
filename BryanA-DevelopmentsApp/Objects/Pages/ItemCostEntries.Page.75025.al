@@ -15,11 +15,13 @@ page 75025 "BA Item Cost Entries"
         {
             repeater(Lines)
             {
-                field("Entry No."; "Entry No.") { }
-                field("Item No."; "Item No.") { }
-                field("Updated At"; "Updated At") { }
-                field("Updated By"; "Updated By") { }
-                field("Direct Cost"; "Direct Cost") { }
+                field("Entry No."; Rec."Entry No.") { }
+                field("Item No."; Rec."Item No.") { }
+                field("Updated At"; Rec."Updated At") { }
+                field("Updated By"; Rec."Updated By") { }
+                field("Labour Cost"; Rec."Labour Cost") { }
+                field("Material Cost"; Rec."Material Cost") { }
+                field("Total Standard Cost"; Rec."Total Standard Cost") { }
             }
         }
     }
