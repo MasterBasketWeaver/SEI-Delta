@@ -846,6 +846,7 @@ codeunit 75010 "BA SEI Subscibers"
         UpdateOrderPostedFields(SalesHeader, SalesInvHeader);
     end;
 
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnAfterSalesInvLineInsert', '', false, false)]
     local procedure SalesPostOnAfterSalesInvLineInsert(var SalesInvLine: Record "Sales Invoice Line"; SalesLine: Record "Sales Line")
     begin
@@ -6016,7 +6017,7 @@ codeunit 75010 "BA SEI Subscibers"
         BinContent.Delete(true);
     end;
 
-    [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'Last Direct Cost', false, false)]
+    [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'Standard Cost', false, false)]
     local procedure ItemOnAfterValidateLastDirectCost(var Rec: Record Item)
     begin
         InsertDirectCostEntry(Rec);
@@ -6040,11 +6041,13 @@ codeunit 75010 "BA SEI Subscibers"
     var
         DirectCostEntry: Record "BA Direct Cost Entry";
     begin
-        Item.Validate("BA Last Direct Cost Updated", CurrentDateTime());
+        Item.Validate("BA Last Standard Cost Updated", CurrentDateTime());
         DirectCostEntry.Validate("Item No.", Item."No.");
         DirectCostEntry.Validate("Updated At", CurrentDateTime());
         DirectCostEntry.Validate("Updated By", UserId());
-        DirectCostEntry.Validate("Direct Cost", Item."Last Direct Cost");
+        DirectCostEntry.Validate("Material Cost", Item."Single-Level Material Cost");
+        DirectCostEntry.Validate("Labour Cost", Item."Single-Level Capacity Cost");
+        DirectCostEntry.Validate("Total Standard Cost", Item."Standard Cost");
         DirectCostEntry.Insert(true);
     end;
 
@@ -6232,6 +6235,34 @@ codeunit 75010 "BA SEI Subscibers"
         SalesLine.Validate("Dimension Set ID", NewDimSetID);
         exit(true);
     end;
+
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeSalesInvLineInsert', '', false, false)]
+    local procedure SalesPostOnBeforeSalesInvLineInsert(var SalesInvLine: Record "Sales Invoice Line"; SalesLine: Record "Sales Line")
+    var
+        Item: Record Item;
+    begin
+        if SalesInvLine.Type = SalesInvLine.Type::Item then begin
+            Item.Get(SalesInvLine."No.");
+            SalesInvLine.Validate("BA Labour Cost", Item."Single-Level Capacity Cost");
+            SalesInvLine.Validate("BA Material Cost", Item."Single-Level Material Cost");
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeSalesCrMemoLineInsert', '', false, false)]
+    local procedure SalesPostOnBeforeSalesCrMemoLineInsert(var SalesCrMemoLine: Record "Sales Cr.Memo Line"; SalesLine: Record "Sales Line")
+    var
+        Item: Record Item;
+    begin
+        if SalesCrMemoLine.Type = SalesCrMemoLine.Type::Item then begin
+            Item.Get(SalesCrMemoLine."No.");
+            SalesCrMemoLine.Validate("BA Labour Cost", Item."Single-Level Capacity Cost");
+            SalesCrMemoLine.Validate("BA Material Cost", Item."Single-Level Material Cost");
+        end;
+    end;
+
 
 
     var

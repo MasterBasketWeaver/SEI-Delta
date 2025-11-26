@@ -354,9 +354,9 @@ pageextension 80009 "BA Item Card" extends "Item Card"
                 ApplicationArea = all;
             }
         }
-        addafter("Last Direct Cost")
+        addafter("Standard Cost")
         {
-            field("BA Last Direct Cost Updated"; Rec."BA Last Direct Cost Updated")
+            field("BA Last Standard Cost Updated"; Rec."BA Last Standard Cost Updated")
             {
                 ApplicationArea = all;
 

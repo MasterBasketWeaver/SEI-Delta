@@ -9,6 +9,27 @@ pageextension 80148 "BA P. Service Cr.Memo Subpage" extends "Posted Serv. Cr. Me
                 ApplicationArea = all;
             }
         }
+        addafter("Unit Cost (LCY)")
+        {
+            field("BA Labour Cost"; Rec."BA Labour Cost")
+            {
+                ApplicationArea = all;
+                BlankZero = true;
+                HideValue = Type <> Type::Item;
+            }
+            field("BA Material Cost"; Rec."BA Material Cost")
+            {
+                ApplicationArea = all;
+                BlankZero = true;
+                HideValue = Type <> Type::Item;
+            }
+        }
+        modify("Unit Cost (LCY)")
+        {
+            ApplicationArea = all;
+            BlankZero = true;
+            HideValue = Type <> Type::Item;
+        }
     }
 
     actions

@@ -105,15 +105,6 @@ pageextension 80078 "BA Sales Order Subpage" extends "Sales Order Subform"
                 ApplicationArea = all;
                 BlankZero = true;
                 HideValue = Type <> Type::Item;
-
-                trigger OnDrillDown()
-                var
-                    DirectCostEntry: Record "BA Direct Cost Entry";
-                begin
-                    DirectCostEntry.SetCurrentKey("Item No.");
-                    DirectCostEntry.SetRange("Item No.", Rec."No.");
-                    Page.Run(0, DirectCostEntry);
-                end;
             }
         }
         modify("Unit Cost (LCY)")

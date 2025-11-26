@@ -16,6 +16,27 @@ pageextension 80146 "BA P. Sales Cr.Memo Subpage" extends "Posted Sales Cr. Memo
                 ApplicationArea = all;
             }
         }
+        addafter("Unit Cost (LCY)")
+        {
+            field("BA Labour Cost"; Rec."BA Labour Cost")
+            {
+                ApplicationArea = all;
+                BlankZero = true;
+                HideValue = Type <> Type::Item;
+            }
+            field("BA Material Cost"; Rec."BA Material Cost")
+            {
+                ApplicationArea = all;
+                BlankZero = true;
+                HideValue = Type <> Type::Item;
+            }
+        }
+        modify("Unit Cost (LCY)")
+        {
+            ApplicationArea = all;
+            BlankZero = true;
+            HideValue = Type <> Type::Item;
+        }
     }
 
     actions
