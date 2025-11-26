@@ -1,7 +1,7 @@
-table 75030 "BA Direct Cost Entry"
+table 75030 "BA Item Cost Entry"
 {
     DataClassification = CustomerContent;
-    Caption = 'Direct Cost Entry';
+    Caption = 'Item Cost Entry';
 
     fields
     {
