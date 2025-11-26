@@ -128,20 +128,22 @@ codeunit 75011 "BA Install Codeunit"
     local procedure PopulateDirectCostEntries()
     var
         Item: Record Item;
-        DirectCostEntry: Record "BA Direct Cost Entry";
+        ItemCostEntry: Record "BA Item Cost Entry";
         EntryNo: Integer;
     begin
-        if not DirectCostEntry.IsEmpty() then
+        if not ItemCostEntry.IsEmpty() then
             exit;
 
         if Item.FindSet() then
             repeat
                 EntryNo += 1;
-                DirectCostEntry.Init();
-                DirectCostEntry."Entry No." := EntryNo;
-                DirectCostEntry."Item No." := Item."No.";
-                DirectCostEntry."Total Standard Cost" := Item."Last Direct Cost";
-                DirectCostEntry.Insert(true);
+                ItemCostEntry.Init();
+                ItemCostEntry."Entry No." := EntryNo;
+                ItemCostEntry."Item No." := Item."No.";
+                ItemCostEntry."Total Standard Cost" := Item."Last Direct Cost";
+                ItemCostEntry."Labour Cost" := Item."Single-Level Capacity Cost";
+                ItemCostEntry."Material Cost" := Item."Single-Level Material Cost";
+                ItemCostEntry.Insert(true);
             until Item.Next() = 0;
     end;
 

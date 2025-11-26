@@ -6093,7 +6093,7 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'Standard Cost', false, false)]
     local procedure ItemOnAfterValidateLastDirectCost(var Rec: Record Item)
     begin
-        InsertDirectCostEntry(Rec);
+        InsertItemCostEntry(Rec);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::ItemCostManagement, 'OnBeforeUpdateUnitCost', '', false, false)]
@@ -6107,21 +6107,21 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ItemCostMgtOnUpdateUnitCostOnBeforeValidatePriceProfitCalculation(var Item: Record Item)
     begin
         if SingleInstance.GetInitialLastDirectCost() <> Item."Last Direct Cost" then
-            InsertDirectCostEntry(Item);
+            InsertItemCostEntry(Item);
     end;
 
-    local procedure InsertDirectCostEntry(var Item: Record Item)
+    local procedure InsertItemCostEntry(var Item: Record Item)
     var
-        DirectCostEntry: Record "BA Direct Cost Entry";
+        ItemCostEntry: Record "BA Item Cost Entry";
     begin
         Item.Validate("BA Last Standard Cost Updated", CurrentDateTime());
-        DirectCostEntry.Validate("Item No.", Item."No.");
-        DirectCostEntry.Validate("Updated At", CurrentDateTime());
-        DirectCostEntry.Validate("Updated By", UserId());
-        DirectCostEntry.Validate("Material Cost", Item."Single-Level Material Cost");
-        DirectCostEntry.Validate("Labour Cost", Item."Single-Level Capacity Cost");
-        DirectCostEntry.Validate("Total Standard Cost", Item."Standard Cost");
-        DirectCostEntry.Insert(true);
+        ItemCostEntry.Validate("Item No.", Item."No.");
+        ItemCostEntry.Validate("Updated At", CurrentDateTime());
+        ItemCostEntry.Validate("Updated By", UserId());
+        ItemCostEntry.Validate("Material Cost", Item."Single-Level Material Cost");
+        ItemCostEntry.Validate("Labour Cost", Item."Single-Level Capacity Cost");
+        ItemCostEntry.Validate("Total Standard Cost", Item."Standard Cost");
+        ItemCostEntry.Insert(true);
     end;
 
 
