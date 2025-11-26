@@ -2,7 +2,7 @@ page 75025 "BA Item Cost Entries"
 {
     ApplicationArea = all;
     UsageCategory = Lists;
-    SourceTable = "BA Direct Cost Entry";
+    SourceTable = "BA Item Cost Entry";
     Caption = 'Item Cost Entries';
     PageType = List;
     Editable = false;

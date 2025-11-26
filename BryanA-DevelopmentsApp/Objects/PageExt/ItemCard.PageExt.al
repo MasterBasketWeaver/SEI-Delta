@@ -362,11 +362,11 @@ pageextension 80009 "BA Item Card" extends "Item Card"
 
                 trigger OnDrillDown()
                 var
-                    DirectCostEntry: Record "BA Direct Cost Entry";
+                    ItemCostEntry: Record "BA Item Cost Entry";
                 begin
-                    DirectCostEntry.SetCurrentKey("Item No.");
-                    DirectCostEntry.SetRange("Item No.", Rec."No.");
-                    Page.Run(0, DirectCostEntry);
+                    ItemCostEntry.SetCurrentKey("Item No.");
+                    ItemCostEntry.SetRange("Item No.", Rec."No.");
+                    Page.Run(0, ItemCostEntry);
                 end;
             }
         }
