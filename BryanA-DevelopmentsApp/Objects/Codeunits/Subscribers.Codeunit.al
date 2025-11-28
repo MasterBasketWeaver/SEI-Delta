@@ -6277,6 +6277,14 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Calculate Standard Cost", 'OnBeforeSetBOMCompFilters', '', false, false)]
+    local procedure CalculateStandardCostOnBeforeSetBOMCompFilters(var BOMComponent: Record "BOM Component")
+    begin
+        BOMComponent.SetFilter("No.", '<>%1', '');
+    end;
+
+
     var
         SalesApprovalMgt: Codeunit "BA Sales Approval Mgt.";
         SingleInstance: Codeunit "BA Single Instance";
