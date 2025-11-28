@@ -4930,6 +4930,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     local procedure SaveOrderLine(var SalesLine: Record "Sales Line"; var OrderLine: Record "BA Order Line"; Deleted: Boolean; Cancelled: Boolean)
     var
+        Item: Record Item;
         OrderLine2: Record "BA Order Line";
         EntryNo: Integer;
     begin
@@ -4963,6 +4964,11 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Unit of Measure Code" := SalesLine."Unit of Measure Code";
         OrderLine."Unit Cost (LCY)" := SalesLine."Unit Cost (LCY)";
         OrderLine."Unit Price" := SalesLine."Unit Price";
+        if SalesLine.Type = SalesLine.Type::Item then begin
+            Item.Get(SalesLine."No.");
+            OrderLine."Labour Cost" := Item."Single-Level Capacity Cost";
+            OrderLine."Materal Cost" := Item."Single-Level Material Cost";
+        end;
 
         OrderLine."Line Discount Amount" := SalesLine."Line Discount Amount";
         OrderLine."Line Discount %" := SalesLine."Line Discount %";
@@ -5004,6 +5010,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     local procedure UpdateOrderPostedFields(var SalesLine: Record "Sales Line"; var SalesInvLine: Record "Sales Invoice Line")
     var
+        Item: Record Item;
         OrderLine: Record "BA Order Line";
     begin
         if SalesLine."Qty. to Invoice" = 0 then
@@ -5025,6 +5032,11 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Line Amount" := SalesInvLine."Line Amount";
         OrderLine.Amount := SalesInvLine.Amount;
         OrderLine.Deleted := false;
+        if SalesLine.Type = SalesLine.Type::Item then begin
+            Item.Get(SalesLine."No.");
+            OrderLine."Labour Cost" := Item."Single-Level Capacity Cost";
+            OrderLine."Materal Cost" := Item."Single-Level Material Cost";
+        end;
         OrderLine.Modify(true);
     end;
 
@@ -5111,6 +5123,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     local procedure SaveOrderLine(var ServiceLine: Record "Service Line"; var OrderLine: Record "BA Order Line"; Deleted: Boolean; Cancelled: Boolean)
     var
+        Item: Record Item;
         OrderLine2: Record "BA Order Line";
         EntryNo: Integer;
     begin
@@ -5143,7 +5156,12 @@ codeunit 75010 "BA SEI Subscibers"
             ServiceLine.Type::"G/L Account":
                 OrderLine.Type := OrderLine.Type::"G/L Account";
             ServiceLine.Type::Item:
-                OrderLine.Type := OrderLine.Type::Item;
+                begin
+                    OrderLine.Type := OrderLine.Type::Item;
+                    Item.Get(ServiceLine."No.");
+                    OrderLine."Labour Cost" := Item."Single-Level Capacity Cost";
+                    OrderLine."Materal Cost" := Item."Single-Level Material Cost";
+                end;
             ServiceLine.Type::Resource:
                 OrderLine.Type := OrderLine.Type::Resource;
         end;
@@ -5200,6 +5218,7 @@ codeunit 75010 "BA SEI Subscibers"
 
     local procedure UpdateOrderPostedFields(var ServiceLine: Record "Service Line"; var ServiceInvLine: Record "Service Invoice Line")
     var
+        Item: Record Item;
         OrderLine: Record "BA Order Line";
     begin
         if ServiceLine."Qty. to Invoice" = 0 then
@@ -5220,6 +5239,11 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine.Quantity := ServiceLine."Qty. to Invoice";
         OrderLine."Line Amount" := ServiceInvLine."Line Amount";
         OrderLine.Amount := ServiceInvLine.Amount;
+        if ServiceLine.Type = ServiceLine.Type::Item then begin
+            Item.Get(ServiceLine."No.");
+            OrderLine."Labour Cost" := Item."Single-Level Capacity Cost";
+            OrderLine."Materal Cost" := Item."Single-Level Material Cost";
+        end;
         OrderLine.Deleted := false;
         OrderLine.Modify(true);
     end;
@@ -6373,7 +6397,7 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeSalesInvLineInsert', '', false, false)]
-    local procedure SalesPostOnBeforeSalesInvLineInsert(var SalesInvLine: Record "Sales Invoice Line"; SalesLine: Record "Sales Line")
+    local procedure SalesPostOnBeforeSalesInvLineInsert(var SalesInvLine: Record "Sales Invoice Line")
     var
         Item: Record Item;
     begin
@@ -6385,7 +6409,7 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Sales-Post", 'OnBeforeSalesCrMemoLineInsert', '', false, false)]
-    local procedure SalesPostOnBeforeSalesCrMemoLineInsert(var SalesCrMemoLine: Record "Sales Cr.Memo Line"; SalesLine: Record "Sales Line")
+    local procedure SalesPostOnBeforeSalesCrMemoLineInsert(var SalesCrMemoLine: Record "Sales Cr.Memo Line")
     var
         Item: Record Item;
     begin
@@ -6393,6 +6417,18 @@ codeunit 75010 "BA SEI Subscibers"
             Item.Get(SalesCrMemoLine."No.");
             SalesCrMemoLine.Validate("BA Labour Cost", Item."Single-Level Capacity Cost");
             SalesCrMemoLine.Validate("BA Material Cost", Item."Single-Level Material Cost");
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Serv-Documents Mgt.", 'OnBeforeServInvLineInsert', '', false, false)]
+    local procedure ServDocumentsMgtOnBeforeServInvLineInsert(var ServiceInvoiceLine: Record "Service Invoice Line")
+    var
+        Item: Record Item;
+    begin
+        if ServiceInvoiceLine.Type = ServiceInvoiceLine.Type::Item then begin
+            Item.Get(ServiceInvoiceLine."No.");
+            ServiceInvoiceLine.Validate("BA Labour Cost", Item."Single-Level Capacity Cost");
+            ServiceInvoiceLine.Validate("BA Material Cost", Item."Single-Level Material Cost");
         end;
     end;
 
