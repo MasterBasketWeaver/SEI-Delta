@@ -4967,7 +4967,7 @@ codeunit 75010 "BA SEI Subscibers"
         if SalesLine.Type = SalesLine.Type::Item then begin
             Item.Get(SalesLine."No.");
             OrderLine."Labour Cost" := Item."Single-Level Capacity Cost";
-            OrderLine."Materal Cost" := Item."Single-Level Material Cost";
+            OrderLine."Material Cost" := Item."Single-Level Material Cost";
         end;
 
         OrderLine."Line Discount Amount" := SalesLine."Line Discount Amount";
@@ -5035,7 +5035,7 @@ codeunit 75010 "BA SEI Subscibers"
         if SalesLine.Type = SalesLine.Type::Item then begin
             Item.Get(SalesLine."No.");
             OrderLine."Labour Cost" := Item."Single-Level Capacity Cost";
-            OrderLine."Materal Cost" := Item."Single-Level Material Cost";
+            OrderLine."Material Cost" := Item."Single-Level Material Cost";
         end;
         OrderLine.Modify(true);
     end;
@@ -5160,7 +5160,7 @@ codeunit 75010 "BA SEI Subscibers"
                     OrderLine.Type := OrderLine.Type::Item;
                     Item.Get(ServiceLine."No.");
                     OrderLine."Labour Cost" := Item."Single-Level Capacity Cost";
-                    OrderLine."Materal Cost" := Item."Single-Level Material Cost";
+                    OrderLine."Material Cost" := Item."Single-Level Material Cost";
                 end;
             ServiceLine.Type::Resource:
                 OrderLine.Type := OrderLine.Type::Resource;
@@ -5242,7 +5242,7 @@ codeunit 75010 "BA SEI Subscibers"
         if ServiceLine.Type = ServiceLine.Type::Item then begin
             Item.Get(ServiceLine."No.");
             OrderLine."Labour Cost" := Item."Single-Level Capacity Cost";
-            OrderLine."Materal Cost" := Item."Single-Level Material Cost";
+            OrderLine."Material Cost" := Item."Single-Level Material Cost";
         end;
         OrderLine.Deleted := false;
         OrderLine.Modify(true);
