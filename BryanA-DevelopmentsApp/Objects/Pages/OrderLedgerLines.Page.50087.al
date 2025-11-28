@@ -93,6 +93,18 @@ page 50087 "BA Order Ledger Lines"
                     ApplicationArea = all;
                     BlankZero = true;
                 }
+                field("Labour Cost"; Rec."Labour Cost")
+                {
+                    ApplicationArea = all;
+                    BlankZero = true;
+                    HideValue = Type <> Type::Item;
+                }
+                field("Material Cost"; Rec."Material Cost")
+                {
+                    ApplicationArea = all;
+                    BlankZero = true;
+                    HideValue = Type <> Type::Item;
+                }
                 field("Amount"; Rec."Amount")
                 {
                     ApplicationArea = all;

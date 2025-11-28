@@ -239,6 +239,16 @@ table 75024 "BA Order Line"
                 "Posted Document Type" = field ("Posted Document Type"), "Posted Document No." = field ("Posted Document No.")));
             Editable = false;
         }
+        field(80; "Labour Cost"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
+        field(81; "Material Cost"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Editable = false;
+        }
     }
 
     keys
