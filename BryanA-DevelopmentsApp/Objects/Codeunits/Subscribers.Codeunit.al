@@ -4888,11 +4888,11 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Unit of Measure Code" := SalesLine."Unit of Measure Code";
         OrderLine."Unit Cost (LCY)" := SalesLine."Unit Cost (LCY)";
         OrderLine."Unit Price" := SalesLine."Unit Price";
-        if SalesLine.Type = SalesLine.Type::Item then begin
-            Item.Get(SalesLine."No.");
-            OrderLine."Labour Cost" := GetLabourCost(Item);
-            OrderLine."Material Cost" := Item."Single-Level Material Cost";
-        end;
+        if SalesLine.Type = SalesLine.Type::Item then
+            if Item.Get(SalesLine."No.") then begin
+                OrderLine."Labour Cost" := GetLabourCost(Item);
+                OrderLine."Material Cost" := Item."Single-Level Material Cost";
+            end;
 
         OrderLine."Line Discount Amount" := SalesLine."Line Discount Amount";
         OrderLine."Line Discount %" := SalesLine."Line Discount %";
@@ -4956,11 +4956,11 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Line Amount" := SalesInvLine."Line Amount";
         OrderLine.Amount := SalesInvLine.Amount;
         OrderLine.Deleted := false;
-        if SalesLine.Type = SalesLine.Type::Item then begin
-            Item.Get(SalesLine."No.");
-            OrderLine."Labour Cost" := GetLabourCost(Item);
-            OrderLine."Material Cost" := Item."Single-Level Material Cost";
-        end;
+        if SalesLine.Type = SalesLine.Type::Item then
+            if Item.Get(SalesLine."No.") then begin
+                OrderLine."Labour Cost" := GetLabourCost(Item);
+                OrderLine."Material Cost" := Item."Single-Level Material Cost";
+            end;
         OrderLine.Modify(true);
     end;
 
@@ -5082,9 +5082,10 @@ codeunit 75010 "BA SEI Subscibers"
             ServiceLine.Type::Item:
                 begin
                     OrderLine.Type := OrderLine.Type::Item;
-                    Item.Get(ServiceLine."No.");
-                    OrderLine."Labour Cost" := GetLabourCost(Item);
-                    OrderLine."Material Cost" := Item."Single-Level Material Cost";
+                    if Item.Get(ServiceLine."No.") then begin
+                        OrderLine."Labour Cost" := GetLabourCost(Item);
+                        OrderLine."Material Cost" := Item."Single-Level Material Cost";
+                    end;
                 end;
             ServiceLine.Type::Resource:
                 OrderLine.Type := OrderLine.Type::Resource;
