@@ -6171,21 +6171,20 @@ codeunit 75010 "BA SEI Subscibers"
         if Item."Routing No." <> '' then begin
             MfgSetup.Get();
             VersionCode := VersionMgt.GetRtngVersion(Item."Routing No.", WorkDate(), false);
-
             RoutingLine.SetRange("Routing No.", Item."Routing No.");
             RoutingLine.SetRange("Version Code", VersionCode);
-
             if RoutingLine.FindSet() then
                 repeat
                     UnitCost := RoutingLine."Unit Cost per";
                     CostCalcMgt.RoutingCostPerUnit(RoutingLine.Type, RoutingLine."No.", DirectUnitCost, IndirectCostPct, OverheadRate, UnitCost, UnitCostCalculation);
                     CostTime := CostCalcMgt.CalcCostTime(CostCalcMgt.CalcQtyAdjdForBOMScrap(Item."Lot Size", Item."Scrap %"),
-                    RoutingLine."Setup Time", RoutingLine."Setup Time Unit of Meas. Code",
+                        RoutingLine."Setup Time", RoutingLine."Setup Time Unit of Meas. Code",
                         RoutingLine."Run Time", RoutingLine."Run Time Unit of Meas. Code", RoutingLine."Lot Size",
                         RoutingLine."Scrap Factor % (Accumulated)", RoutingLine."Fixed Scrap Qty. (Accum.)",
                         RoutingLine."Work Center No.", UnitCostCalculation, MfgSetup."Cost Incl. Setup",
-                        RoutingLine."Concurrent Capacities") /
-                        Item."Lot Size";
+                        RoutingLine."Concurrent Capacities");
+                    if Item."Lot Size" <> 0 then
+                        CostTime /= Item."Lot Size";
                     LabourCost += CostTime * UnitCost;
                 until RoutingLine.Next() = 0;
         end;
@@ -6194,6 +6193,7 @@ codeunit 75010 "BA SEI Subscibers"
             exit;
         if not ProdBOMHeader.Get(Item."Production BOM No.") then
             exit;
+        ProdBOMHeader.CalcFields("BA Active Version");
         ProdBOMLine.SetRange("Production BOM No.", Item."Production BOM No.");
         ProdBOMLine.SetRange("Version Code", ProdBOMHeader."BA Active Version");
         ProdBOMLine.SetFilter("Starting Date", '%1|<=%2', 0D, WorkDate());
