@@ -83,6 +83,18 @@ pageextension 80051 "BA Service Quote" extends "Service Quote"
                 ApplicationArea = all;
                 Editable = false;
             }
+            field("BA Service Dept. 1"; Rec."ENC Service Dept. 1")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Service Dept. 2"; Rec."ENC Service Dept. 2")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Service Dept. 3"; Rec."ENC Service Dept. 3")
+            {
+                ApplicationArea = all;
+            }
         }
         addafter("Tax Area Code")
         {
