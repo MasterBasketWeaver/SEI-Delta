@@ -6,6 +6,13 @@ pageextension 80187 "BA Bank Account Card" extends "Bank Account Card"
         {
             ApplicationArea = all;
             Visible = true;
+
+            trigger OnAfterValidate()
+            begin
+                if Rec."E-Pay Export File Path" <> '' then
+                    if not Rec."E-Pay Export File Path".EndsWith('\') then
+                        Rec."E-Pay Export File Path" += '\';
+            end;
         }
         modify("Last E-Pay File Creation No.")
         {
