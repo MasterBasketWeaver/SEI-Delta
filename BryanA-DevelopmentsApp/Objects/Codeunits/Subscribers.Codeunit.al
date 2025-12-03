@@ -6049,7 +6049,7 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Table, Database::Item, 'OnAfterValidateEvent', 'Standard Cost', false, false)]
     local procedure ItemOnAfterValidateStandardCost(var Rec: Record Item)
     begin
-        InsertItemCostEntry(Rec);
+        InsertItemCostEntry(Rec, true);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::ItemCostManagement, 'OnBeforeUpdateUnitCost', '', false, false)]
@@ -6063,25 +6063,26 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ItemCostMgtOnUpdateUnitCostOnBeforeValidatePriceProfitCalculation(var Item: Record Item)
     begin
         if SingleInstance.GetInitialStandardCost() <> Item."Standard Cost" then
-            InsertItemCostEntry(Item);
+            InsertItemCostEntry(Item, Item."Routing No." <> '');
     end;
 
-    local procedure InsertItemCostEntry(var Item: Record Item)
+    local procedure InsertItemCostEntry(var Item: Record Item; RecordUpdate: Boolean)
     var
         ItemCostEntry: Record "BA Item Cost Entry";
         LabourCost: Decimal;
         MaterialCost: Decimal;
     begin
-        if Item."Routing No." <> '' then
-            Item.Validate("BA Last Standard Cost Updated", CurrentDateTime());
+        GetLabourAndMaterialCosts(Item, LabourCost, MaterialCost);
         ItemCostEntry.Validate("Item No.", Item."No.");
         ItemCostEntry.Validate("Updated At", CurrentDateTime());
         ItemCostEntry.Validate("Updated By", UserId());
-        ItemCostEntry.Validate("Material Cost", Item."Single-Level Material Cost");
-        GetLabourAndMaterialCosts(Item, LabourCost, MaterialCost);
         ItemCostEntry.Validate("Labour Cost", LabourCost);
-        ItemCostEntry.Validate("Total Standard Cost", MaterialCost);
+        ItemCostEntry.Validate("Material Cost", MaterialCost);
+        ItemCostEntry.Validate("Total Standard Cost", Item."Standard Cost");
         ItemCostEntry.Insert(true);
+
+        if RecordUpdate then
+            Item.Validate("BA Last Standard Cost Updated", ItemCostEntry."Updated At");
     end;
 
     local procedure GetLabourAndMaterialCosts(var Item: Record Item; var LabourCost: Decimal; var MaterialCost: Decimal)
