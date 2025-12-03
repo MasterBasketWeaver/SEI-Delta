@@ -69,6 +69,8 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SalesLineOnAfterValidateNo(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
     var
         Item: Record Item;
+        LabourCost: Decimal;
+        MaterialCost: Decimal;
     begin
         if Rec."No." <> xRec."No." then begin
             ClearShipmentDates(Rec);
@@ -84,13 +86,15 @@ codeunit 75010 "BA SEI Subscibers"
             Rec.Type::Item:
                 if Item.Get(Rec."No.") then begin
                     Item.TestField("ENC Not for Sale", false);
-                    Rec.Validate("BA Labour Cost", GetLabourCost(Item));
-                    Rec.Validate("BA Material Cost", Item."Single-Level Material Cost");
+                    GetLabourAndMaterialCosts(Item, LabourCost, MaterialCost);
+                    Rec.Validate("BA Labour Cost", LabourCost);
+                    Rec.Validate("BA Material Cost", MaterialCost);
                 end;
             Rec.Type::"G/L Account":
                 ValidateSalesLineGLSourceDimensions(Rec);
         end;
     end;
+
 
     [EventSubscriber(ObjectType::Table, Database::"Sales Line", 'OnAfterValidateEvent', 'Quantity', false, false)]
     local procedure SalesLineOnAfterValdiateQuantity(var Rec: Record "Sales Line"; var xRec: Record "Sales Line")
@@ -4965,10 +4969,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine."Unit Cost (LCY)" := SalesLine."Unit Cost (LCY)";
         OrderLine."Unit Price" := SalesLine."Unit Price";
         if SalesLine.Type = SalesLine.Type::Item then
-            if Item.Get(SalesLine."No.") then begin
-                OrderLine."Labour Cost" := GetLabourCost(Item);
-                OrderLine."Material Cost" := Item."Single-Level Material Cost";
-            end;
+            if Item.Get(SalesLine."No.") then
+                GetLabourAndMaterialCosts(Item, OrderLine."Labour Cost", OrderLine."Material Cost");
 
         OrderLine."Line Discount Amount" := SalesLine."Line Discount Amount";
         OrderLine."Line Discount %" := SalesLine."Line Discount %";
@@ -5033,10 +5035,8 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine.Amount := SalesInvLine.Amount;
         OrderLine.Deleted := false;
         if SalesLine.Type = SalesLine.Type::Item then
-            if Item.Get(SalesLine."No.") then begin
-                OrderLine."Labour Cost" := GetLabourCost(Item);
-                OrderLine."Material Cost" := Item."Single-Level Material Cost";
-            end;
+            if Item.Get(SalesLine."No.") then
+                GetLabourAndMaterialCosts(Item, OrderLine."Labour Cost", OrderLine."Material Cost");
         OrderLine.Modify(true);
     end;
 
@@ -5158,10 +5158,8 @@ codeunit 75010 "BA SEI Subscibers"
             ServiceLine.Type::Item:
                 begin
                     OrderLine.Type := OrderLine.Type::Item;
-                    if Item.Get(ServiceLine."No.") then begin
-                        OrderLine."Labour Cost" := GetLabourCost(Item);
-                        OrderLine."Material Cost" := Item."Single-Level Material Cost";
-                    end;
+                    if Item.Get(ServiceLine."No.") then
+                        GetLabourAndMaterialCosts(Item, OrderLine."Labour Cost", OrderLine."Material Cost");
                 end;
             ServiceLine.Type::Resource:
                 OrderLine.Type := OrderLine.Type::Resource;
@@ -5242,8 +5240,7 @@ codeunit 75010 "BA SEI Subscibers"
         OrderLine.Amount := ServiceInvLine.Amount;
         if ServiceLine.Type = ServiceLine.Type::Item then begin
             Item.Get(ServiceLine."No.");
-            OrderLine."Labour Cost" := GetLabourCost(Item);
-            OrderLine."Material Cost" := Item."Single-Level Material Cost";
+            GetLabourAndMaterialCosts(Item, OrderLine."Labour Cost", OrderLine."Material Cost");
         end;
         OrderLine.Deleted := false;
         OrderLine.Modify(true);
@@ -6138,6 +6135,8 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure InsertItemCostEntry(var Item: Record Item)
     var
         ItemCostEntry: Record "BA Item Cost Entry";
+        LabourCost: Decimal;
+        MaterialCost: Decimal;
     begin
         if Item."Routing No." <> '' then
             Item.Validate("BA Last Standard Cost Updated", CurrentDateTime());
@@ -6145,53 +6144,70 @@ codeunit 75010 "BA SEI Subscibers"
         ItemCostEntry.Validate("Updated At", CurrentDateTime());
         ItemCostEntry.Validate("Updated By", UserId());
         ItemCostEntry.Validate("Material Cost", Item."Single-Level Material Cost");
-        ItemCostEntry.Validate("Labour Cost", GetLabourCost(Item));
-        ItemCostEntry.Validate("Total Standard Cost", Item."Standard Cost");
+        GetLabourAndMaterialCosts(Item, LabourCost, MaterialCost);
+        ItemCostEntry.Validate("Labour Cost", LabourCost);
+        ItemCostEntry.Validate("Total Standard Cost", MaterialCost);
         ItemCostEntry.Insert(true);
     end;
 
-    local procedure GetLabourCost(var Item: Record Item): Decimal
+    local procedure GetLabourAndMaterialCosts(var Item: Record Item; var LabourCost: Decimal; var MaterialCost: Decimal)
     var
         RoutingLine: Record "Routing Line";
         MfgSetup: Record "Manufacturing Setup";
+        ProdBOMHeader: Record "Production BOM Header";
+        ProdBOMLine: Record "Production BOM Line";
         VersionMgt: Codeunit VersionManagement;
         CostCalcMgt: Codeunit "Cost Calculation Management";
         VersionCode: Code[20];
         DirectUnitCost: Decimal;
         UnitCost: Decimal;
         CostTime: Decimal;
-        LabourCost: Decimal;
         IndirectCostPct: Decimal;
         OverheadRate: Decimal;
         UnitCostCalculation: Option;
     begin
-        if Item."Routing No." = '' then
-            exit(0);
+        LabourCost := 0;
+        MaterialCost := 0;
+        if Item."Routing No." <> '' then begin
+            MfgSetup.Get();
+            VersionCode := VersionMgt.GetRtngVersion(Item."Routing No.", WorkDate(), false);
 
-        VersionCode := VersionMgt.GetRtngVersion(Item."Routing No.", WorkDate(), false);
+            RoutingLine.SetRange("Routing No.", Item."Routing No.");
+            RoutingLine.SetRange("Version Code", VersionCode);
 
-        RoutingLine.SetRange("Routing No.", Item."Routing No.");
-        RoutingLine.SetRange("Version Code", VersionCode);
+            if RoutingLine.FindSet() then
+                repeat
+                    UnitCost := RoutingLine."Unit Cost per";
+                    CostCalcMgt.RoutingCostPerUnit(RoutingLine.Type, RoutingLine."No.", DirectUnitCost, IndirectCostPct, OverheadRate, UnitCost, UnitCostCalculation);
+                    CostTime := CostCalcMgt.CalcCostTime(CostCalcMgt.CalcQtyAdjdForBOMScrap(Item."Lot Size", Item."Scrap %"),
+                    RoutingLine."Setup Time", RoutingLine."Setup Time Unit of Meas. Code",
+                        RoutingLine."Run Time", RoutingLine."Run Time Unit of Meas. Code", RoutingLine."Lot Size",
+                        RoutingLine."Scrap Factor % (Accumulated)", RoutingLine."Fixed Scrap Qty. (Accum.)",
+                        RoutingLine."Work Center No.", UnitCostCalculation, MfgSetup."Cost Incl. Setup",
+                        RoutingLine."Concurrent Capacities") /
+                        Item."Lot Size";
+                    LabourCost += CostTime * UnitCost;
+                until RoutingLine.Next() = 0;
+        end;
 
-        if not RoutingLine.FindSet() then
-            exit(0);
-
-        MfgSetup.Get();
-        repeat
-            UnitCost := RoutingLine."Unit Cost per";
-            CostCalcMgt.RoutingCostPerUnit(RoutingLine.Type, RoutingLine."No.", DirectUnitCost, IndirectCostPct, OverheadRate, UnitCost, UnitCostCalculation);
-            CostTime := CostCalcMgt.CalcCostTime(CostCalcMgt.CalcQtyAdjdForBOMScrap(Item."Lot Size", Item."Scrap %"),
-            RoutingLine."Setup Time", RoutingLine."Setup Time Unit of Meas. Code",
-                RoutingLine."Run Time", RoutingLine."Run Time Unit of Meas. Code", RoutingLine."Lot Size",
-                RoutingLine."Scrap Factor % (Accumulated)", RoutingLine."Fixed Scrap Qty. (Accum.)",
-                RoutingLine."Work Center No.", UnitCostCalculation, MfgSetup."Cost Incl. Setup",
-                RoutingLine."Concurrent Capacities") /
-                Item."Lot Size";
-            LabourCost += CostTime * UnitCost;
-        until RoutingLine.Next() = 0;
-
-        exit(LabourCost);
+        if Item."Production BOM No." = '' then
+            exit;
+        if not ProdBOMHeader.Get(Item."Production BOM No.") then
+            exit;
+        ProdBOMLine.SetRange("Production BOM No.", Item."Production BOM No.");
+        ProdBOMLine.SetRange("Version Code", ProdBOMHeader."BA Active Version");
+        ProdBOMLine.SetFilter("Starting Date", '%1|<=%2', 0D, WorkDate());
+        ProdBOMLine.SetFilter("Ending Date", '%1|>=%2', 0D, WorkDate());
+        ProdBOMLine.SetFilter(Type, '%1|%2', ProdBOMLine.Type::Item, ProdBOMLine.Type::"Production BOM");
+        ProdBOMLine.SetFilter("No.", '<>%1', '');
+        ProdBOMLine.SetFilter("Quantity per", '<>%1', 0);
+        ProdBOMLine.SetFilter("ENC Unit Cost", '<>%1', 0);
+        if ProdBOMLine.FindSet() then
+            repeat
+                MaterialCost += ProdBOMLine."Quantity per" * ProdBOMLine."ENC Unit Cost";
+            until ProdBOMLine.Next() = 0;
     end;
+
 
 
 
@@ -6445,11 +6461,14 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SalesPostOnBeforeSalesInvLineInsert(var SalesInvLine: Record "Sales Invoice Line")
     var
         Item: Record Item;
+        LabourCost: Decimal;
+        MaterialCost: Decimal;
     begin
         if SalesInvLine.Type = SalesInvLine.Type::Item then begin
             Item.Get(SalesInvLine."No.");
-            SalesInvLine.Validate("BA Labour Cost", GetLabourCost(Item));
-            SalesInvLine.Validate("BA Material Cost", Item."Single-Level Material Cost");
+            GetLabourAndMaterialCosts(Item, LabourCost, MaterialCost);
+            SalesInvLine.Validate("BA Labour Cost", LabourCost);
+            SalesInvLine.Validate("BA Material Cost", MaterialCost);
         end;
     end;
 
@@ -6457,11 +6476,14 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure SalesPostOnBeforeSalesCrMemoLineInsert(var SalesCrMemoLine: Record "Sales Cr.Memo Line")
     var
         Item: Record Item;
+        LabourCost: Decimal;
+        MaterialCost: Decimal;
     begin
         if SalesCrMemoLine.Type = SalesCrMemoLine.Type::Item then begin
             Item.Get(SalesCrMemoLine."No.");
-            SalesCrMemoLine.Validate("BA Labour Cost", GetLabourCost(Item));
-            SalesCrMemoLine.Validate("BA Material Cost", Item."Single-Level Material Cost");
+            GetLabourAndMaterialCosts(Item, LabourCost, MaterialCost);
+            SalesCrMemoLine.Validate("BA Labour Cost", LabourCost);
+            SalesCrMemoLine.Validate("BA Material Cost", MaterialCost);
         end;
     end;
 
@@ -6469,11 +6491,14 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure ServDocumentsMgtOnBeforeServInvLineInsert(var ServiceInvoiceLine: Record "Service Invoice Line")
     var
         Item: Record Item;
+        LabourCost: Decimal;
+        MaterialCost: Decimal;
     begin
         if ServiceInvoiceLine.Type = ServiceInvoiceLine.Type::Item then begin
             Item.Get(ServiceInvoiceLine."No.");
-            ServiceInvoiceLine.Validate("BA Labour Cost", GetLabourCost(Item));
-            ServiceInvoiceLine.Validate("BA Material Cost", Item."Single-Level Material Cost");
+            GetLabourAndMaterialCosts(Item, LabourCost, MaterialCost);
+            ServiceInvoiceLine.Validate("BA Labour Cost", LabourCost);
+            ServiceInvoiceLine.Validate("BA Material Cost", MaterialCost);
         end;
     end;
 
