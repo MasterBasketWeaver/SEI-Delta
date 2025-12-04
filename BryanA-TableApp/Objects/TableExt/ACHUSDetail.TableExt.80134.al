@@ -1,4 +1,4 @@
-tableextension 80133 "BA ACH US Detail" extends "ACH US Detail"
+tableextension 80134 "BA ACH US Detail" extends "ACH US Detail"
 {
     fields
     {

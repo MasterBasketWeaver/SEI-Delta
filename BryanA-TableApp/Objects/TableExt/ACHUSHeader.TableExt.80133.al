@@ -1,4 +1,4 @@
-tableextension 80132 "BA ACH US Header" extends "ACH US Header"
+tableextension 80133 "BA ACH US Header" extends "ACH US Header"
 {
     fields
     {
