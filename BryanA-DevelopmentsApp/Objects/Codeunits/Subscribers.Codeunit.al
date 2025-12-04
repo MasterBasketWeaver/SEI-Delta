@@ -4547,7 +4547,6 @@ codeunit 75010 "BA SEI Subscibers"
         Vendor: Record Vendor;
         VendorBankAccount: Record "Vendor Bank Account";
         BankAccount: Record "Bank Account";
-        CurrExchRate: Record "Currency Exchange Rate";
         GenJnlLine: Record "Gen. Journal Line";
         VendorSource: Boolean;
     begin
@@ -4557,6 +4556,7 @@ codeunit 75010 "BA SEI Subscibers"
         // if not Confirm('Batch Header:\%1', false, PrintRecord(EFTExportWorkset)) then
         //     Error('');
 
+        GenJnlLine.Get(EFTExportWorkset."Journal Template Name", EFTExportWorkset."Journal Batch Name", EFTExportWorkset."Line No.");
         BankAccount.Get(EFTExportWorkset."Bank Account No.");
         BankAccount.TestField("Client No.");
         ACHUSHeader."Bank Account Number" := BankAccount."Client No.";
@@ -4567,19 +4567,14 @@ codeunit 75010 "BA SEI Subscibers"
             ACHUSHeader."Destination Currency Code" := 'CAD';
 
         ACHUSHeader."Foreign Exchange Reference" := '';
-        if ACHUSHeader."Currency Type" <> ACHUSHeader."Destination Currency Code" then begin
-            CurrExchRate.SetRange("Currency Code", ACHUSHeader."Destination Currency Code");
-            CurrExchRate.SetFilter("Starting Date", '<=%1', ACHUSHeader."Effective Date");
-            CurrExchRate.SetFilter("Relational Exch. Rate Amount", '<>%1', 0);
-            if CurrExchRate.FindLast() then begin
-                ACHUSHeader."Foreign Exchange Reference" := Format(CurrExchRate."Relational Exch. Rate Amount");
-                ACHUSHeader."Foreign Exchange Ref Indicator" := '3';
-            end else
-                ACHUSHeader."Foreign Exchange Ref Indicator" := '1';
-        end else
-            ACHUSHeader."Foreign Exchange Ref Indicator" := '1';
+        ACHUSHeader."Foreign Exchange Ref Indicator" := '3';
+        if ACHUSHeader."Currency Type" <> ACHUSHeader."Destination Currency Code" then
+            if GenJnlLine.Amount <> 0 then
+                if GenJnlLine.Amount <> GenJnlLine."Amount (LCY)" then begin
+                    ACHUSHeader."Foreign Exchange Reference" := Format(GenJnlLine."Amount (LCY)" / GenJnlLine.Amount);
+                    ACHUSHeader."Foreign Exchange Ref Indicator" := '1';
+                end;
 
-        GenJnlLine.Get(EFTExportWorkset."Journal Template Name", EFTExportWorkset."Journal Batch Name", EFTExportWorkset."Line No.");
         Vendor.Get(GenJnlLine."Account No.");
         VendorBankAccount.Get(Vendor."No.", GenJnlLine."Recipient Bank Account");
         if VendorBankAccount."Country/Region Code" <> '' then
@@ -4605,6 +4600,7 @@ codeunit 75010 "BA SEI Subscibers"
         ACHUSHeader."BA Due Date" := FormatACHDate(ACHUSHeader."Effective Date");
 
         EFTValues.SetEntryAddendaCount(0);
+        EFTValues.SetTotalFileCreditNonLCY(0);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeACHUSDetailModify', '', false, false)]
@@ -4635,10 +4631,11 @@ codeunit 75010 "BA SEI Subscibers"
         ACHUSDetail."Destination City County Code" := StrSubstNo('%1*%2\', Vendor.City, Vendor.County);
         ACHUSDetail."Destination CntryCode PostCode" := StrSubstNo('%1*%2\', Vendor."Country/Region Code", Vendor."Post Code");
 
-        if Format(ACHUSDetail."Data Exch. Line Def Code").Contains('ADDENDA') then begin
-            EFTExportWorkset."BA Detail Record Count" += 1;
-            EFTValues.SetEntryAddendaCount(EFTExportWorkset."BA Detail Record Count");
-        end;
+        EFTExportWorkset."BA Detail Record Count" += 1;
+        EFTValues.SetEntryAddendaCount(EFTExportWorkset."BA Detail Record Count");
+
+        if not Format(ACHUSDetail."Data Exch. Line Def Code").Contains('ADDENDA') then
+            EFTValues.SetTotalFileCreditNonLCY(EFTValues.GetTotalFileCreditNonLCY() + GenJnlLine.Amount);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSFooterModify', '', false, false)]
@@ -4653,6 +4650,7 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         // if not Confirm('File Footer:\%1', false, PrintRecord(ACHUSFooter)) then
         //     Error('');
+        ACHUSFooter."Total File Credit Amount" := EFTValues.GetTotalFileCreditNonLCY();
     end;
     // RBC USD
 
