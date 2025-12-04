@@ -9,6 +9,21 @@ pageextension 80186 "BA Payment Journal" extends "Payment Journal"
                 ApplicationArea = all;
             }
         }
+        modify(Description)
+        {
+            ShowMandatory = EFTpayment;
+        }
+        modify("Bank Payment Type")
+        {
+            trigger OnAfterValidate()
+            begin
+                EFTPayment := Rec."Bank Payment Type" = Rec."Bank Payment Type"::"Electronic Payment";
+            end;
+        }
+        modify("Recipient Bank Account")
+        {
+            ShowMandatory = EFTpayment;
+        }
     }
 
     actions
@@ -31,4 +46,13 @@ pageextension 80186 "BA Payment Journal" extends "Payment Journal"
         }
         moveafter(VoidPayments; GenerateEFT)
     }
+
+    trigger OnAfterGetRecord()
+    begin
+        EFTPayment := Rec."Bank Payment Type" = Rec."Bank Payment Type"::"Electronic Payment";
+    end;
+
+    var
+        [InDataSet]
+        EFTPayment: Boolean;
 }
