@@ -3549,10 +3549,9 @@ codeunit 75010 "BA SEI Subscibers"
         FileMgt: Codeunit "File Management";
     begin
         if BankAccount."E-Pay Export File Path" <> '' then begin
+            if not FileMgt.SelectDefaultFolderDialog(SaveFolderMsg, Path, BankAccount."E-Pay Export File Path") then
+                Error('');
             IsHandled := true;
-            FileMgt.SelectDefaultFolderDialog(SaveFolderMsg, Path, BankAccount."E-Pay Export File Path");
-
-
         end;
     end;
 
@@ -3629,6 +3628,10 @@ codeunit 75010 "BA SEI Subscibers"
     // RBC CAD
 
 
+
+
+
+
     // RBC USD
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeFileACHUSHeaderModify', '', false, false)]
     local procedure ExportETFIATOnBeforeFileACHUSHeaderModify(var ACHUSHeader: Record "ACH US Header"; var EFTValues: Codeunit "EFT Values"; var BankAccount: Record "Bank Account")
@@ -3639,6 +3642,10 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         ACHUSHeader."Priority Code" := FormatACHDate(Today());
         ACHUSHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHUSHeader."Federal ID No."));
+
+
+
+
         // ACHUSHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHUSHeader."Input Qualifier"));
 
         // ACHUSHeader.
@@ -3661,8 +3668,8 @@ codeunit 75010 "BA SEI Subscibers"
         // BankAccount."Last E-Pay File Creation No." := ACHUSHeader."File Creation Number";
         // BankAccount.Modify(true);
 
-        if not Confirm('File Header:\%1', false, PrintRecord(ACHUSHeader)) then
-            Error('');
+        // if not Confirm('File Header:\%1', false, PrintRecord(ACHUSHeader)) then
+        //     Error('');
     end;
 
 
@@ -3670,42 +3677,129 @@ codeunit 75010 "BA SEI Subscibers"
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSHeaderModify', '', false, false)]
     local procedure ExportETFIATOnBeforeBatchACHUSHeaderModify(var ACHUSHeader: Record "ACH US Header"; var EFTValues: Codeunit "EFT Values"; var EFTExportWorkset: Record "EFT Export Workset")
+    var
+        Vendor: Record Vendor;
+        VendorBankAccount: Record "Vendor Bank Account";
+        BankAccount: Record "Bank Account";
+        CurrExchRate: Record "Currency Exchange Rate";
+        GenJnlLine: Record "Gen. Journal Line";
+        VendorSource: Boolean;
     begin
-        if not Confirm('Batch Header:\%1', false, PrintRecord(ACHUSHeader)) then
-            Error('');
+        // if not Confirm('Batch Header:\%1', false, PrintRecord(ACHUSHeader)) then
+        //     Error('');
 
-        if not Confirm('Batch Header:\%1', false, PrintRecord(EFTExportWorkset)) then
-            Error('');
+        // if not Confirm('Batch Header:\%1', false, PrintRecord(EFTExportWorkset)) then
+        //     Error('');
+
+        BankAccount.Get(EFTExportWorkset."Bank Account No.");
+        BankAccount.TestField("Client No.");
+        ACHUSHeader."Bank Account Number" := BankAccount."Client No.";
+
+        if ACHUSHeader."Currency Type" = 'CDN' then
+            ACHUSHeader."Currency Type" := 'CAD';
+        if ACHUSHeader."Destination Currency Code" = 'CDN' then
+            ACHUSHeader."Destination Currency Code" := 'CAD';
+
+        ACHUSHeader."Foreign Exchange Reference" := '';
+        if ACHUSHeader."Currency Type" <> ACHUSHeader."Destination Currency Code" then begin
+            CurrExchRate.SetRange("Currency Code", ACHUSHeader."Destination Currency Code");
+            CurrExchRate.SetFilter("Starting Date", '<=%1', ACHUSHeader."Effective Date");
+            CurrExchRate.SetFilter("Relational Exch. Rate Amount", '<>%1', 0);
+            if CurrExchRate.FindLast() then begin
+                ACHUSHeader."Foreign Exchange Reference" := Format(CurrExchRate."Relational Exch. Rate Amount");
+                ACHUSHeader."Foreign Exchange Ref Indicator" := '3';
+            end else
+                ACHUSHeader."Foreign Exchange Ref Indicator" := '1';
+        end else
+            ACHUSHeader."Foreign Exchange Ref Indicator" := '1';
+
+        GenJnlLine.Get(EFTExportWorkset."Journal Template Name", EFTExportWorkset."Journal Batch Name", EFTExportWorkset."Line No.");
+        Vendor.Get(GenJnlLine."Account No.");
+        VendorBankAccount.Get(GenJnlLine."Recipient Bank Account");
+        if VendorBankAccount."Country/Region Code" <> '' then
+            ACHUSHeader."Destination Country Code" := VendorBankAccount."Country/Region Code"
+        else
+            if Vendor."Country/Region Code" <> '' then begin
+                ACHUSHeader."Destination Country Code" := Vendor."Country/Region Code";
+                VendorSource := true;
+            end;
+
+        if ACHUSHeader."Destination Country Code" = '' then
+            Error('Vendor %1 must have a country specified for it or it''s bank account %2, before payments can be sent', Vendor."No.", VendorBankAccount.Code);
+        if not (ACHUSHeader."Destination Currency Code" in ['CA', 'US']) then
+            if VendorSource then
+                Error('Vendor %1 must be located in CA or US to receive USD ACH payments.', Vendor."No.")
+            else
+                Error('Vendor Bank Account %1 for Vendor %2 must be located in CA or US to receive USD ACH payments.', VendorBankAccount.Code, Vendor."No.");
+
+        if GenJnlLine.Description.Trim() = '' then
+            Error('Line %1 must have a Description.', GenJnlLine."Line No.");
+        ACHUSHeader."Company Entry Description" := CopyStr(GenJnlLine.Description.Trim(), 1, MaxStrLen(ACHUSHeader."Company Entry Description"));
+
+        ACHUSHeader."BA Due Date" := FormatACHDate(ACHUSHeader."Effective Date");
+
+        EFTValues.SetEntryAddendaCount(0);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeACHUSDetailModify', '', false, false)]
     local procedure ExportETFIATOnBeforeACHUSDetailModify(var ACHUSDetail: Record "ACH US Detail"; var EFTValues: Codeunit "EFT Values"; var EFTExportWorkset: Record "EFT Export Workset")
+    var
+        GenJnlLine: Record "Gen. Journal Line";
+        Vendor: Record Vendor;
     begin
-        if not Confirm('Detail:\%1', false, PrintRecord(ACHUSDetail)) then
-            Error('');
+        // if not Confirm('Detail:\%1', false, PrintRecord(ACHUSDetail)) then
+        //     Error('');
 
-        ACHUSDetail."Payee Small Transit Route No" := 'test';
+        // if not Confirm('Detail:\%1', false, PrintRecord(EFTExportWorkset)) then
+        //     Error('');
+
+        GenJnlLine.Get(EFTExportWorkset."Journal Template Name", EFTExportWorkset."Journal Batch Name", EFTExportWorkset."Line No.");
+        Vendor.Get(GenJnlLine."Account No.");
+        Vendor.TestField("Country/Region Code");
+
+        if EFTExportWorkset."Currency Code" <> '' then
+            ACHUSDetail."BA Amount" := GenJnlLine.Amount
+        else
+            ACHUSDetail."BA Amount" := EFTExportWorkset."Amount (LCY)";
+        ACHUSDetail."BA Receiver Name" := CopyStr(Vendor.Name, 1, MaxStrLen(ACHUSDetail."BA Receiver Name"));
+
+        if Format(ACHUSDetail."Data Exch. Line Def Code").Contains('ADDENDA') then begin
+            EFTExportWorkset."BA Detail Record Count" += 1;
+            EFTValues.SetEntryAddendaCount(EFTExportWorkset."BA Detail Record Count");
+        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSFooterModify', '', false, false)]
     local procedure ExportETFIATOnBeforeBatchACHUSFooterModify(var ACHUSDetail: Record "ACH US Footer"; var EFTValues: Codeunit "EFT Values")
     begin
-        if not Confirm('Batch Footer:\%1', false, PrintRecord(ACHUSDetail)) then
-            Error('');
+        // if not Confirm('Batch Footer:\%1', false, PrintRecord(ACHUSDetail)) then
+        //     Error('');
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeFileACHUSFooterModify', '', false, false)]
     local procedure ExportETFIATOnBeforeFileACHUSFooterModify(var ACHUSFooter: Record "ACH US Footer"; var EFTValues: Codeunit "EFT Values")
     begin
-        if not Confirm('File Footer:\%1', false, PrintRecord(ACHUSFooter)) then
-            Error('');
+        // if not Confirm('File Footer:\%1', false, PrintRecord(ACHUSFooter)) then
+        //     Error('');
+    end;
+    // RBC USD
+
+
+
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Transformation Rule", 'OnTransformation', '', false, false)]
+    local procedure TransformationRuleOnTransformation(TransformationCode: Code[20]; InputText: Text; var OutputText: Text)
+    var
+        TempDec: Decimal;
+    begin
+        if TransformationCode = 'AMOUNT' then
+            if Evaluate(TempDec, InputText) then
+                OutputText := FormatPaymentAmount(Round(TempDec, 0.01), StrLen(InputText));
     end;
 
 
-
-
-
-    local procedure GetNumeralsOnly(Input: Text): Text
+    procedure GetNumeralsOnly(Input: Text): Text
     var
         s: Text;
         c: Char;
@@ -3725,11 +3819,17 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
     local procedure FormatPaymentAmount(Input: Decimal): Text
+    begin
+        exit(FormatPaymentAmount(Input, 0));
+    end;
+
+    local procedure FormatPaymentAmount(Input: Decimal; Length: Integer): Text
     var
         Parts: List of [Text];
         PaymentText: Text;
         s1: Text;
         s2: Text;
+        Output: Text;
     begin
         PaymentText := Format(Input);
         if PaymentText.Contains('.') then begin
@@ -3738,9 +3838,16 @@ codeunit 75010 "BA SEI Subscibers"
             s2 := DelChr(Parts.Get(2), '=', ',.');
             if StrLen(s2) = 1 then
                 s2 += '0';
-            exit(s1 + s2);
+            Output := s1 + s2;
+        end else
+            Output := DelChr(PaymentText, '=', ',.') + '00';
+
+        Length -= StrLen(Output);
+        while Length > 0 do begin
+            Output := '0' + Output;
+            Length -= 1;
         end;
-        exit(DelChr(PaymentText, '=', ',.') + '00');
+        exit(Output);
     end;
     // -EFT RCB CAD
 
