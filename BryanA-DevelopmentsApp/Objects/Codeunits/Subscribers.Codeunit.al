@@ -3477,7 +3477,7 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    // ETF RCB CAD
+    // EFT RCB CAD
     [EventSubscriber(ObjectType::Page, Page::"Payment Journal", 'OnBeforeActionEvent', 'ExportPaymentsToFile', false, false)]
     local procedure PaymentJournalOnBeforeExportPaymentsToFile(var Rec: Record "Gen. Journal Line")
     var
@@ -3551,10 +3551,13 @@ codeunit 75010 "BA SEI Subscibers"
         if BankAccount."E-Pay Export File Path" <> '' then begin
             IsHandled := true;
             FileMgt.SelectDefaultFolderDialog(SaveFolderMsg, Path, BankAccount."E-Pay Export File Path");
+
+
         end;
     end;
 
 
+    // RBC CAD
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
     local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
     var
@@ -3623,6 +3626,84 @@ codeunit 75010 "BA SEI Subscibers"
         ACHRBFooter."Record Count" := TempEFTExportWorkset.Count();
         ACHRBFooter."BA Payment Amount Text" := CopyStr(FormatPaymentAmount(ACHRBFooter."Total File Credit"), 1, MaxStrLen(ACHRBFooter."BA Payment Amount Text"));
     end;
+    // RBC CAD
+
+
+    // RBC USD
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeFileACHUSHeaderModify', '', false, false)]
+    local procedure ExportETFIATOnBeforeFileACHUSHeaderModify(var ACHUSHeader: Record "ACH US Header"; var EFTValues: Codeunit "EFT Values"; var BankAccount: Record "Bank Account")
+    var
+        CompInfo: Record "Company Information";
+        Parts: List of [Text];
+        FileNumberText: Text;
+    begin
+        ACHUSHeader."Priority Code" := FormatACHDate(Today());
+        ACHUSHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHUSHeader."Federal ID No."));
+        // ACHUSHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHUSHeader."Input Qualifier"));
+
+        // ACHUSHeader.
+
+        // if BankAccount."Client Name" = '' then begin
+        //     CompInfo.Get();
+        //     ACHUSHeader."Client Name" := CopyStr(CompInfo.Name, 1, MaxStrLen(ACHUSHeader."Client Name"));
+        // end else
+        //     ACHUSHeader."Client Name" := CopyStr(BankAccount."Client Name", 1, MaxStrLen(ACHUSHeader."Client Name"));
+
+        // if BankAccount."Last E-Pay Export File Name".Contains('.') then begin
+        //     Parts := BankAccount."Last E-Pay Export File Name".Split('.');
+        //     FileNumberText := Parts.Get(1);
+        // end else
+        //     FileNumberText := BankAccount."Last E-Pay Export File Name";
+        // FileNumberText := GetNumeralsOnly(FileNumberText);
+        // if FileNumberText = '' then
+        //     FileNumberText := '1';
+        // Evaluate(ACHUSHeader."File Creation Number", GetNumeralsOnly(FileNumberText));
+        // BankAccount."Last E-Pay File Creation No." := ACHUSHeader."File Creation Number";
+        // BankAccount.Modify(true);
+
+        if not Confirm('File Header:\%1', false, PrintRecord(ACHUSHeader)) then
+            Error('');
+    end;
+
+
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSHeaderModify', '', false, false)]
+    local procedure ExportETFIATOnBeforeBatchACHUSHeaderModify(var ACHUSHeader: Record "ACH US Header"; var EFTValues: Codeunit "EFT Values"; var EFTExportWorkset: Record "EFT Export Workset")
+    begin
+        if not Confirm('Batch Header:\%1', false, PrintRecord(ACHUSHeader)) then
+            Error('');
+
+        if not Confirm('Batch Header:\%1', false, PrintRecord(EFTExportWorkset)) then
+            Error('');
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeACHUSDetailModify', '', false, false)]
+    local procedure ExportETFIATOnBeforeACHUSDetailModify(var ACHUSDetail: Record "ACH US Detail"; var EFTValues: Codeunit "EFT Values"; var EFTExportWorkset: Record "EFT Export Workset")
+    begin
+        if not Confirm('Detail:\%1', false, PrintRecord(ACHUSDetail)) then
+            Error('');
+
+        ACHUSDetail."Payee Small Transit Route No" := 'test';
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSFooterModify', '', false, false)]
+    local procedure ExportETFIATOnBeforeBatchACHUSFooterModify(var ACHUSDetail: Record "ACH US Footer"; var EFTValues: Codeunit "EFT Values")
+    begin
+        if not Confirm('Batch Footer:\%1', false, PrintRecord(ACHUSDetail)) then
+            Error('');
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeFileACHUSFooterModify', '', false, false)]
+    local procedure ExportETFIATOnBeforeFileACHUSFooterModify(var ACHUSFooter: Record "ACH US Footer"; var EFTValues: Codeunit "EFT Values")
+    begin
+        if not Confirm('File Footer:\%1', false, PrintRecord(ACHUSFooter)) then
+            Error('');
+    end;
+
+
+
+
 
     local procedure GetNumeralsOnly(Input: Text): Text
     var
@@ -3661,7 +3742,7 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         exit(DelChr(PaymentText, '=', ',.') + '00');
     end;
-    // -ETF RCB CAD
+    // -EFT RCB CAD
 
 
 
