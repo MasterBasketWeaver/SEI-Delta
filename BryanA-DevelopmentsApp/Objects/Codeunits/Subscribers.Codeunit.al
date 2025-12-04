@@ -4581,7 +4581,7 @@ codeunit 75010 "BA SEI Subscibers"
 
         GenJnlLine.Get(EFTExportWorkset."Journal Template Name", EFTExportWorkset."Journal Batch Name", EFTExportWorkset."Line No.");
         Vendor.Get(GenJnlLine."Account No.");
-        VendorBankAccount.Get(GenJnlLine."Recipient Bank Account");
+        VendorBankAccount.Get(Vendor."No.", GenJnlLine."Recipient Bank Account");
         if VendorBankAccount."Country/Region Code" <> '' then
             ACHUSHeader."Destination Country Code" := VendorBankAccount."Country/Region Code"
         else
@@ -4592,11 +4592,11 @@ codeunit 75010 "BA SEI Subscibers"
 
         if ACHUSHeader."Destination Country Code" = '' then
             Error('Vendor %1 must have a country specified for it or it''s bank account %2, before payments can be sent', Vendor."No.", VendorBankAccount.Code);
-        if not (ACHUSHeader."Destination Currency Code" in ['CA', 'US']) then
+        if not (ACHUSHeader."Destination Country Code" in ['CA', 'US']) then
             if VendorSource then
-                Error('Vendor %1 must be located in CA or US to receive USD ACH payments.', Vendor."No.")
+                Error('Vendor %1 must be located in CA or US to receive USD ACH payments: %3', Vendor."No.", ACHUSHeader."Destination Country Code")
             else
-                Error('Vendor Bank Account %1 for Vendor %2 must be located in CA or US to receive USD ACH payments.', VendorBankAccount.Code, Vendor."No.");
+                Error('Vendor Bank Account %1 for Vendor %2 must be located in CA or US to receive USD ACH payments: %3', VendorBankAccount.Code, Vendor."No.", ACHUSHeader."Destination Country Code");
 
         if GenJnlLine.Description.Trim() = '' then
             Error('Line %1 must have a Description.', GenJnlLine."Line No.");
@@ -4628,6 +4628,12 @@ codeunit 75010 "BA SEI Subscibers"
         else
             ACHUSDetail."BA Amount" := EFTExportWorkset."Amount (LCY)";
         ACHUSDetail."BA Receiver Name" := CopyStr(Vendor.Name, 1, MaxStrLen(ACHUSDetail."BA Receiver Name"));
+
+        ACHUSDetail."Destination Address" := Vendor.Address;
+        if Vendor."Address 2" <> '' then
+            ACHUSDetail."Destination Address" += ' ' + Vendor."Address 2";
+        ACHUSDetail."Destination City County Code" := StrSubstNo('%1*%2\', Vendor.City, Vendor.County);
+        ACHUSDetail."Destination CntryCode PostCode" := StrSubstNo('%1*%2\', Vendor."Country/Region Code", Vendor."Post Code");
 
         if Format(ACHUSDetail."Data Exch. Line Def Code").Contains('ADDENDA') then begin
             EFTExportWorkset."BA Detail Record Count" += 1;

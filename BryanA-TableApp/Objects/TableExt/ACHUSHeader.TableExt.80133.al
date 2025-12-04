@@ -1,4 +1,4 @@
-tableextension 80132 "BA ACH US Header" extends "ACH US Header"
+tableextension 80133 "BA ACH US Header" extends "ACH US Header"
 {
     fields
     {
@@ -17,7 +17,7 @@ tableextension 80132 "BA ACH US Header" extends "ACH US Header"
         field(80002; "BA Work Date"; Integer)
         {
             DataClassification = CustomerContent;
-            Caption = 'Due Date';
+            Caption = 'Work Date';
             Editable = false;
         }
     }
