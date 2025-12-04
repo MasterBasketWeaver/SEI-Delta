@@ -8,5 +8,17 @@ tableextension 80132 "BA ACH US Header" extends "ACH US Header"
             Caption = 'Payment Amount Text';
             Editable = false;
         }
+        field(80001; "BA Due Date"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Due Date';
+            Editable = false;
+        }
+        field(80002; "BA Work Date"; Integer)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Due Date';
+            Editable = false;
+        }
     }
 }
