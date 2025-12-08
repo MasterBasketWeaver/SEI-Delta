@@ -2265,7 +2265,11 @@ codeunit 75010 "BA SEI Subscibers"
         PageMgt: Codeunit "Page Management";
         RecRef: RecordRef;
     begin
-        if WasSuccess or (JobQueueEntry."Object Type to Run" <> JobQueueEntry."Object Type to Run"::Codeunit) or (JobQueueEntry."Object ID to Run" <> 75009) then
+        if WasSuccess then
+            exit;
+        if (JobQueueEntry."Object Type to Run" <> JobQueueEntry."Object Type to Run"::Codeunit) then
+            exit;
+        if not (JobQueueEntry."Object ID to Run" in [75009, Codeunit::"Update Currency Exchange Rates"] then
             exit;
         UserSetup.SetRange("BA Receive Job Queue Notes.", true);
         if not UserSetup.FindSet() then
@@ -4000,6 +4004,11 @@ codeunit 75010 "BA SEI Subscibers"
         exit(80000);
     end;
 
+    procedure GetJobQueueFailedReportUsage(): Integer
+    begin
+        exit(80002);
+    end;
+
 
 
     procedure SendShipmentTrackingInfoEmail(var SalesInvHeader: Record "Sales Invoice Header")
@@ -4034,7 +4043,7 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Table, Database::"Report Selections", 'OnFindReportSelections', '', false, false)]
     local procedure ReportSelectionsOnFindReportSelections(var FilterReportSelections: Record "Report Selections"; var IsHandled: Boolean; sender: Record "Report Selections")
     begin
-        if not (sender.Usage in [GetShipmentTrackingInfoReportUsage(), SalesApprovalMgt.GetProdApprovalReportUsage()]) then
+        if not (sender.Usage in [GetShipmentTrackingInfoReportUsage(), SalesApprovalMgt.GetProdApprovalReportUsage(), GetJobQueueFailedReportUsage()]) then
             exit;
         IsHandled := true;
         FilterReportSelections := sender;
@@ -4051,8 +4060,10 @@ codeunit 75010 "BA SEI Subscibers"
         case ReportUsage of
             GetShipmentTrackingInfoReportUsage():
                 SetSalesServiceEmailToAddress(RecVar, IsHandled, ToAddress);
-                // SalesApprovalMgt.GetProdApprovalReportUsage():
-                //     SalesApprovalMgt.SetProdNotificationEmailToAddress(RecVar, IsHandled, ToAddress);
+            // SalesApprovalMgt.GetProdApprovalReportUsage():
+            //     SalesApprovalMgt.SetProdNotificationEmailToAddress(RecVar, IsHandled, ToAddress);
+            GetJobQueueFailedReportUsage():
+                ;
         end;
     end;
 
@@ -4082,6 +4093,9 @@ codeunit 75010 "BA SEI Subscibers"
                 SetSalesServiceEmailFilters(RecordVariant);
                 // Report::"BA Prod. Order Approval":
                 //     SalesApprovalMgt.SetProdNotificationEmailFilters(RecordVariant);
+
+                // GetJobQueueFailedReportUsage():
+                //     ;
         end;
     end;
 
@@ -4112,8 +4126,11 @@ codeunit 75010 "BA SEI Subscibers"
         case ReportUsage of
             GetShipmentTrackingInfoReportUsage():
                 UpdateSalesServiceEmailSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
-                // SalesApprovalMgt.GetProdApprovalReportUsage():
-                //     SalesApprovalMgt.UpdateProdNotificationSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
+            // SalesApprovalMgt.GetProdApprovalReportUsage():
+            //     SalesApprovalMgt.UpdateProdNotificationSettings(PostedDocNo, HideDialog, IsFromPostedDoc, TempEmailItem);
+
+            GetJobQueueFailedReportUsage():
+                ;
         end;
     end;
 
@@ -4175,7 +4192,7 @@ codeunit 75010 "BA SEI Subscibers"
     local procedure MailMgtOnBeforeRunMailDialog(var TempEmailItem: Record "Email Item"; var IsHandled: Boolean)
     begin
         if not IsDebugUser() then
-            IsHandled := TempEmailItem."Message Type" in [GetShipmentTrackingInfoReportUsage(), SalesApprovalMgt.GetProdApprovalReportUsage()];
+            IsHandled := TempEmailItem."Message Type" in [GetShipmentTrackingInfoReportUsage(), SalesApprovalMgt.GetProdApprovalReportUsage(), GetJobQueueFailedReportUsage()];
     end;
 
     local procedure AddShippingEmailEntry(var TempEmailItem: Record "Email Item"; PostedDocNo: Code[20])
