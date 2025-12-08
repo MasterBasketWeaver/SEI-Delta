@@ -2269,7 +2269,7 @@ codeunit 75010 "BA SEI Subscibers"
             exit;
         if (JobQueueEntry."Object Type to Run" <> JobQueueEntry."Object Type to Run"::Codeunit) then
             exit;
-        if not (JobQueueEntry."Object ID to Run" in [75009, Codeunit::"Update Currency Exchange Rates"] then
+        if not (JobQueueEntry."Object ID to Run" in [75009, Codeunit::"Update Currency Exchange Rates"]) then
             exit;
         UserSetup.SetRange("BA Receive Job Queue Notes.", true);
         if not UserSetup.FindSet() then
