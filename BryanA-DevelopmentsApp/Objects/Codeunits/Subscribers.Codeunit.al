@@ -2272,6 +2272,7 @@ codeunit 75010 "BA SEI Subscibers"
         if not (JobQueueEntry."Object ID to Run" in [75009, Codeunit::"Update Currency Exchange Rates"]) then
             exit;
         UserSetup.SetRange("BA Receive Job Queue Notes.", true);
+        UserSetup.SetFilter("E-Mail", '<>%1', '');
         if not UserSetup.FindSet() then
             exit;
         RecRef.GetTable(JobQueueEntry);
