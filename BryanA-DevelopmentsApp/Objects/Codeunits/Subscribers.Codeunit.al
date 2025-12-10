@@ -3729,11 +3729,8 @@ codeunit 75010 "BA SEI Subscibers"
             else
                 Error('Vendor Bank Account %1 for Vendor %2 must be located in CA or US to receive USD ACH payments: %3', VendorBankAccount.Code, Vendor."No.", ACHUSHeader."Destination Country Code");
 
-        if GenJnlLine.Description.Trim() = '' then
-            Error('Line %1 must have a Description.', GenJnlLine."Line No.");
-        ACHUSHeader."Company Entry Description" := CopyStr(GenJnlLine.Description.Trim(), 1, MaxStrLen(ACHUSHeader."Company Entry Description"));
-
         ACHUSHeader."BA Due Date" := FormatACHDate(ACHUSHeader."Effective Date");
+        ACHUSHeader."Company Entry Description" := EFTValues.GetPaymentDesciption();
 
         EFTValues.SetEntryAddendaCount(0);
         EFTValues.SetTotalFileCreditNonLCY(0);
