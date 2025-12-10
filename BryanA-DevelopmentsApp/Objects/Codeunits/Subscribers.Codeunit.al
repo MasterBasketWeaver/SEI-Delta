@@ -4361,7 +4361,7 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    // EFT RCB CAD
+    // +EFT RBC
     [EventSubscriber(ObjectType::Page, Page::"Payment Journal", 'OnBeforeActionEvent', 'ExportPaymentsToFile', false, false)]
     local procedure PaymentJournalOnBeforeExportPaymentsToFile(var Rec: Record "Gen. Journal Line")
     var
@@ -4527,6 +4527,8 @@ codeunit 75010 "BA SEI Subscibers"
         ACHUSHeader."Priority Code" := FormatACHDate(Today());
         ACHUSHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHUSHeader."Federal ID No."));
 
+        EFTValues.SetLineCount(1);
+
 
 
 
@@ -4619,6 +4621,8 @@ codeunit 75010 "BA SEI Subscibers"
 
         EFTValues.SetEntryAddendaCount(0);
         EFTValues.SetTotalFileCreditNonLCY(0);
+
+        EFTValues.SetLineCount(EFTValues.GetLineCount() + 1);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeACHUSDetailModify', '', false, false)]
@@ -4654,6 +4658,8 @@ codeunit 75010 "BA SEI Subscibers"
 
         if not Format(ACHUSDetail."Data Exch. Line Def Code").Contains('ADDENDA') then
             EFTValues.SetTotalFileCreditNonLCY(EFTValues.GetTotalFileCreditNonLCY() + GenJnlLine.Amount);
+
+        EFTValues.SetLineCount(EFTValues.GetLineCount() + 1);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSFooterModify', '', false, false)]
@@ -4666,9 +4672,20 @@ codeunit 75010 "BA SEI Subscibers"
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeFileACHUSFooterModify', '', false, false)]
     local procedure ExportETFIATOnBeforeFileACHUSFooterModify(var ACHUSFooter: Record "ACH US Footer"; var EFTValues: Codeunit "EFT Values")
     begin
-        // if not Confirm('File Footer:\%1', false, PrintRecord(ACHUSFooter)) then
-        //     Error('');
-        ACHUSFooter."Total File Credit Amount" := EFTValues.GetTotalFileCreditNonLCY();
+        ACHUSFooter."Block Count" := Round((EFTValues.GetLineCount() + 1) / 10, 1, '>');
+    end;
+
+
+    [EventSubscriber(ObjectType::Page, Page::"Generate EFT Files", 'OnShowPaymentDescription', '', false, false)]
+    local procedure GenerateEFTFilesOnShowPaymentDescription(BankAccountNo: Code[20]; var ShowPaymentDescription: boolean)
+    var
+        BankAccount: Record "Bank Account";
+        DataExchDef: Record "Data Exch. Def";
+    begin
+        if not BankAccount.Get(BankAccountNo) then
+            exit;
+        if DataExchDef.Get(BankAccount."Payment Export Format") then
+            ShowPaymentDescription := DataExchDef."BA Require Desciption";
     end;
     // RBC USD
 
@@ -4737,7 +4754,7 @@ codeunit 75010 "BA SEI Subscibers"
         end;
         exit(Output);
     end;
-    // -EFT RCB CAD
+    // -EFT RBC
 
 
 
