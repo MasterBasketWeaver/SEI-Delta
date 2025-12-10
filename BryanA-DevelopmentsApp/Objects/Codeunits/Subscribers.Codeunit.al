@@ -4540,6 +4540,7 @@ codeunit 75010 "BA SEI Subscibers"
     begin
         ACHUSHeader."Priority Code" := FormatACHDate(Today());
         ACHUSHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHUSHeader."Federal ID No."));
+        ACHUSHeader."Bank Account Number" := BankAccount."Client No.";
 
         EFTValues.SetLineCount(1);
         if EFTValues.GetPaymentDesciption() = '' then
@@ -4554,6 +4555,8 @@ codeunit 75010 "BA SEI Subscibers"
         BankAccount: Record "Bank Account";
         GenJnlLine: Record "Gen. Journal Line";
         VendorSource: Boolean;
+        MinDate: Date;
+        MaxData: Date;
     begin
         GenJnlLine.Get(EFTExportWorkset."Journal Template Name", EFTExportWorkset."Journal Batch Name", EFTExportWorkset."Line No.");
         BankAccount.Get(EFTExportWorkset."Bank Account No.");
@@ -4564,6 +4567,22 @@ codeunit 75010 "BA SEI Subscibers"
             ACHUSHeader."Currency Type" := 'CAD';
         if ACHUSHeader."Destination Currency Code" = 'CDN' then
             ACHUSHeader."Destination Currency Code" := 'CAD';
+
+        case ACHUSHeader."Destination Country Code" of
+            'US':
+                begin
+                    if ACHUSHeader."Destination Currency Code" <> 'USD' then
+                        Error('Invalid currency code: %1.\Currency code must be USD for payments being send to US.', ACHUSHeader."Destination Currency Code");
+                    MinDate := Today();
+                end;
+            'CA':
+                MinDate := CalcDate('<-30D>', Today());
+        end;
+        MaxData := CalcDate('<+173D>', Today());
+
+        if (ACHUSHeader."Effective Date" < MinDate) or (ACHUSHeader."Effective Date" > MaxData) then
+            Error('Settlement data must be between %1 and %2: %3.', MinDate, MaxData, ACHUSHeader."Effective Date");
+
 
         ACHUSHeader."Foreign Exchange Reference" := '';
         ACHUSHeader."Foreign Exchange Ref Indicator" := '3';
@@ -4592,6 +4611,8 @@ codeunit 75010 "BA SEI Subscibers"
             else
                 Error('Vendor Bank Account %1 for Vendor %2 must be located in CA or US to receive USD ACH payments: %3', VendorBankAccount.Code, Vendor."No.", ACHUSHeader."Destination Country Code");
 
+
+
         ACHUSHeader."BA Due Date" := FormatACHDate(ACHUSHeader."Effective Date");
         ACHUSHeader."Company Entry Description" := EFTValues.GetPaymentDesciption();
 
@@ -4606,10 +4627,12 @@ codeunit 75010 "BA SEI Subscibers"
     var
         GenJnlLine: Record "Gen. Journal Line";
         Vendor: Record Vendor;
+        VendorBankAccount: Record "Vendor Bank Account";
     begin
         GenJnlLine.Get(EFTExportWorkset."Journal Template Name", EFTExportWorkset."Journal Batch Name", EFTExportWorkset."Line No.");
         Vendor.Get(GenJnlLine."Account No.");
         Vendor.TestField("Country/Region Code");
+        VendorBankAccount.Get(Vendor."No.", GenJnlLine."Recipient Bank Account");
 
         if EFTExportWorkset."Currency Code" <> '' then
             ACHUSDetail."BA Amount" := GenJnlLine.Amount
@@ -4622,6 +4645,8 @@ codeunit 75010 "BA SEI Subscibers"
             ACHUSDetail."Destination Address" += ' ' + Vendor."Address 2";
         ACHUSDetail."Destination City County Code" := StrSubstNo('%1*%2\', Vendor.City, Vendor.County);
         ACHUSDetail."Destination CntryCode PostCode" := StrSubstNo('%1*%2\', Vendor."Country/Region Code", Vendor."Post Code");
+        ACHUSDetail."Destination Bank" := VendorBankAccount."Bank Account No.";
+        ACHUSDetail."Bank Name" := Vendor."No.";
 
         EFTExportWorkset."BA Detail Record Count" += 1;
         EFTValues.SetEntryAddendaCount(EFTExportWorkset."BA Detail Record Count");
