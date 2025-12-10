@@ -1,4 +1,4 @@
-pageextension 80193 "BA Data Exch. Def. Card" extends "Data Exch Def Card"
+pageextension 80202 "BA Data Exch. Def. Card" extends "Data Exch Def Card"
 {
     layout
     {

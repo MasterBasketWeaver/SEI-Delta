@@ -1,4 +1,4 @@
-tableextension 80135 "BA Data Exch. Def." extends "Data Exch. Def"
+tableextension 80137 "BA Data Exch. Def." extends "Data Exch. Def"
 {
     fields
     {
