@@ -3564,11 +3564,6 @@ codeunit 75010 "BA SEI Subscibers"
         Parts: List of [Text];
         FileNumberText: Text;
     begin
-        if SingleInstance.GetEFTTestTransaction() then
-            ACHRBHeader."Transaction Code" := 'TEST'
-        else
-            ACHRBHeader."Transaction Code" := 'PROD';
-
         ACHRBHeader."File Creation Date" := FormatACHDate(Today());
         ACHRBHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHRBHeader."Federal ID No."));
         ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
@@ -3591,6 +3586,15 @@ codeunit 75010 "BA SEI Subscibers"
         BankAccount."Last E-Pay File Creation No." := ACHRBHeader."File Creation Number";
         BankAccount.Modify(true);
         ACHRBHeader."File Creation Number" -= 1;
+
+
+        if SingleInstance.GetEFTTestTransaction() then begin
+            ACHRBHeader."Transaction Code" := 'TEST';
+            ACHRBHeader."Record Type" := 'TEST';
+        end else begin
+            ACHRBHeader."Transaction Code" := 'PROD';
+            ACHRBHeader."Record Type" := Format(ACHRBHeader."File Creation Number");
+        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]
