@@ -4,13 +4,13 @@ pageextension 80211 "BA Generate EFT Files" extends "Generate EFT Files"
     {
         addafter(PaymentDescription)
         {
-            field("Test Payment"; TestPayment)
+            field("Test Transaction"; TestTransaction)
             {
                 ApplicationArea = all;
 
                 trigger OnValidate()
                 begin
-                    SingleInstance.SetEFTTestTransaction(TestPayment);
+                    SingleInstance.SetEFTTestTransaction(TestTransaction);
                 end;
             }
         }
@@ -34,11 +34,11 @@ pageextension 80211 "BA Generate EFT Files" extends "Generate EFT Files"
 
     trigger OnOpenPage()
     begin
-        TestPayment := SingleInstance.GetEFTTestTransaction();
+        TestTransaction := SingleInstance.GetEFTTestTransaction();
     end;
 
     var
         SingleInstance: Codeunit "BA Single Instance";
-        TestPayment: Boolean;
+        TestTransaction: Boolean;
 
 }
