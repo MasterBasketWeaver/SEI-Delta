@@ -4467,8 +4467,17 @@ codeunit 75010 "BA SEI Subscibers"
         if FileNumberText = '' then
             FileNumberText := '1';
         Evaluate(ACHRBHeader."File Creation Number", GetNumeralsOnly(FileNumberText));
+        ACHRBHeader."File Creation Number" -= 1;
         BankAccount."Last E-Pay File Creation No." := ACHRBHeader."File Creation Number";
         BankAccount.Modify(true);
+
+        if SingleInstance.GetEFTTestTransaction() then begin
+            ACHRBHeader."Transaction Code" := 'TEST';
+            ACHRBHeader."Record Type" := 'TEST';
+        end else begin
+            ACHRBHeader."Transaction Code" := 'PROD';
+            ACHRBHeader."Record Type" := Format(ACHRBHeader."File Creation Number");
+        end;
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]

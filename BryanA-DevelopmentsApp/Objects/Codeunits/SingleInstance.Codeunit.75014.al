@@ -152,10 +152,32 @@ codeunit 75014 "BA Single Instance"
         exit(InitialStandardCost);
     end;
 
+    procedure SetInitialLastDirectCost(NewValue: Decimal)
+    begin
+        InitialLastDirectCost := NewValue;
+    end;
+
+    procedure GetInitialLastDirectCost(): Decimal
+    begin
+        exit(InitialLastDirectCost);
+    end;
+
+
+    procedure GetEFTTestTransaction(): Boolean
+    begin
+        exit(EFTTestTransaction);
+    end;
+
+    procedure SetEFTTestTransaction(NewValue: Boolean)
+    begin
+        EFTTestTransaction := NewValue;
+    end;
+
 
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
         InitialStandardCost: Decimal;
+        InitialLastDirectCost: Decimal;
         SkipUSDCreditLimit: Boolean;
         ForceUSDCreditLimit: Boolean;
         SkipSalesPrepaymentApprovalCheck: Boolean;
@@ -164,4 +186,5 @@ codeunit 75014 "BA Single Instance"
         SkipCreditLimitUpdate: Boolean;
         SkipBlockedItem: Boolean;
         HasDisplayedInventoryWarning: Boolean;
+        EFTTestTransaction: Boolean;
 }
