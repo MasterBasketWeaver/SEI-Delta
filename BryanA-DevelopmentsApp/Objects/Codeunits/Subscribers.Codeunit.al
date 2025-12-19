@@ -3583,10 +3583,9 @@ codeunit 75010 "BA SEI Subscibers"
         if FileNumberText = '' then
             FileNumberText := '1';
         Evaluate(ACHRBHeader."File Creation Number", GetNumeralsOnly(FileNumberText));
+        ACHRBHeader."File Creation Number" -= 1;
         BankAccount."Last E-Pay File Creation No." := ACHRBHeader."File Creation Number";
         BankAccount.Modify(true);
-        ACHRBHeader."File Creation Number" -= 1;
-
 
         if SingleInstance.GetEFTTestTransaction() then begin
             ACHRBHeader."Transaction Code" := 'TEST';

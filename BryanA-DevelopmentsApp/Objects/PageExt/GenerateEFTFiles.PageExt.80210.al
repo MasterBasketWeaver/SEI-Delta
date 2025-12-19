@@ -2,7 +2,7 @@ pageextension 80210 "BA Gener" extends "Generate EFT Files"
 {
     layout
     {
-        addlast(Content)
+        addafter(PaymentDescription)
         {
             field("Test Payment"; TestPayment)
             {
@@ -14,6 +14,22 @@ pageextension 80210 "BA Gener" extends "Generate EFT Files"
                 end;
             }
         }
+    }
+
+    actions
+    {
+        modify(GenerateEFTFile)
+        {
+            trigger OnAfterAction()
+            var
+                TempEFTExportWorkset: Record "EFT Export Workset" temporary;
+            begin
+                CurrPage.GenerateEFTFileLines.Page.GetColumns(TempEFTExportWorkset);
+                if TempEFTExportWorkset.IsEmpty() then
+                    CurrPage.Close();
+            end;
+        }
+
     }
 
     trigger OnOpenPage()
