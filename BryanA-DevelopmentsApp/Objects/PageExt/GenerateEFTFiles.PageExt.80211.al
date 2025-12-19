@@ -1,4 +1,4 @@
-pageextension 80211 "BA Gener" extends "Generate EFT Files"
+pageextension 80211 "BA Generate EFT Files" extends "Generate EFT Files"
 {
     layout
     {
