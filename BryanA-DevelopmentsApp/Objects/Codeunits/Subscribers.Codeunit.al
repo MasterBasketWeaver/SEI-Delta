@@ -3557,6 +3557,18 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     // RBC CAD
+    [EventSubscriber(ObjectType::Page, Page::"Generate EFT Files", 'OnAfterOpenPage', '', false, false)]
+    local procedure GenerateEFTFilesOnAfterOpenPage(var SettlementDate: Date)
+    begin
+        SingleInstance.SetSettlementDate(SettlementDate);
+    end;
+
+    [EventSubscriber(ObjectType::Page, Page::"Generate EFT Files", 'OnAfterValidateSettlementDate', '', false, false)]
+    local procedure GenerateEFTFilesOnAfterValidateSettlementDate(var SettlementDate: Date)
+    begin
+        SingleInstance.SetSettlementDate(SettlementDate);
+    end;
+
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
     local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
     var
@@ -3564,7 +3576,7 @@ codeunit 75010 "BA SEI Subscibers"
         Parts: List of [Text];
         FileNumberText: Text;
     begin
-        ACHRBHeader."File Creation Date" := FormatACHDate(Today());
+        ACHRBHeader."File Creation Date" := FormatACHDate(SingleInstance.GetSettlementDate());
         ACHRBHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHRBHeader."Federal ID No."));
         ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
 
