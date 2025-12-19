@@ -174,6 +174,16 @@ codeunit 75014 "BA Single Instance"
     end;
 
 
+    procedure GetSettlementDate(): Date
+    begin
+        exit(SettlementDate);
+    end;
+
+    procedure SetSettlementDate(NewValue: Date)
+    begin
+        SettlementDate := NewValue;
+    end;
+
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
         InitialStandardCost: Decimal;
@@ -187,4 +197,5 @@ codeunit 75014 "BA Single Instance"
         SkipBlockedItem: Boolean;
         HasDisplayedInventoryWarning: Boolean;
         EFTTestTransaction: Boolean;
+        SettlementDate: Date;
 }
