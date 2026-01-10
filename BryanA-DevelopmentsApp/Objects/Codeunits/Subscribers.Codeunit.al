@@ -4355,149 +4355,6 @@ codeunit 75010 "BA SEI Subscibers"
     end;
 
 
-    [EventSubscriber(ObjectType::Page, Page::"Payment Journal", 'OnBeforeActionEvent', 'ExportPaymentsToFile', false, false)]
-    local procedure PaymentJournalOnBeforeExportPaymentsToFile(var Rec: Record "Gen. Journal Line")
-    var
-        UserSetup: Record "User Setup";
-    begin
-        if not UserSetup.Get(UserId()) then begin
-            UserSetup.Init();
-            UserSetup.Validate("User ID", UserId());
-            UserSetup.Insert(true);
-        end;
-        UserSetup.Validate("BA Payment Bank Account No.", Rec."Bal. Account No.");
-        UserSetup.Validate("BA Payment Filter Record ID", Rec.RecordId());
-        UserSetup.Modify(true);
-    end;
-
-    // [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeOpenPage', '', false, false)]
-    // local procedure ExportElectronicPaymentsOnBeforeOpenPage(var BankAccount: Record "Bank Account"; var SupportedOutputMethod: Option; var FilterRecordID: RecordId)
-    // var
-    //     UserSetup: Record "User Setup";
-    // begin
-    //     if UserSetup.Get(UserId()) then begin
-    //         FilterRecordID := UserSetup."BA Payment Filter Record ID";
-    //         if UserSetup."BA Payment Bank Account No." <> '' then begin
-    //             BankAccount."No." := UserSetup."BA Payment Bank Account No.";
-    //             UserSetup."BA Payment Bank Account No." := '';
-    //             UserSetup.Modify(false);
-    //         end;
-    //     end;
-    //     SupportedOutputMethod := 0;
-    // end;
-
-    // [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeGenJournalLineOnAfterGetRecord', '', false, false)]
-    // local procedure ExportElectronicPaymentsOnBeforeGenJournalLineOnAfterGetRecord(var GenJournalLine: Record "Gen. Journal Line")
-    // var
-    //     TempDimSetEntry: Record "Dimension Set Entry" temporary;
-    //     DimValue: Record "Dimension Value";
-    //     DimMgt: Codeunit DimensionManagement;
-    // begin
-    //     DimMgt.GetDimensionSet(TempDimSetEntry, GenJournalLine."Dimension Set ID");
-    //     if TempDimSetEntry.FindSet() then
-    //         repeat
-    //             DimValue.Get(TempDimSetEntry."Dimension Code", TempDimSetEntry."Dimension Value Code");
-    //             if DimValue.Blocked then
-    //                 Error(BlockedDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
-    //             if DimValue."ENC Inactive" then
-    //                 Error(InactiveDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
-    //         until TempDimSetEntry.Next() = 0;
-    // end;
-
-
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
-    // local procedure GenerateEFTOnBeforeSelectFolder(var BankAccount: Record "Bank Account"; SaveFolderMsg: Text; var Path: Text; var IsHandled: Boolean)
-    // var
-    //     FileMgt: Codeunit "File Management";
-    // begin
-    //     if BankAccount."E-Pay Export File Path" <> '' then begin
-    //         IsHandled := true;
-    //         FileMgt.SelectDefaultFolderDialog(SaveFolderMsg, Path, BankAccount."E-Pay Export File Path");
-    //     end;
-    // end;
-
-
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
-    // local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
-    // begin
-    //     ACHRBHeader."File Creation Date" := FormatACHDate(Today());
-    //     ACHRBHeader."Federal ID No." := StrSubstNo('%1', FormatACHDate(Today() - 30));
-    //     ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
-    // end;
-
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]
-    // local procedure ExportETFRBOnBeforeACHRBDetailModify(var ACHRBDetail: Record "ACH RB Detail"; var TempEFTExportWorkset: Record "EFT Export Workset")
-    // var
-    //     VendorBankAccount: Record "Vendor Bank Account";
-    // begin
-    //     VendorBankAccount.SetRange("Vendor No.", TempEFTExportWorkset."Account No.");
-    //     VendorBankAccount.SetRange("Use for Electronic Payments", true);
-    //     VendorBankAccount.FindFirst();
-    //     VendorBankAccount.TestField("Bank Code");
-    //     VendorBankAccount.TestField("Bank Branch No.");
-    //     VendorBankAccount.TestField("Bank Account No.");
-    //     VendorBankAccount.TestField(Name);
-    //     ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
-    //     ACHRBDetail."Language Code" := FormatPaymentAmount(ACHRBDetail."Payment Amount");
-    //     ACHRBDetail."Vendor/Customer Name" := VendorBankAccount.Name;
-    // end;
-
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBFooterModify', '', false, false)]
-    // local procedure ExportETFRBOnBeforeACHRBFooterModify(var ACHRBFooter: Record "ACH RB Footer"; var TempEFTExportWorkset: Record "EFT Export Workset")
-    // begin
-    //     ACHRBFooter."Record Count" := TempEFTExportWorkset.Count();
-    //     ACHRBFooter."BA Payment Amount Text" := FormatPaymentAmount(ACHRBFooter."Total File Credit");
-    // end;
-
-
-
-
-    local procedure FormatACHDate(Input: Date): Integer
-    begin
-        exit((Date2DMY(Input, 3) - 2000) * 10000 + Date2DMY(Input, 2) * 100 + Date2DMY(Input, 1));
-    end;
-
-    local procedure FormatPaymentAmount(Input: Decimal): Text
-    var
-        Parts: List of [Text];
-        PaymentText: Text;
-        s1: Text;
-        s2: Text;
-    begin
-        PaymentText := Format(Input);
-        if PaymentText.Contains('.') then begin
-            Parts := PaymentText.Split('.');
-            s1 := DelChr(Parts.Get(1), '=', ',.');
-            s2 := DelChr(Parts.Get(2), '=', ',.');
-            if StrLen(s2) = 1 then
-                s2 += '0';
-            exit(s1 + s2);
-        end;
-        exit(DelChr(PaymentText, '=', ',.') + '00');
-    end;
-
-
-    local procedure PrintRecord(RecVar: Variant): Text
-    var
-        FieldRec: Record Field;
-        RecRef: RecordRef;
-        FldRef: FieldRef;
-        Output: TextBuilder;
-    begin
-        RecRef.GetTable(RecVar);
-        FieldRec.SetRange(TableNo, RecRef.Number());
-        FieldRec.SetRange(Enabled, true);
-        FieldRec.SetFilter(ObsoleteState, '<>%1', FieldRec.ObsoleteState::Removed);
-        if FieldRec.FindSet() then
-            repeat
-                FldRef := RecRef.Field(FieldRec."No.");
-                if FldRef.Class = FldRef.Class::FlowField then
-                    FldRef.CalcField();
-                Output.AppendLine(StrSubstNo('%1 %2: %3', FldRef.Number, FldRef.Caption, FldRef.Value));
-            until FieldRec.Next() = 0;
-        exit(Output.ToText());
-    end;
-
 
 
     procedure ImportFreightInvoicesToFixUpdate()
@@ -6296,11 +6153,427 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Calculate Standard Cost", 'OnBeforeSetBOMCompFilters', '', false, false)]
-    // local procedure CalculateStandardCostOnBeforeSetBOMCompFilters(var BOMComponent: Record "BOM Component")
+
+
+    // +EFT RBC
+    [EventSubscriber(ObjectType::Page, Page::"Payment Journal", 'OnBeforeActionEvent', 'ExportPaymentsToFile', false, false)]
+    local procedure PaymentJournalOnBeforeExportPaymentsToFile(var Rec: Record "Gen. Journal Line")
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if not UserSetup.Get(UserId()) then begin
+            UserSetup.Init();
+            UserSetup.Validate("User ID", UserId());
+            UserSetup.Insert(true);
+        end;
+        UserSetup.Validate("BA Payment Bank Account No.", Rec."Bal. Account No.");
+        UserSetup.Validate("BA Payment Filter Record ID", Rec.RecordId());
+        UserSetup.Modify(true);
+    end;
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Gen. Journal Line", 'OnAfterValidateEvent', 'Recipient Bank Account', false, false)]
+    local procedure GenJournalLineOnAfterValidateRecipientBankAccount(var Rec: Record "Gen. Journal Line")
+    var
+        VendorBankAccount: Record "Vendor Bank Account";
+    begin
+        if Rec."Recipient Bank Account" <> '' then
+            if Rec."Account Type" = Rec."Account Type"::Vendor then
+                if VendorBankAccount.Get(Rec."Account No.", Rec."Recipient Bank Account") then
+                    if VendorBankAccount."Use for Electronic Payments" then
+                        Rec.Validate("Bank Payment Type", Rec."Bank Payment Type"::"Electronic Payment");
+    end;
+
+
+    [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeOpenPage', '', false, false)]
+    local procedure ExportElectronicPaymentsOnBeforeOpenPage(var BankAccount: Record "Bank Account"; var SupportedOutputMethod: Option; var FilterRecordID: RecordId)
+    var
+        UserSetup: Record "User Setup";
+    begin
+        if UserSetup.Get(UserId()) then begin
+            FilterRecordID := UserSetup."BA Payment Filter Record ID";
+            if UserSetup."BA Payment Bank Account No." <> '' then begin
+                BankAccount."No." := UserSetup."BA Payment Bank Account No.";
+                UserSetup."BA Payment Bank Account No." := '';
+                UserSetup.Modify(false);
+            end;
+        end;
+        SupportedOutputMethod := 0;
+    end;
+
+
+    [EventSubscriber(ObjectType::Report, Report::"Export Electronic Payments", 'OnBeforeGenJournalLineOnAfterGetRecord', '', false, false)]
+    local procedure ExportElectronicPaymentsOnBeforeGenJournalLineOnAfterGetRecord(var GenJournalLine: Record "Gen. Journal Line")
+    var
+        TempDimSetEntry: Record "Dimension Set Entry" temporary;
+        DimValue: Record "Dimension Value";
+        DimMgt: Codeunit DimensionManagement;
+    begin
+        DimMgt.GetDimensionSet(TempDimSetEntry, GenJournalLine."Dimension Set ID");
+        if TempDimSetEntry.FindSet() then
+            repeat
+                DimValue.Get(TempDimSetEntry."Dimension Code", TempDimSetEntry."Dimension Value Code");
+                if DimValue.Blocked then
+                    Error(BlockedDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
+                if DimValue."ENC Inactive" then
+                    Error(InactiveDimErr, DimValue."Dimension Code", DimValue.Code, GenJournalLine."Line No.");
+            until TempDimSetEntry.Next() = 0;
+    end;
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Generate EFT", 'OnBeforeSelectFolder', '', false, false)]
+    local procedure GenerateEFTOnBeforeSelectFolder(var BankAccount: Record "Bank Account"; SaveFolderMsg: Text; var Path: Text; var IsHandled: Boolean)
+    var
+        FileMgt: Codeunit "File Management";
+    begin
+        if BankAccount."E-Pay Export File Path" <> '' then begin
+            if not FileMgt.SelectDefaultFolderDialog(SaveFolderMsg, Path, BankAccount."E-Pay Export File Path") then
+                Error('');
+            IsHandled := true;
+        end;
+    end;
+
+
+    // RBC CAD
+    [EventSubscriber(ObjectType::Page, Page::"Generate EFT Files", 'OnAfterOpenPage', '', false, false)]
+    local procedure GenerateEFTFilesOnAfterOpenPage(var SettlementDate: Date)
+    begin
+        SingleInstance.SetSettlementDate(SettlementDate);
+    end;
+
+    [EventSubscriber(ObjectType::Page, Page::"Generate EFT Files", 'OnAfterValidateSettlementDate', '', false, false)]
+    local procedure GenerateEFTFilesOnAfterValidateSettlementDate(var SettlementDate: Date)
+    begin
+        SingleInstance.SetSettlementDate(SettlementDate);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBHeaderModify', '', false, false)]
+    local procedure ExportETFRBOnBeforeACHRBHeaderModify(var ACHRBHeader: Record "ACH RB Header"; EFTExportWorkset: Record "EFT Export Workset"; var BankAccount: Record "Bank Account")
+    var
+        CompInfo: Record "Company Information";
+        Parts: List of [Text];
+        FileNumberText: Text;
+    begin
+        ACHRBHeader."File Creation Date" := FormatACHDate(SingleInstance.GetSettlementDate());
+        ACHRBHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHRBHeader."Federal ID No."));
+        ACHRBHeader."Input Qualifier" := CopyStr(EFTExportWorkset.Description, 1, MaxStrLen(ACHRBHeader."Input Qualifier"));
+
+        if BankAccount."Client Name" = '' then begin
+            CompInfo.Get();
+            ACHRBHeader."Client Name" := CopyStr(CompInfo.Name, 1, MaxStrLen(ACHRBHeader."Client Name"));
+        end else
+            ACHRBHeader."Client Name" := CopyStr(BankAccount."Client Name", 1, MaxStrLen(ACHRBHeader."Client Name"));
+
+        if BankAccount."Last E-Pay Export File Name".Contains('.') then begin
+            Parts := BankAccount."Last E-Pay Export File Name".Split('.');
+            FileNumberText := Parts.Get(1);
+        end else
+            FileNumberText := BankAccount."Last E-Pay Export File Name";
+        FileNumberText := GetNumeralsOnly(FileNumberText);
+        if FileNumberText = '' then
+            FileNumberText := '1';
+        Evaluate(ACHRBHeader."File Creation Number", GetNumeralsOnly(FileNumberText));
+        ACHRBHeader."File Creation Number" -= 1;
+        BankAccount."Last E-Pay File Creation No." := ACHRBHeader."File Creation Number";
+        BankAccount.Modify(true);
+
+        if SingleInstance.GetEFTTestTransaction() then begin
+            ACHRBHeader."Transaction Code" := 'TEST';
+            ACHRBHeader."Record Type" := 'TEST';
+        end else begin
+            ACHRBHeader."Transaction Code" := 'PROD';
+            ACHRBHeader."Record Type" := Format(ACHRBHeader."File Creation Number");
+        end;
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBDetailModify', '', false, false)]
+    local procedure ExportETFRBOnBeforeACHRBDetailModify(var ACHRBDetail: Record "ACH RB Detail"; var TempEFTExportWorkset: Record "EFT Export Workset")
+    var
+        Vendor: Record Vendor;
+        CompInfo: Record "Company Information";
+        VendorBankAccount: Record "Vendor Bank Account";
+        BankAccount: Record "Bank Account";
+    begin
+        VendorBankAccount.SetRange("Vendor No.", TempEFTExportWorkset."Account No.");
+        VendorBankAccount.SetRange("Use for Electronic Payments", true);
+        VendorBankAccount.FindFirst();
+        VendorBankAccount.TestField("Bank Code");
+        VendorBankAccount.TestField("Bank Branch No.");
+        VendorBankAccount.TestField("Bank Account No.");
+        VendorBankAccount.TestField(Name);
+        ACHRBDetail."Transaction Code" := VendorBankAccount."Bank Code";
+        ACHRBDetail."Language Code" := CopyStr(FormatPaymentAmount(ACHRBDetail."Payment Amount"), 1, MaxStrLen(ACHRBDetail."Language Code"));
+        Vendor.Get(TempEFTExportWorkset."Account No.");
+        Vendor.TestField(Name);
+        ACHRBDetail."Vendor/Customer Name" := CopyStr(Vendor.Name, 1, MaxStrLen(ACHRBDetail."Vendor/Customer Name"));
+
+        BankAccount.Get(TempEFTExportWorkset."Bank Account No.");
+        BankAccount.TestField("Bank Account No.");
+        ACHRBDetail."Client Number" := CopyStr(GetNumeralsOnly(BankAccount."Bank Account No."), 1, MaxStrLen(ACHRBDetail."Client Number"));
+
+        if BankAccount."Client Name" = '' then begin
+            CompInfo.Get();
+            ACHRBDetail."Client Name" := CopyStr(CompInfo.Name, 1, MaxStrLen(ACHRBDetail."Client Name"));
+        end else
+            ACHRBDetail."Client Name" := CopyStr(BankAccount."Client Name", 1, MaxStrLen(ACHRBDetail."Client Name"));
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (RB)", 'OnBeforeACHRBFooterModify', '', false, false)]
+    local procedure ExportETFRBOnBeforeACHRBFooterModify(var ACHRBFooter: Record "ACH RB Footer"; var TempEFTExportWorkset: Record "EFT Export Workset")
+    begin
+        ACHRBFooter."Record Count" := TempEFTExportWorkset.Count();
+        ACHRBFooter."BA Payment Amount Text" := CopyStr(FormatPaymentAmount(ACHRBFooter."Total File Credit"), 1, MaxStrLen(ACHRBFooter."BA Payment Amount Text"));
+    end;
+    // RBC CAD
+
+
+
+    // RBC USD
+    [EventSubscriber(ObjectType::Page, Page::"Generate EFT Files", 'OnShowPaymentDescription', '', false, false)]
+    local procedure GenerateEFTFilesOnShowPaymentDescription(BankAccountNo: Code[20]; var ShowPaymentDescription: boolean)
+    var
+        BankAccount: Record "Bank Account";
+        DataExchDef: Record "Data Exch. Def";
+    begin
+        if not BankAccount.Get(BankAccountNo) then
+            exit;
+        if DataExchDef.Get(BankAccount."Payment Export Format") then
+            ShowPaymentDescription := DataExchDef."BA Require Desciption";
+        //EFTValues.SetPaymentDescription is called from CSIDE after this published
+    end;
+
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeFileACHUSHeaderModify', '', false, false)]
+    local procedure ExportETFIATOnBeforeFileACHUSHeaderModify(var ACHUSHeader: Record "ACH US Header"; var EFTValues: Codeunit "EFT Values"; var BankAccount: Record "Bank Account")
+    var
+        CompInfo: Record "Company Information";
+        Parts: List of [Text];
+        FileNumberText: Text;
+    begin
+        ACHUSHeader."Priority Code" := FormatACHDate(Today());
+        ACHUSHeader."Federal ID No." := CopyStr(StrSubstNo('%1', FormatACHDate(Today() - 30)), 1, MaxStrLen(ACHUSHeader."Federal ID No."));
+        ACHUSHeader."Bank Account Number" := BankAccount."Client No.";
+
+        EFTValues.SetLineCount(1);
+        if EFTValues.GetPaymentDesciption() = '' then
+            Error('Payment Description must be specified.');
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSHeaderModify', '', false, false)]
+    local procedure ExportETFIATOnBeforeBatchACHUSHeaderModify(var ACHUSHeader: Record "ACH US Header"; var EFTValues: Codeunit "EFT Values"; var EFTExportWorkset: Record "EFT Export Workset")
+    var
+        Vendor: Record Vendor;
+        VendorBankAccount: Record "Vendor Bank Account";
+        BankAccount: Record "Bank Account";
+        GenJnlLine: Record "Gen. Journal Line";
+        VendorSource: Boolean;
+        MinDate: Date;
+        MaxData: Date;
+    begin
+        GenJnlLine.Get(EFTExportWorkset."Journal Template Name", EFTExportWorkset."Journal Batch Name", EFTExportWorkset."Line No.");
+        BankAccount.Get(EFTExportWorkset."Bank Account No.");
+        BankAccount.TestField("Client No.");
+        ACHUSHeader."Bank Account Number" := BankAccount."Client No.";
+
+        if ACHUSHeader."Currency Type" = 'CDN' then
+            ACHUSHeader."Currency Type" := 'CAD';
+        if ACHUSHeader."Destination Currency Code" = 'CDN' then
+            ACHUSHeader."Destination Currency Code" := 'CAD';
+
+        case ACHUSHeader."Destination Country Code" of
+            'US':
+                begin
+                    if ACHUSHeader."Destination Currency Code" <> 'USD' then
+                        Error('Invalid currency code: %1.\Currency code must be USD for payments being send to US.', ACHUSHeader."Destination Currency Code");
+                    MinDate := Today();
+                end;
+            'CA':
+                MinDate := CalcDate('<-30D>', Today());
+        end;
+        MaxData := CalcDate('<+173D>', Today());
+
+        if (ACHUSHeader."Effective Date" < MinDate) or (ACHUSHeader."Effective Date" > MaxData) then
+            Error('Settlement data must be between %1 and %2: %3.', MinDate, MaxData, ACHUSHeader."Effective Date");
+
+
+        ACHUSHeader."Foreign Exchange Reference" := '';
+        ACHUSHeader."Foreign Exchange Ref Indicator" := '3';
+        if ACHUSHeader."Currency Type" <> ACHUSHeader."Destination Currency Code" then
+            if GenJnlLine.Amount <> 0 then
+                if GenJnlLine.Amount <> GenJnlLine."Amount (LCY)" then begin
+                    ACHUSHeader."Foreign Exchange Reference" := Format(GenJnlLine."Amount (LCY)" / GenJnlLine.Amount);
+                    ACHUSHeader."Foreign Exchange Ref Indicator" := '1';
+                end;
+
+        Vendor.Get(GenJnlLine."Account No.");
+        VendorBankAccount.Get(Vendor."No.", GenJnlLine."Recipient Bank Account");
+        if VendorBankAccount."Country/Region Code" <> '' then
+            ACHUSHeader."Destination Country Code" := VendorBankAccount."Country/Region Code"
+        else
+            if Vendor."Country/Region Code" <> '' then begin
+                ACHUSHeader."Destination Country Code" := Vendor."Country/Region Code";
+                VendorSource := true;
+            end;
+
+        if ACHUSHeader."Destination Country Code" = '' then
+            Error('Vendor %1 must have a country specified for it or it''s bank account %2, before payments can be sent', Vendor."No.", VendorBankAccount.Code);
+        if not (ACHUSHeader."Destination Country Code" in ['CA', 'US']) then
+            if VendorSource then
+                Error('Vendor %1 must be located in CA or US to receive USD ACH payments: %3', Vendor."No.", ACHUSHeader."Destination Country Code")
+            else
+                Error('Vendor Bank Account %1 for Vendor %2 must be located in CA or US to receive USD ACH payments: %3', VendorBankAccount.Code, Vendor."No.", ACHUSHeader."Destination Country Code");
+
+
+
+        ACHUSHeader."BA Due Date" := FormatACHDate(ACHUSHeader."Effective Date");
+        ACHUSHeader."Company Entry Description" := EFTValues.GetPaymentDesciption();
+
+        EFTValues.SetEntryAddendaCount(0);
+        EFTValues.SetTotalFileCreditNonLCY(0);
+        EFTValues.SetLineCount(EFTValues.GetLineCount() + 1);
+        EFTValues.SetEntryLineCount(0);
+    end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeACHUSDetailModify', '', false, false)]
+    local procedure ExportETFIATOnBeforeACHUSDetailModify(var ACHUSDetail: Record "ACH US Detail"; var EFTValues: Codeunit "EFT Values"; var EFTExportWorkset: Record "EFT Export Workset")
+    var
+        GenJnlLine: Record "Gen. Journal Line";
+        Vendor: Record Vendor;
+        VendorBankAccount: Record "Vendor Bank Account";
+    begin
+        GenJnlLine.Get(EFTExportWorkset."Journal Template Name", EFTExportWorkset."Journal Batch Name", EFTExportWorkset."Line No.");
+        Vendor.Get(GenJnlLine."Account No.");
+        Vendor.TestField("Country/Region Code");
+        VendorBankAccount.Get(Vendor."No.", GenJnlLine."Recipient Bank Account");
+
+        if EFTExportWorkset."Currency Code" <> '' then
+            ACHUSDetail."BA Amount" := GenJnlLine.Amount
+        else
+            ACHUSDetail."BA Amount" := EFTExportWorkset."Amount (LCY)";
+        ACHUSDetail."BA Receiver Name" := CopyStr(Vendor.Name, 1, MaxStrLen(ACHUSDetail."BA Receiver Name"));
+
+        ACHUSDetail."Destination Address" := Vendor.Address;
+        if Vendor."Address 2" <> '' then
+            ACHUSDetail."Destination Address" += ' ' + Vendor."Address 2";
+        ACHUSDetail."Destination City County Code" := StrSubstNo('%1*%2\', Vendor.City, Vendor.County);
+        ACHUSDetail."Destination CntryCode PostCode" := StrSubstNo('%1*%2\', Vendor."Country/Region Code", Vendor."Post Code");
+        ACHUSDetail."Destination Bank" := VendorBankAccount."Bank Account No.";
+        ACHUSDetail."Bank Name" := Vendor."No.";
+
+        EFTExportWorkset."BA Detail Record Count" += 1;
+        EFTValues.SetEntryAddendaCount(EFTExportWorkset."BA Detail Record Count");
+
+        if not Format(ACHUSDetail."Data Exch. Line Def Code").Contains('ADDENDA') then
+            EFTValues.SetTotalFileCreditNonLCY(EFTValues.GetTotalFileCreditNonLCY() + GenJnlLine.Amount);
+
+        EFTValues.SetLineCount(EFTValues.GetLineCount() + 1);
+        EFTValues.SetEntryLineCount(EFTValues.GetEntryLineCount() + 1);
+    end;
+
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSFooterModify', '', false, false)]
+    // local procedure ExportETFIATOnBeforeBatchACHUSFooterModify(var EFTValues: Codeunit "EFT Values")
     // begin
-    //     BOMComponent.SetFilter("No.", '<>%1', '');
+    //     EFTValues.SetFileEntryAddendaCount(EFTValues.GetFileEntryAddendaCount() + EFTValues.GetEntryAddendaCount());
     // end;
+
+    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeFileACHUSFooterModify', '', false, false)]
+    local procedure ExportETFIATOnBeforeFileACHUSFooterModify(var ACHUSFooter: Record "ACH US Footer"; var EFTValues: Codeunit "EFT Values")
+    begin
+        ACHUSFooter."Block Count" := Round((EFTValues.GetLineCount() + 1) / 10, 1, '>');
+        ACHUSFooter."Entry Addenda Count" := EFTValues.GetEntryLineCount();
+    end;
+    // RBC USD
+
+
+
+    [EventSubscriber(ObjectType::Table, Database::"Transformation Rule", 'OnTransformation', '', false, false)]
+    local procedure TransformationRuleOnTransformation(TransformationCode: Code[20]; InputText: Text; var OutputText: Text)
+    var
+        TempDec: Decimal;
+    begin
+        if TransformationCode = 'AMOUNT' then
+            if Evaluate(TempDec, InputText) then
+                OutputText := FormatPaymentAmount(Round(TempDec, 0.01), StrLen(InputText));
+    end;
+
+
+    procedure GetNumeralsOnly(Input: Text): Text
+    var
+        s: Text;
+        c: Char;
+        i: Integer;
+    begin
+        for i := 1 to StrLen(Input) do begin
+            c := Input[i];
+            if (c >= '0') and (c < '9') then
+                s += c;
+        end;
+        exit(s);
+    end;
+
+    local procedure FormatACHDate(Input: Date): Integer
+    begin
+        exit((Date2DMY(Input, 3) - 2000) * 10000 + Date2DMY(Input, 2) * 100 + Date2DMY(Input, 1));
+    end;
+
+    local procedure FormatPaymentAmount(Input: Decimal): Text
+    begin
+        exit(FormatPaymentAmount(Input, 0));
+    end;
+
+    local procedure FormatPaymentAmount(Input: Decimal; Length: Integer): Text
+    var
+        Parts: List of [Text];
+        PaymentText: Text;
+        s1: Text;
+        s2: Text;
+        Output: Text;
+    begin
+        PaymentText := Format(Input);
+        if PaymentText.Contains('.') then begin
+            Parts := PaymentText.Split('.');
+            s1 := DelChr(Parts.Get(1), '=', ',.');
+            s2 := DelChr(Parts.Get(2), '=', ',.');
+            if StrLen(s2) = 1 then
+                s2 += '0';
+            Output := s1 + s2;
+        end else
+            Output := DelChr(PaymentText, '=', ',.') + '00';
+
+        Length -= StrLen(Output);
+        while Length > 0 do begin
+            Output := '0' + Output;
+            Length -= 1;
+        end;
+        exit(Output);
+    end;
+
+    local procedure PrintRecord(RecVar: Variant): Text
+    var
+        FieldRec: Record Field;
+        RecRef: RecordRef;
+        FldRef: FieldRef;
+        Output: TextBuilder;
+    begin
+        RecRef.GetTable(RecVar);
+        FieldRec.SetRange(TableNo, RecRef.Number());
+        FieldRec.SetRange(Enabled, true);
+        FieldRec.SetFilter(ObsoleteState, '<>%1', FieldRec.ObsoleteState::Removed);
+        if FieldRec.FindSet() then
+            repeat
+                FldRef := RecRef.Field(FieldRec."No.");
+                if FldRef.Class = FldRef.Class::FlowField then
+                    FldRef.CalcField();
+                Output.AppendLine(StrSubstNo('%1 %2: %3', FldRef.Number, FldRef.Caption, FldRef.Value));
+            until FieldRec.Next() = 0;
+        exit(Output.ToText());
+    end;s
+    // -EFT RBC
+
+
+
+
+
 
 
     var
@@ -6380,5 +6653,8 @@ codeunit 75010 "BA SEI Subscibers"
         BinContentAvailableQtyMsg: Label 'Line %1, Item %2, Bin %3 -> Available: %4, Requested: %5';
         BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested, do you want to continue?\If you continue, only the available quantity will be used.\\%1';
         //
+        BlockedDimErr: Label 'Dimension %1 %2 on line %3 is blocked.';
+        InactiveDimErr: Label 'Dimension %1 %2 on line %3 is inactive.';
+
 }
 

@@ -144,6 +144,27 @@ codeunit 75014 "BA Single Instance"
     end;
 
 
+    procedure GetEFTTestTransaction(): Boolean
+    begin
+        exit(EFTTestTransaction);
+    end;
+
+    procedure SetEFTTestTransaction(NewValue: Boolean)
+    begin
+        EFTTestTransaction := NewValue;
+    end;
+
+
+    procedure GetSettlementDate(): Date
+    begin
+        exit(SettlementDate);
+    end;
+
+    procedure SetSettlementDate(NewValue: Date)
+    begin
+        SettlementDate := NewValue;
+    end;
+
     var
         NameValueBuffer: Record "Name/Value Buffer" temporary;
         InitialLastDirectCost: Decimal;
@@ -155,4 +176,6 @@ codeunit 75014 "BA Single Instance"
         SkipLedgerLineSave: Boolean;
         SkipBlockedItem: Boolean;
         HasDisplayedInventoryWarning: Boolean;
+        EFTTestTransaction: Boolean;
+        SettlementDate: Date;
 }
