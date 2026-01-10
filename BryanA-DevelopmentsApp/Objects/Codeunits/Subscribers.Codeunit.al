@@ -6567,7 +6567,7 @@ codeunit 75010 "BA SEI Subscibers"
                 Output.AppendLine(StrSubstNo('%1 %2: %3', FldRef.Number, FldRef.Caption, FldRef.Value));
             until FieldRec.Next() = 0;
         exit(Output.ToText());
-    end;s
+    end;
     // -EFT RBC
 
 
