@@ -8,11 +8,19 @@ pageextension 80192 "BA Vendor List" extends "Vendor List"
             {
                 ApplicationArea = all;
             }
-            field("BA Address"; Address)
+            field("BA Address"; Rec.Address)
             {
                 ApplicationArea = all;
             }
-            field("BA Address 2"; "Address 2")
+            field("BA Address 2"; Rec."Address 2")
+            {
+                ApplicationArea = all;
+            }
+            field("Payment Method Code"; Rec."Payment Method Code")
+            {
+                ApplicationArea = all;
+            }
+            field("Preferred Bank Account Code"; Rec."Preferred Bank Account Code")
             {
                 ApplicationArea = all;
             }

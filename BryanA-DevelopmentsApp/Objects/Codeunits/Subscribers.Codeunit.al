@@ -6235,10 +6235,25 @@ codeunit 75010 "BA SEI Subscibers"
 
 
     // RBC CAD
+    [EventSubscriber(ObjectType::Page, Page::"Payment Journal", 'OnBeforeActionEvent', 'GenerateEFT', false, false)]
+    local procedure PaymentJournalOnBeforeGenerateEFTAction(var Rec: Record "Gen. Journal Line")
+    var
+        GenJnlLine: Record "Gen. Journal Line";
+    begin
+        GenJnlLine.SetRange("Journal Template Name", GenJnlLine."Journal Template Name");
+        GenJnlLine.SetRange("Journal Batch Name", GenJnlLine."Journal Batch Name");
+        GenJnlLine.SetRange("Check Printed", true);
+        GenJnlLine.SetRange("Check Exported", false);
+        GenJnlLine.SetFilter("Posting Date", '<>%1', 0D);
+        GenJnlLine.FindFirst();
+
+        SingleInstance.SetSettlementDate(GenJnlLine."Posting Date");
+    end;
+
     [EventSubscriber(ObjectType::Page, Page::"Generate EFT Files", 'OnAfterOpenPage', '', false, false)]
     local procedure GenerateEFTFilesOnAfterOpenPage(var SettlementDate: Date)
     begin
-        SingleInstance.SetSettlementDate(SettlementDate);
+        SettlementDate := SingleInstance.GetSettlementDate();
     end;
 
     [EventSubscriber(ObjectType::Page, Page::"Generate EFT Files", 'OnAfterValidateSettlementDate', '', false, false)]
