@@ -6240,12 +6240,14 @@ codeunit 75010 "BA SEI Subscibers"
     var
         GenJnlLine: Record "Gen. Journal Line";
     begin
-        GenJnlLine.SetRange("Journal Template Name", GenJnlLine."Journal Template Name");
-        GenJnlLine.SetRange("Journal Batch Name", GenJnlLine."Journal Batch Name");
-        GenJnlLine.SetRange("Check Printed", true);
-        GenJnlLine.SetRange("Check Exported", false);
+        GenJnlLine.SetRange("Journal Template Name", Rec."Journal Template Name");
+        GenJnlLine.SetRange("Journal Batch Name", Rec."Journal Batch Name");
+        GenJnlLine.SetRange("Check Exported", true);
+        GenJnlLine.SetRange("Check Transmitted", false);
         GenJnlLine.SetFilter("Posting Date", '<>%1', 0D);
-        GenJnlLine.FindFirst();
+
+        if not GenJnlLine.FindFirst() then
+            Error(NoExportedLinesErr, Rec."Journal Batch Name");
 
         SingleInstance.SetSettlementDate(GenJnlLine."Posting Date");
     end;
@@ -6371,7 +6373,7 @@ codeunit 75010 "BA SEI Subscibers"
 
         EFTValues.SetLineCount(1);
         if EFTValues.GetPaymentDesciption() = '' then
-            Error('Payment Description must be specified.');
+            Error(NoPaymentDescrErr);
     end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSHeaderModify', '', false, false)]
@@ -6399,7 +6401,7 @@ codeunit 75010 "BA SEI Subscibers"
             'US':
                 begin
                     if ACHUSHeader."Destination Currency Code" <> 'USD' then
-                        Error('Invalid currency code: %1.\Currency code must be USD for payments being send to US.', ACHUSHeader."Destination Currency Code");
+                        Error(InvalidCurrencyErr, ACHUSHeader."Destination Currency Code");
                     MinDate := Today();
                 end;
             'CA':
@@ -6408,7 +6410,7 @@ codeunit 75010 "BA SEI Subscibers"
         MaxData := CalcDate('<+173D>', Today());
 
         if (ACHUSHeader."Effective Date" < MinDate) or (ACHUSHeader."Effective Date" > MaxData) then
-            Error('Settlement data must be between %1 and %2: %3.', MinDate, MaxData, ACHUSHeader."Effective Date");
+            Error(ExportDateRangeErr, MinDate, MaxData, ACHUSHeader."Effective Date");
 
 
         ACHUSHeader."Foreign Exchange Reference" := '';
@@ -6431,12 +6433,12 @@ codeunit 75010 "BA SEI Subscibers"
             end;
 
         if ACHUSHeader."Destination Country Code" = '' then
-            Error('Vendor %1 must have a country specified for it or it''s bank account %2, before payments can be sent', Vendor."No.", VendorBankAccount.Code);
+            Error(NoTransmitCountryCodeErr, Vendor."No.", VendorBankAccount.Code);
         if not (ACHUSHeader."Destination Country Code" in ['CA', 'US']) then
             if VendorSource then
-                Error('Vendor %1 must be located in CA or US to receive USD ACH payments: %3', Vendor."No.", ACHUSHeader."Destination Country Code")
+                Error(InvalidVendorDestinationCountryErr, Vendor."No.", ACHUSHeader."Destination Country Code")
             else
-                Error('Vendor Bank Account %1 for Vendor %2 must be located in CA or US to receive USD ACH payments: %3', VendorBankAccount.Code, Vendor."No.", ACHUSHeader."Destination Country Code");
+                Error(InvalidDestinationCountryErr, VendorBankAccount.Code, Vendor."No.", ACHUSHeader."Destination Country Code");
 
 
 
@@ -6448,6 +6450,8 @@ codeunit 75010 "BA SEI Subscibers"
         EFTValues.SetLineCount(EFTValues.GetLineCount() + 1);
         EFTValues.SetEntryLineCount(0);
     end;
+
+
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeACHUSDetailModify', '', false, false)]
     local procedure ExportETFIATOnBeforeACHUSDetailModify(var ACHUSDetail: Record "ACH US Detail"; var EFTValues: Codeunit "EFT Values"; var EFTExportWorkset: Record "EFT Export Workset")
@@ -6484,12 +6488,6 @@ codeunit 75010 "BA SEI Subscibers"
         EFTValues.SetLineCount(EFTValues.GetLineCount() + 1);
         EFTValues.SetEntryLineCount(EFTValues.GetEntryLineCount() + 1);
     end;
-
-    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeBatchACHUSFooterModify', '', false, false)]
-    // local procedure ExportETFIATOnBeforeBatchACHUSFooterModify(var EFTValues: Codeunit "EFT Values")
-    // begin
-    //     EFTValues.SetFileEntryAddendaCount(EFTValues.GetFileEntryAddendaCount() + EFTValues.GetEntryAddendaCount());
-    // end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Export EFT (IAT)", 'OnBeforeFileACHUSFooterModify', '', false, false)]
     local procedure ExportETFIATOnBeforeFileACHUSFooterModify(var ACHUSFooter: Record "ACH US Footer"; var EFTValues: Codeunit "EFT Values")
@@ -6667,9 +6665,15 @@ codeunit 75010 "BA SEI Subscibers"
         NoBlockReasonErr: Label 'Block reason must be specified when blocking an item.';
         BinContentAvailableQtyMsg: Label 'Line %1, Item %2, Bin %3 -> Available: %4, Requested: %5';
         BinContentWarningPrefixMsg: Label 'The following lines have less inventory available than requested, do you want to continue?\If you continue, only the available quantity will be used.\\%1';
-        //
         BlockedDimErr: Label 'Dimension %1 %2 on line %3 is blocked.';
         InactiveDimErr: Label 'Dimension %1 %2 on line %3 is inactive.';
+        NoExportedLinesErr: Label 'There must be at least one line exported in Batch %1 before a EFT file can be generated.', Comment = '%1 = Batch Name';
+        NoPaymentDescrErr: Label 'Payment Description must be specified.';
+        InvalidCurrencyErr: Label 'Invalid currency code: %1.\Currency code must be USD for payments being send to US.', Comment = '%1 = Currency Code';
+        ExportDateRangeErr: Label 'Settlement data must be between %1 and %2: %3.', Comment = '%1 = Min Date, %2 = Max Date, %3 = Current Date';
+        NoTransmitCountryCodeErr: Label 'Vendor %1 must have a country specified for it or it''s bank account %2, before payments can be sent.', Comment = '%1 = Vendor No., %2 = Bank Account No.';
+        InvalidVendorDestinationCountryErr: Label 'Vendor %1 must be located in CA or US to receive USD ACH payments: %3', Comment = '%1 = Vendor Bank Account No., %2 = Vendor No., %3 = Target Country Code';
+        InvalidDestinationCountryErr: Label 'Vendor Bank Account %1 for Vendor %2 must be located in CA or US to receive USD ACH payments: %3', Comment = '%1 = Vendor Bank Account No., %2 = Vendor No., %3 = Target Country Code';
 
 }
 
