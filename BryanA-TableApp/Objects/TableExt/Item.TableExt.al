@@ -142,12 +142,13 @@ tableextension 80012 "BA Item" extends Item
         {
             DataClassification = CustomerContent;
             Caption = 'SIOP Quantity';
+            DecimalPlaces = 0 : 8;
         }
         field(80092; "BA Shell Item No."; Code[20])
         {
             DataClassification = CustomerContent;
             Caption = 'Shell Item No.';
-            TableRelation = Item."No.";
+            TableRelation = Item."No." where (Blocked = const (false));
         }
     }
 
