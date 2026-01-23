@@ -133,6 +133,22 @@ tableextension 80012 "BA Item" extends Item
             Caption = 'Last Standard Cost Updated';
             Editable = false;
         }
+        field(80090; "BA SIOP Item"; Boolean)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'SIOP Item';
+        }
+        field(80091; "BA SIOP Quantity"; Decimal)
+        {
+            DataClassification = CustomerContent;
+            Caption = 'SIOP Quantity';
+        }
+        field(80092; "BA Shell Item No."; Code[20])
+        {
+            DataClassification = CustomerContent;
+            Caption = 'Shell Item No.';
+            TableRelation = Item."No.";
+        }
     }
 
     procedure SetLastCurrencyPurchCost(CurrCode: Code[10]; LastPurchCost: Decimal)

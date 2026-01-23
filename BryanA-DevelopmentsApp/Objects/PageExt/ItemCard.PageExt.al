@@ -88,6 +88,14 @@ pageextension 80009 "BA Item Card" extends "Item Card"
         }
         addlast(Item)
         {
+            field("BA SIOP Item"; Rec."BA SIOP Item")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Shell Item No."; Rec."BA Shell Item No.")
+            {
+                ApplicationArea = all;
+            }
             group("BA Dimensions")
             {
                 Caption = 'Dimensions';
@@ -368,6 +376,13 @@ pageextension 80009 "BA Item Card" extends "Item Card"
                     ItemCostEntry.SetRange("Item No.", Rec."No.");
                     Page.Run(0, ItemCostEntry);
                 end;
+            }
+        }
+        addlast(Planning)
+        {
+            field("BA SIOP Quantity"; Rec."BA SIOP Quantity")
+            {
+                ApplicationArea = all;
             }
         }
     }
