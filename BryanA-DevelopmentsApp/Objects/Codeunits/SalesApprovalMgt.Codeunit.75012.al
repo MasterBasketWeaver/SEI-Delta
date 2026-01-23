@@ -812,24 +812,24 @@ codeunit 75012 "BA Sales Approval Mgt."
 
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnBeforeCreateApprovalEntryNotification', '', false, false)]
-    local procedure ApprovalMgtOnBeforeCreateApprovalEntryNotification(var ApprovalEntry: Record "Approval Entry")
-    var
-        UserSetup: Record "User Setup";
-    begin
-        if (ApprovalEntry."Table ID" <> Database::"Purchase Header") or (ApprovalEntry.Status <> ApprovalEntry.Status::Open) then
-            exit;
-        UserSetup.SetRange("User ID", ApprovalEntry."Approver ID");
-        UserSetup.SetRange("Approval Administrator", true);
-        if UserSetup.IsEmpty() then
-            exit;
-        UserSetup.Reset();
-        UserSetup.SetRange("BA Purch. Approval Admin", true);
-        if not UserSetup.FindFirst() then
-            error(NoPurchApprovalAdminErr);
-        ApprovalEntry."Approver ID" := UserSetup."User ID";
-        ApprovalEntry.Modify(true);
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnBeforeCreateApprovalEntryNotification', '', false, false)]
+    // local procedure ApprovalMgtOnBeforeCreateApprovalEntryNotification(var ApprovalEntry: Record "Approval Entry")
+    // var
+    //     UserSetup: Record "User Setup";
+    // begin
+    //     if (ApprovalEntry."Table ID" <> Database::"Purchase Header") or (ApprovalEntry.Status <> ApprovalEntry.Status::Open) then
+    //         exit;
+    //     UserSetup.SetRange("User ID", ApprovalEntry."Approver ID");
+    //     UserSetup.SetRange("Approval Administrator", true);
+    //     if UserSetup.IsEmpty() then
+    //         exit;
+    //     UserSetup.Reset();
+    //     UserSetup.SetRange("BA Purch. Approval Admin", true);
+    //     if not UserSetup.FindFirst() then
+    //         error(NoPurchApprovalAdminErr);
+    //     ApprovalEntry."Approver ID" := UserSetup."User ID";
+    //     ApprovalEntry.Modify(true);
+    // end;
 
     [EventSubscriber(ObjectType::Codeunit, Codeunit::"Notification Entry Dispatcher", 'OnBeforeCreateMailAndDispatch', '', false, false)]
     local procedure NotificationEntryDispatcherOnBeforeCreateMailAndDispatch(var NotificationEntry: Record "Notification Entry"; var MailSubject: Text)
@@ -861,62 +861,62 @@ codeunit 75012 "BA Sales Approval Mgt."
     end;
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnBeforeSubstituteUserIdForApprovalEntry', '', false, false)]
-    local procedure ApprovalMgtOnBeforeSubstituteUserIdForApprovalEntry(ApprovalEntry: Record "Approval Entry"; var IsHandled: Boolean)
-    var
-        UserSetup: Record "User Setup";
-        ApprovalAdminUserSetup: Record "User Setup";
-        Substitute: Code[50];
-    begin
-        if (ApprovalEntry."Table ID" <> Database::"Purchase Header") then
-            exit;
-        IsHandled := true;
-        if not UserSetup.Get(ApprovalEntry."Approver ID") then
-            error(ApproverUserIdnotInSetupErr, ApprovalEntry."Sender ID");
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnBeforeSubstituteUserIdForApprovalEntry', '', false, false)]
+    // local procedure ApprovalMgtOnBeforeSubstituteUserIdForApprovalEntry(ApprovalEntry: Record "Approval Entry"; var IsHandled: Boolean)
+    // var
+    //     UserSetup: Record "User Setup";
+    //     ApprovalAdminUserSetup: Record "User Setup";
+    //     Substitute: Code[50];
+    // begin
+    //     if (ApprovalEntry."Table ID" <> Database::"Purchase Header") then
+    //         exit;
+    //     IsHandled := true;
+    //     if not UserSetup.Get(ApprovalEntry."Approver ID") then
+    //         error(ApproverUserIdnotInSetupErr, ApprovalEntry."Sender ID");
 
-        Substitute := '';
-        ApprovalMgt.OnSubstituteUserIdForApprovalEntry(ApprovalEntry, Substitute);
-        if Substitute <> '' then begin
-            ApprovalEntry."Approver ID" := Substitute;
-            ApprovalEntry.Modify(true);
-            ApprovalMgt.OnDelegateApprovalRequest(ApprovalEntry);
-            exit;
-        end;
+    //     Substitute := '';
+    //     ApprovalMgt.OnSubstituteUserIdForApprovalEntry(ApprovalEntry, Substitute);
+    //     if Substitute <> '' then begin
+    //         ApprovalEntry."Approver ID" := Substitute;
+    //         ApprovalEntry.Modify(true);
+    //         ApprovalMgt.OnDelegateApprovalRequest(ApprovalEntry);
+    //         exit;
+    //     end;
 
-        if UserSetup.Substitute = '' then
-            if UserSetup."BA Purch. Approver ID" = '' then begin
-                ApprovalAdminUserSetup.SetRange("Approval Administrator", true);
-                if ApprovalAdminUserSetup.FINDFIRST then
-                    UserSetup.Get(ApprovalAdminUserSetup."User ID")
-                else
-                    error(SubstitutenotFoundErr, UserSetup."User ID");
-            end else
-                UserSetup.Get(UserSetup."BA Purch. Approver ID")
-        else
-            UserSetup.Get(UserSetup.Substitute);
+    //     if UserSetup.Substitute = '' then
+    //         if UserSetup."BA Purch. Approver ID" = '' then begin
+    //             ApprovalAdminUserSetup.SetRange("Approval Administrator", true);
+    //             if ApprovalAdminUserSetup.FINDFIRST then
+    //                 UserSetup.Get(ApprovalAdminUserSetup."User ID")
+    //             else
+    //                 error(SubstitutenotFoundErr, UserSetup."User ID");
+    //         end else
+    //             UserSetup.Get(UserSetup."BA Purch. Approver ID")
+    //     else
+    //         UserSetup.Get(UserSetup.Substitute);
 
-        ApprovalEntry."Approver ID" := UserSetup."User ID";
-        ApprovalEntry.Modify(true);
-        ApprovalMgt.OnDelegateApprovalRequest(ApprovalEntry);
-    end;
+    //     ApprovalEntry."Approver ID" := UserSetup."User ID";
+    //     ApprovalEntry.Modify(true);
+    //     ApprovalMgt.OnDelegateApprovalRequest(ApprovalEntry);
+    // end;
 
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnBeforeIsSufficientPurchApprover', '', false, false)]
-    local procedure ApprovalMgtOnBeforeIsSufficientPurchApprover(UserSetup: Record "User Setup"; var IsHandled: Boolean; var IsSufficient: Boolean)
-    begin
-        if UserSetup."BA Purch. Approval Admin" or (UserSetup."User ID" = UserSetup."BA Purch. Approver ID") or UserSetup."Unlimited Purchase Approval" then begin
-            IsHandled := true;
-            IsSufficient := true;
-        end;
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnBeforeIsSufficientPurchApprover', '', false, false)]
+    // local procedure ApprovalMgtOnBeforeIsSufficientPurchApprover(UserSetup: Record "User Setup"; var IsHandled: Boolean; var IsSufficient: Boolean)
+    // begin
+    //     if UserSetup."BA Purch. Approval Admin" or (UserSetup."User ID" = UserSetup."BA Purch. Approver ID") or UserSetup."Unlimited Purchase Approval" then begin
+    //         IsHandled := true;
+    //         IsSufficient := true;
+    //     end;
+    // end;
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnCreateApprovalRequestForApproverChainOnBeforeCheckApproverId', '', false, false)]
-    local procedure ApprovalMgtOnCreateApprovalRequestForApproverChainOnBeforeCheckApproverId(var UserSetup: Record "User Setup"; ApprovalEntry: Record "Approval Entry")
-    begin
-        if ApprovalEntry."Table ID" = Database::"Purchase Header" then
-            UserSetup."Approver ID" := UserSetup."BA Purch. Approver ID";
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Approvals Mgmt.", 'OnCreateApprovalRequestForApproverChainOnBeforeCheckApproverId', '', false, false)]
+    // local procedure ApprovalMgtOnCreateApprovalRequestForApproverChainOnBeforeCheckApproverId(var UserSetup: Record "User Setup"; ApprovalEntry: Record "Approval Entry")
+    // begin
+    //     if ApprovalEntry."Table ID" = Database::"Purchase Header" then
+    //         UserSetup."Approver ID" := UserSetup."BA Purch. Approver ID";
+    // end;
 
 
     var

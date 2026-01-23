@@ -6389,7 +6389,7 @@ codeunit 75010 "BA SEI Subscibers"
         ItemCostEntry.Insert(true);
 
         if RecordUpdate then
-            Item.Validate("BA Last Standard Cost Updated", ItemCostEntry."Updated At");
+            Item.Validate("BA Last Direct Cost Updated", ItemCostEntry."Updated At");
     end;
 
     local procedure GetLabourAndMaterialCosts(var Item: Record Item; var LabourCost: Decimal; var MaterialCost: Decimal)
@@ -6747,11 +6747,11 @@ codeunit 75010 "BA SEI Subscibers"
 
 
 
-    [EventSubscriber(ObjectType::Codeunit, Codeunit::"Calculate Standard Cost", 'OnBeforeSetBOMCompFilters', '', false, false)]
-    local procedure CalculateStandardCostOnBeforeSetBOMCompFilters(var BOMComponent: Record "BOM Component")
-    begin
-        BOMComponent.SetFilter("No.", '<>%1', '');
-    end;
+    // [EventSubscriber(ObjectType::Codeunit, Codeunit::"Calculate Standard Cost", 'OnBeforeSetBOMCompFilters', '', false, false)]
+    // local procedure CalculateStandardCostOnBeforeSetBOMCompFilters(var BOMComponent: Record "BOM Component")
+    // begin
+    //     BOMComponent.SetFilter("No.", '<>%1', '');
+    // end;
 
 
     var
