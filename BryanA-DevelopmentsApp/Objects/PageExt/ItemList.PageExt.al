@@ -74,6 +74,18 @@ pageextension 80046 "BA Item List" extends "Item List"
                     Page.Run(0, BinContent);
                 end;
             }
+            field("BA SIOP Item"; Rec."BA SIOP Item")
+            {
+                ApplicationArea = all;
+            }
+            field("BA SIOP Quantity"; Rec."BA SIOP Quantity")
+            {
+                ApplicationArea = all;
+            }
+            field("BA Shell Item No."; Rec."BA Shell Item No.")
+            {
+                ApplicationArea = all;
+            }
         }
     }
 
